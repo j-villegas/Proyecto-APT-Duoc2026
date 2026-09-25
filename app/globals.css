@@ -1,26 +1,31 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --trazza-background: #0d1d37;
+  --trazza-surface: #172e49;
+  --trazza-border: #2b405b;
+  --trazza-text: #f1f5f9;
+  --trazza-muted: #a8b8cc;
+  --trazza-accent: #10b98b;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+@layer base {
+  body { margin: 0; }
+  button:not(:disabled), a, input { -webkit-tap-highlight-color: transparent; }
+  :focus-visible { outline: 2px solid var(--trazza-accent); outline-offset: 3px; }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
-}
+.trazza-login { color-scheme: dark; background: var(--trazza-background); color: var(--trazza-text); }
+.trazza-input { background: var(--trazza-surface); border: 1px solid var(--trazza-border); }
+.trazza-input:focus-within { border-color: var(--trazza-accent); box-shadow: 0 0 0 3px #10b98b20; }
+.trazza-input input:focus { outline: none; }
+
+
+/* Native form controls within TRAZZA; Google Maps retains its own control colors. */
+.trazza-dashboard input,
+.trazza-dashboard select,
+.trazza-dashboard textarea { color-scheme: dark; }
