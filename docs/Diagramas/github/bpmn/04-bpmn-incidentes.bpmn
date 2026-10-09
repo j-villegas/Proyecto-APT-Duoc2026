@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:bioc="http://bpmn.io/schema/bpmn/biocolor/1.0" id="Definitions_bpmn03-reportar-y-resolver-incidentes" targetNamespace="http://trazza.cl/bpmn">
+  <bpmn:collaboration id="Collab_bpmn03-reportar-y-resolver-incidentes">
+    <bpmn:participant id="Part_con" name="Conductor / app nativa" processRef="Proc_con" />
+    <bpmn:participant id="Part_pyme" name="Pyme de transporte (Administración operacional)" processRef="Proc_pyme" />
+    <bpmn:participant id="Part_sis" name="TRAZZA / sistema" processRef="Proc_sis" />
+    <bpmn:messageFlow id="Msg_bpmn03-reportar-y-resolver-incidentes_0" sourceRef="c_t1" targetRef="p_s" name="Reporte" />
+    <bpmn:messageFlow id="Msg_bpmn03-reportar-y-resolver-incidentes_1" sourceRef="p_t3" targetRef="c_w" name="Indicaciones" />
+    <bpmn:messageFlow id="Msg_bpmn03-reportar-y-resolver-incidentes_2" sourceRef="p_e2" targetRef="s_s" name="Derivación" />
+    <bpmn:messageFlow id="Msg_bpmn03-reportar-y-resolver-incidentes_3" sourceRef="p_e1" targetRef="s_t2" name="Resolución" />
+  </bpmn:collaboration>
+  <bpmn:process id="Proc_con" isExecutable="false">
+    <bpmn:startEvent id="c_s" name="Incidente en el servicio" />
+    <bpmn:task id="c_t1" name="Reportar incidente" />
+    <bpmn:intermediateCatchEvent id="c_w" name="Indicaciones recibidas"><bpmn:messageEventDefinition id="c_w_d" /></bpmn:intermediateCatchEvent>
+    <bpmn:task id="c_t2" name="Recibir indicaciones" />
+    <bpmn:endEvent id="c_e" name="Conductor informado" />
+    <bpmn:sequenceFlow id="Flow_con_0" sourceRef="c_s" targetRef="c_t1" />
+    <bpmn:sequenceFlow id="Flow_con_1" sourceRef="c_t1" targetRef="c_w" />
+    <bpmn:sequenceFlow id="Flow_con_2" sourceRef="c_w" targetRef="c_t2" />
+    <bpmn:sequenceFlow id="Flow_con_3" sourceRef="c_t2" targetRef="c_e" />
+  </bpmn:process>
+  <bpmn:process id="Proc_pyme" isExecutable="false">
+    <bpmn:startEvent id="p_s" name="Reporte recibido"><bpmn:messageEventDefinition id="p_s_d" /></bpmn:startEvent>
+    <bpmn:task id="p_t1" name="Registrar y clasificar" />
+    <bpmn:task id="p_t2" name="Evaluar impacto" />
+    <bpmn:exclusiveGateway id="p_g" name="¿Severidad?" />
+    <bpmn:task id="p_t3" name="Coordinar contingencia" />
+    <bpmn:endEvent id="p_e1" name="Contingencia coordinada"><bpmn:messageEventDefinition id="p_e1_d" /></bpmn:endEvent>
+    <bpmn:endEvent id="p_e2" name="Atención solicitada"><bpmn:messageEventDefinition id="p_e2_d" /></bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_pyme_0" sourceRef="p_s" targetRef="p_t1" />
+    <bpmn:sequenceFlow id="Flow_pyme_1" sourceRef="p_t1" targetRef="p_t2" />
+    <bpmn:sequenceFlow id="Flow_pyme_2" sourceRef="p_t2" targetRef="p_g" />
+    <bpmn:sequenceFlow id="Flow_pyme_3" sourceRef="p_g" targetRef="p_t3" name="Crítico / alto" />
+    <bpmn:sequenceFlow id="Flow_pyme_4" sourceRef="p_g" targetRef="p_e2" name="Bajo / medio" />
+    <bpmn:sequenceFlow id="Flow_pyme_5" sourceRef="p_t3" targetRef="p_e1" />
+  </bpmn:process>
+  <bpmn:process id="Proc_sis" isExecutable="false">
+    <bpmn:startEvent id="s_s" name="Atención solicitada"><bpmn:messageEventDefinition id="s_s_d" /></bpmn:startEvent>
+    <bpmn:task id="s_t1" name="Gestionar atención" />
+    <bpmn:task id="s_t2" name="Registrar resolución" />
+    <bpmn:endEvent id="s_e" name="Incidente resuelto" />
+    <bpmn:sequenceFlow id="Flow_sis_0" sourceRef="s_s" targetRef="s_t1" />
+    <bpmn:sequenceFlow id="Flow_sis_1" sourceRef="s_t1" targetRef="s_t2" />
+    <bpmn:sequenceFlow id="Flow_sis_2" sourceRef="s_t2" targetRef="s_e" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="Diagram_bpmn03-reportar-y-resolver-incidentes">
+    <bpmndi:BPMNPlane id="Plane_bpmn03-reportar-y-resolver-incidentes" bpmnElement="Collab_bpmn03-reportar-y-resolver-incidentes">
+      <bpmndi:BPMNShape id="Part_con_di" bpmnElement="Part_con" isHorizontal="true" bioc:stroke="#334155" bioc:fill="#0a1020"><dc:Bounds x="20" y="20" width="1480" height="140" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="c_s_di" bpmnElement="c_s" bioc:stroke="#f0566f" bioc:fill="#3a1a28"><dc:Bounds x="152.0" y="72.0" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="111.0" y="112.0" width="118" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="c_t1_di" bpmnElement="c_t1" bioc:stroke="#f0566f" bioc:fill="#3a1a28"><dc:Bounds x="261.0" y="55.0" width="118" height="70" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="c_w_di" bpmnElement="c_w" bioc:stroke="#f0566f" bioc:fill="#3a1a28"><dc:Bounds x="902.0" y="72.0" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="861.0" y="40.0" width="118" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="c_t2_di" bpmnElement="c_t2" bioc:stroke="#f0566f" bioc:fill="#3a1a28"><dc:Bounds x="1011.0" y="55.0" width="118" height="70" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="c_e_di" bpmnElement="c_e" bioc:stroke="#f0566f" bioc:fill="#3a1a28"><dc:Bounds x="1202.0" y="72.0" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="1161.0" y="112.0" width="118" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Part_pyme_di" bpmnElement="Part_pyme" isHorizontal="true" bioc:stroke="#334155" bioc:fill="#0a1020"><dc:Bounds x="20" y="224" width="1480" height="252" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="p_s_di" bpmnElement="p_s" bioc:stroke="#f5a524" bioc:fill="#2b2114"><dc:Bounds x="302.0" y="276.0" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="261.0" y="316.0" width="118" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="p_t1_di" bpmnElement="p_t1" bioc:stroke="#f5a524" bioc:fill="#2b2114"><dc:Bounds x="411.0" y="259.0" width="118" height="70" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="p_t2_di" bpmnElement="p_t2" bioc:stroke="#f5a524" bioc:fill="#2b2114"><dc:Bounds x="561.0" y="259.0" width="118" height="70" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="p_g_di" bpmnElement="p_g" isMarkerVisible="true" bioc:stroke="#f0566f" bioc:fill="#3a1a28"><dc:Bounds x="745.0" y="269.0" width="50" height="50" /><bpmndi:BPMNLabel><dc:Bounds x="705.0" y="237.0" width="130" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="p_t3_di" bpmnElement="p_t3" bioc:stroke="#f0566f" bioc:fill="#3a1a28"><dc:Bounds x="861.0" y="259.0" width="118" height="70" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="p_e1_di" bpmnElement="p_e1" bioc:stroke="#f0566f" bioc:fill="#3a1a28"><dc:Bounds x="1202.0" y="276.0" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="1161.0" y="244.0" width="118" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="p_e2_di" bpmnElement="p_e2" bioc:stroke="#f0566f" bioc:fill="#3a1a28"><dc:Bounds x="902.0" y="388.0" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="861.0" y="356.0" width="118" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Part_sis_di" bpmnElement="Part_sis" isHorizontal="true" bioc:stroke="#334155" bioc:fill="#0a1020"><dc:Bounds x="20" y="540" width="1480" height="140" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="s_s_di" bpmnElement="s_s" bioc:stroke="#f0566f" bioc:fill="#3a1a28"><dc:Bounds x="902.0" y="592.0" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="861.0" y="632.0" width="118" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="s_t1_di" bpmnElement="s_t1" bioc:stroke="#f0566f" bioc:fill="#3a1a28"><dc:Bounds x="1011.0" y="575.0" width="118" height="70" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="s_t2_di" bpmnElement="s_t2" bioc:stroke="#f5a524" bioc:fill="#2b2114"><dc:Bounds x="1161.0" y="575.0" width="118" height="70" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="s_e_di" bpmnElement="s_e" bioc:stroke="#f5a524" bioc:fill="#2b2114"><dc:Bounds x="1352.0" y="592.0" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="1311.0" y="632.0" width="118" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_con_0_di" bpmnElement="Flow_con_0" bioc:stroke="#cbd5e1"><di:waypoint x="188.0" y="90.0" /><di:waypoint x="261.0" y="90.0" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_con_1_di" bpmnElement="Flow_con_1" bioc:stroke="#cbd5e1"><di:waypoint x="379.0" y="90.0" /><di:waypoint x="902.0" y="90.0" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_con_2_di" bpmnElement="Flow_con_2" bioc:stroke="#cbd5e1"><di:waypoint x="938.0" y="90.0" /><di:waypoint x="1011.0" y="90.0" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_con_3_di" bpmnElement="Flow_con_3" bioc:stroke="#cbd5e1"><di:waypoint x="1129.0" y="90.0" /><di:waypoint x="1202.0" y="90.0" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_pyme_0_di" bpmnElement="Flow_pyme_0" bioc:stroke="#cbd5e1"><di:waypoint x="338.0" y="294.0" /><di:waypoint x="411.0" y="294.0" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_pyme_1_di" bpmnElement="Flow_pyme_1" bioc:stroke="#cbd5e1"><di:waypoint x="529.0" y="294.0" /><di:waypoint x="561.0" y="294.0" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_pyme_2_di" bpmnElement="Flow_pyme_2" bioc:stroke="#cbd5e1"><di:waypoint x="679.0" y="294.0" /><di:waypoint x="745.0" y="294.0" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_pyme_3_di" bpmnElement="Flow_pyme_3" bioc:stroke="#cbd5e1"><di:waypoint x="795.0" y="294.0" /><di:waypoint x="861.0" y="294.0" /><bpmndi:BPMNLabel><dc:Bounds x="781.6" y="274.0" width="92.8" height="16" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_pyme_4_di" bpmnElement="Flow_pyme_4" bioc:stroke="#cbd5e1"><di:waypoint x="770" y="319.0" /><di:waypoint x="770" y="406.0" /><di:waypoint x="902.0" y="406.0" /><bpmndi:BPMNLabel><dc:Bounds x="795.8" y="386.0" width="80.4" height="16" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_pyme_5_di" bpmnElement="Flow_pyme_5" bioc:stroke="#cbd5e1"><di:waypoint x="979.0" y="294.0" /><di:waypoint x="1202.0" y="294.0" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_sis_0_di" bpmnElement="Flow_sis_0" bioc:stroke="#cbd5e1"><di:waypoint x="938.0" y="610.0" /><di:waypoint x="1011.0" y="610.0" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_sis_1_di" bpmnElement="Flow_sis_1" bioc:stroke="#cbd5e1"><di:waypoint x="1129.0" y="610.0" /><di:waypoint x="1161.0" y="610.0" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_sis_2_di" bpmnElement="Flow_sis_2" bioc:stroke="#cbd5e1"><di:waypoint x="1279.0" y="610.0" /><di:waypoint x="1352.0" y="610.0" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Msg_bpmn03-reportar-y-resolver-incidentes_0_di" bpmnElement="Msg_bpmn03-reportar-y-resolver-incidentes_0" bioc:stroke="#94a3b8"><di:waypoint x="320" y="125.0" /><di:waypoint x="320" y="276.0" /><bpmndi:BPMNLabel><dc:Bounds x="326.0" y="192.5" width="49.4" height="16" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Msg_bpmn03-reportar-y-resolver-incidentes_1_di" bpmnElement="Msg_bpmn03-reportar-y-resolver-incidentes_1" bioc:stroke="#94a3b8"><di:waypoint x="920" y="259.0" /><di:waypoint x="920" y="108.0" /><bpmndi:BPMNLabel><dc:Bounds x="926.0" y="175.5" width="80.4" height="16" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Msg_bpmn03-reportar-y-resolver-incidentes_2_di" bpmnElement="Msg_bpmn03-reportar-y-resolver-incidentes_2" bioc:stroke="#94a3b8"><di:waypoint x="920" y="424.0" /><di:waypoint x="920" y="592.0" /><bpmndi:BPMNLabel><dc:Bounds x="926.0" y="500.0" width="68.0" height="16" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Msg_bpmn03-reportar-y-resolver-incidentes_3_di" bpmnElement="Msg_bpmn03-reportar-y-resolver-incidentes_3" bioc:stroke="#94a3b8"><di:waypoint x="1220" y="312.0" /><di:waypoint x="1220" y="575.0" /><bpmndi:BPMNLabel><dc:Bounds x="1226.0" y="435.5" width="68.0" height="16" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

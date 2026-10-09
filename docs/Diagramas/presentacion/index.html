@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TRAZZA - Procesos y arquitectura</title>
+<style>
+:root{color-scheme:dark;--bg:#0f1419;--side:#151b22;--fg:#e8edf3;--muted:#94a3b8;--line:#263241;--accent:#a78bfa;--hover:#1c2530;--active:#2a2250}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{display:flex;background:var(--bg);color:var(--fg);font:15px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif}
+nav{width:290px;flex:none;background:var(--side);border-right:1px solid var(--line);overflow:auto;padding:18px 12px 24px;transition:margin .2s}
+body.present nav{margin-left:-290px}
+nav h1{font-size:16px;margin:0 8px 2px}
+nav p.s{margin:0 8px 14px;color:var(--muted);font-size:12.5px}
+nav h2{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:16px 8px 6px}
+nav a{display:flex;gap:10px;align-items:baseline;padding:7px 8px;border-radius:7px;color:var(--fg);text-decoration:none;font-size:14px;cursor:pointer}
+nav a:hover{background:var(--hover)}
+nav a.on{background:var(--active);color:var(--fg);font-weight:600}
+nav a b{font-variant-numeric:tabular-nums;color:var(--accent);min-width:22px}
+main{flex:1;display:flex;flex-direction:column;min-width:0}
+.bar{display:flex;gap:8px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line);background:var(--side)}
+.bar .t{flex:1;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+button{font:inherit;font-size:13px;padding:6px 12px;border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:6px;cursor:pointer}
+button:hover{border-color:var(--accent)}
+iframe{flex:1;width:100%;border:0;background:#0d1117}
+.hint{font-size:12px;color:var(--muted);margin-right:6px}
+@media (max-width:800px){nav{position:absolute;z-index:5;height:100%;margin-left:-290px}body.menu nav{margin-left:0}}
+</style>
+</head>
+<body>
+<nav id="nav"></nav>
+<main>
+  <div class="bar">
+    <button id="menu" title="Mostrar u ocultar el menú (tecla M)">Menú</button>
+    <button id="prev" title="Anterior (flecha izquierda)">&larr;</button>
+    <button id="next" title="Siguiente (flecha derecha)">&rarr;</button>
+    <span class="t" id="title"></span>
+    <span class="hint">Flechas: cambiar. M: menú. F: pantalla completa.</span>
+    <button id="full">Pantalla completa</button>
+    <button id="open" title="Abrir esta figura sola en otra pestaña">Abrir sola</button>
+  </div>
+  <iframe id="frame" title="Figura"></iframe>
+</main>
+<script>
+const GROUPS = [
+  ["Procesos de negocio", [
+    ["01", "Mapa de procesos", "figuras/01-mapa-de-procesos.html"],
+    ["02", "BPMN · Contratación", "figuras/02-bpmn-contratacion.html"],
+    ["03", "BPMN · Planificar y ejecutar", "figuras/03-bpmn-planificar-ejecutar.html"],
+    ["04", "BPMN · Incidentes", "figuras/04-bpmn-incidentes.html"],
+    ["05", "BPMN · Flota y combustible", "figuras/05-bpmn-flota-combustible.html"]]],
+  ["Modelos UML", [
+    ["06", "Actores y casos de uso", "figuras/06-uml-casos-de-uso.html"],
+    ["07", "Ciclo de vida del servicio", "figuras/07-uml-ciclo-de-vida.html"]]],
+  ["Arquitectura", [
+    ["08", "Contexto del sistema", "figuras/08-arq-contexto.html"],
+    ["09", "Contenedores y flujos", "figuras/09-arq-contenedores.html"],
+    ["10", "Despliegue en la nube", "figuras/10-arq-despliegue.html"],
+    ["11", "Arquitectura lógica", "figuras/11-arq-logica.html"]]]
+];
+const ALL = GROUPS.flatMap(g => g[1]);
+const nav = document.getElementById('nav');
+nav.innerHTML = '<h1>TRAZZA</h1><p class="s">Procesos, modelos y arquitectura</p>' +
+  GROUPS.map(g => '<h2>' + g[0] + '</h2>' + g[1].map(f =>
+    '<a data-n="' + f[0] + '"><b>' + f[0] + '</b><span>' + f[1] + '</span></a>').join('')).join('');
+const frame = document.getElementById('frame'), title = document.getElementById('title');
+let cur = 0;
+function go(i, push) {
+  cur = (i + ALL.length) % ALL.length;
+  const f = ALL[cur];
+  frame.src = f[2];
+  title.textContent = f[0] + ' · ' + f[1];
+  nav.querySelectorAll('a').forEach(a => a.classList.toggle('on', a.dataset.n === f[0]));
+  if (push !== false) { try { history.replaceState(null, '', '#' + f[0]); } catch (e) {} }
+  document.body.classList.remove('menu');
+}
+nav.addEventListener('click', e => { const a = e.target.closest('a'); if (a) go(ALL.findIndex(f => f[0] === a.dataset.n)); });
+document.getElementById('prev').onclick = () => go(cur - 1);
+document.getElementById('next').onclick = () => go(cur + 1);
+document.getElementById('menu').onclick = () => {
+  if (innerWidth <= 800) document.body.classList.toggle('menu'); else document.body.classList.toggle('present');
+};
+document.getElementById('open').onclick = () => window.open(ALL[cur][2], '_blank');
+function toggleFull() {
+  if (document.fullscreenElement) document.exitFullscreen();
+  else document.documentElement.requestFullscreen().catch(() => {});
+}
+document.getElementById('full').onclick = toggleFull;
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight') go(cur + 1);
+  else if (e.key === 'ArrowLeft') go(cur - 1);
+  else if (e.key === 'f' || e.key === 'F') toggleFull();
+  else if (e.key === 'm' || e.key === 'M') document.getElementById('menu').click();
+});
+const start = ALL.findIndex(f => '#' + f[0] === location.hash);
+go(start >= 0 ? start : 0, false);
+</script>
+</body>
+</html>

@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:bioc="http://bpmn.io/schema/bpmn/biocolor/1.0" id="Definitions_bpmn02-planificar-y-ejecutar-servicio" targetNamespace="http://trazza.cl/bpmn">
+  <bpmn:collaboration id="Collab_bpmn02-planificar-y-ejecutar-servicio">
+    <bpmn:participant id="Part_pyme" name="Pyme de transporte (Administración operacional)" processRef="Proc_pyme" />
+    <bpmn:participant id="Part_con" name="Conductor / operación" processRef="Proc_con" />
+    <bpmn:participant id="Part_sis" name="TRAZZA / sistema" processRef="Proc_sis" />
+    <bpmn:participant id="Part_pas" name="Pasajero" processRef="Proc_pas" />
+    <bpmn:messageFlow id="Msg_bpmn02-planificar-y-ejecutar-servicio_0" sourceRef="a_t3" targetRef="d_s" name="Servicio asignado" />
+    <bpmn:messageFlow id="Msg_bpmn02-planificar-y-ejecutar-servicio_1" sourceRef="d_e" targetRef="s_s1" name="Cierre" />
+    <bpmn:messageFlow id="Msg_bpmn02-planificar-y-ejecutar-servicio_2" sourceRef="d_t2" targetRef="s_s2" name="Estado / ubicación" />
+    <bpmn:messageFlow id="Msg_bpmn02-planificar-y-ejecutar-servicio_3" sourceRef="s_t2" targetRef="x_t" name="Consulta" />
+  </bpmn:collaboration>
+  <bpmn:process id="Proc_pyme" isExecutable="false">
+    <bpmn:startEvent id="a_s" name="Necesidad de viaje" />
+    <bpmn:task id="a_t1" name="Definir ruta, fecha y pasajeros" />
+    <bpmn:task id="a_t2" name="Validar recursos" />
+    <bpmn:exclusiveGateway id="a_g" name="¿Recursos disponibles?" />
+    <bpmn:task id="a_t3" name="Programar y asignar" />
+    <bpmn:task id="a_t4" name="Reprogramar o cancelar" />
+    <bpmn:exclusiveGateway id="a_g2" name="¿Reprogramar?" />
+    <bpmn:endEvent id="a_e" name="Cancelado" />
+    <bpmn:sequenceFlow id="Flow_pyme_0" sourceRef="a_s" targetRef="a_t1" />
+    <bpmn:sequenceFlow id="Flow_pyme_1" sourceRef="a_t1" targetRef="a_t2" />
+    <bpmn:sequenceFlow id="Flow_pyme_2" sourceRef="a_t2" targetRef="a_g" />
+    <bpmn:sequenceFlow id="Flow_pyme_3" sourceRef="a_g" targetRef="a_t3" name="Disponibles" />
+    <bpmn:sequenceFlow id="Flow_pyme_4" sourceRef="a_g" targetRef="a_t4" name="No disponibles" />
+    <bpmn:sequenceFlow id="Flow_pyme_5" sourceRef="a_t4" targetRef="a_g2" />
+    <bpmn:sequenceFlow id="Flow_pyme_6" sourceRef="a_g2" targetRef="a_e" name="Cancelar" />
+    <bpmn:sequenceFlow id="Flow_pyme_7" sourceRef="a_g2" targetRef="a_t1" name="Reprogramar" />
+  </bpmn:process>
+  <bpmn:process id="Proc_con" isExecutable="false">
+    <bpmn:startEvent id="d_s" name="Servicio asignado"><bpmn:messageEventDefinition id="d_s_d" /></bpmn:startEvent>
+    <bpmn:task id="d_t1" name="Iniciar servicio" />
+    <bpmn:task id="d_t2" name="Transportar y registrar asistencia y GPS" />
+    <bpmn:task id="d_t3" name="Finalizar servicio" />
+    <bpmn:endEvent id="d_e" name="Servicio finalizado"><bpmn:messageEventDefinition id="d_e_d" /></bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_con_0" sourceRef="d_s" targetRef="d_t1" />
+    <bpmn:sequenceFlow id="Flow_con_1" sourceRef="d_t1" targetRef="d_t2" />
+    <bpmn:sequenceFlow id="Flow_con_2" sourceRef="d_t2" targetRef="d_t3" />
+    <bpmn:sequenceFlow id="Flow_con_3" sourceRef="d_t3" targetRef="d_e" />
+  </bpmn:process>
+  <bpmn:process id="Proc_sis" isExecutable="false">
+    <bpmn:startEvent id="s_s1" name="Servicio finalizado"><bpmn:messageEventDefinition id="s_s1_d" /></bpmn:startEvent>
+    <bpmn:task id="s_t1" name="Guardar término y liberar recursos" />
+    <bpmn:endEvent id="s_e1" name="Completado" />
+    <bpmn:startEvent id="s_s2" name="Estado de viaje recibido"><bpmn:messageEventDefinition id="s_s2_d" /></bpmn:startEvent>
+    <bpmn:task id="s_t2" name="Exponer estado y ubicación autorizados" />
+    <bpmn:endEvent id="s_e2" name="Estado publicado" />
+    <bpmn:sequenceFlow id="Flow_sis_0" sourceRef="s_s1" targetRef="s_t1" />
+    <bpmn:sequenceFlow id="Flow_sis_1" sourceRef="s_t1" targetRef="s_e1" />
+    <bpmn:sequenceFlow id="Flow_sis_2" sourceRef="s_s2" targetRef="s_t2" />
+    <bpmn:sequenceFlow id="Flow_sis_3" sourceRef="s_t2" targetRef="s_e2" />
+  </bpmn:process>
+  <bpmn:process id="Proc_pas" isExecutable="false">
+    <bpmn:startEvent id="x_s" name="Quiere ver su viaje" />
+    <bpmn:task id="x_t" name="Consultar viaje autorizado" />
+    <bpmn:endEvent id="x_e" name="Consulta atendida" />
+    <bpmn:sequenceFlow id="Flow_pas_0" sourceRef="x_s" targetRef="x_t" />
+    <bpmn:sequenceFlow id="Flow_pas_1" sourceRef="x_t" targetRef="x_e" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="Diagram_bpmn02-planificar-y-ejecutar-servicio">
+    <bpmndi:BPMNPlane id="Plane_bpmn02-planificar-y-ejecutar-servicio" bpmnElement="Collab_bpmn02-planificar-y-ejecutar-servicio">
+      <bpmndi:BPMNShape id="Part_pyme_di" bpmnElement="Part_pyme" isHorizontal="true" bioc:stroke="#334155" bioc:fill="#0a1020"><dc:Bounds x="20" y="20" width="1780" height="252" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="a_s_di" bpmnElement="a_s" bioc:stroke="#f5a524" bioc:fill="#2b2114"><dc:Bounds x="152.0" y="184.0" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="111.0" y="224.0" width="118" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="a_t1_di" bpmnElement="a_t1" bioc:stroke="#f5a524" bioc:fill="#2b2114"><dc:Bounds x="261.0" y="167.0" width="118" height="70" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="a_t2_di" bpmnElement="a_t2" bioc:stroke="#f0566f" bioc:fill="#3a1a28"><dc:Bounds x="411.0" y="167.0" width="118" height="70" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="a_g_di" bpmnElement="a_g" isMarkerVisible="true" bioc:stroke="#f0566f" bioc:fill="#3a1a28"><dc:Bounds x="595.0" y="177.0" width="50" height="50" /><bpmndi:BPMNLabel><dc:Bounds x="555.0" y="231.0" width="130" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="a_t3_di" bpmnElement="a_t3" bioc:stroke="#f5a524" bioc:fill="#2b2114"><dc:Bounds x="711.0" y="167.0" width="118" height="70" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="a_t4_di" bpmnElement="a_t4" bioc:stroke="#f0566f" bioc:fill="#3a1a28"><dc:Bounds x="711.0" y="55.0" width="118" height="70" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="a_g2_di" bpmnElement="a_g2" isMarkerVisible="true" bioc:stroke="#f0566f" bioc:fill="#3a1a28"><dc:Bounds x="895.0" y="65.0" width="50" height="50" /><bpmndi:BPMNLabel><dc:Bounds x="855.0" y="119.0" width="130" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="a_e_di" bpmnElement="a_e" bioc:stroke="#f0566f" bioc:fill="#3a1a28"><dc:Bounds x="1052.0" y="72.0" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="1011.0" y="112.0" width="118" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Part_con_di" bpmnElement="Part_con" isHorizontal="true" bioc:stroke="#334155" bioc:fill="#0a1020"><dc:Bounds x="20" y="336" width="1780" height="140" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="d_s_di" bpmnElement="d_s" bioc:stroke="#f0566f" bioc:fill="#3a1a28"><dc:Bounds x="752.0" y="388.0" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="711.0" y="428.0" width="118" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="d_t1_di" bpmnElement="d_t1" bioc:stroke="#f0566f" bioc:fill="#3a1a28"><dc:Bounds x="861.0" y="371.0" width="118" height="70" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="d_t2_di" bpmnElement="d_t2" bioc:stroke="#f0566f" bioc:fill="#3a1a28"><dc:Bounds x="1011.0" y="371.0" width="118" height="70" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="d_t3_di" bpmnElement="d_t3" bioc:stroke="#f0566f" bioc:fill="#3a1a28"><dc:Bounds x="1161.0" y="371.0" width="118" height="70" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="d_e_di" bpmnElement="d_e" bioc:stroke="#f0566f" bioc:fill="#3a1a28"><dc:Bounds x="1352.0" y="388.0" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="1311.0" y="356.0" width="118" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Part_sis_di" bpmnElement="Part_sis" isHorizontal="true" bioc:stroke="#334155" bioc:fill="#0a1020"><dc:Bounds x="20" y="540" width="1780" height="252" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="s_s1_di" bpmnElement="s_s1" bioc:stroke="#f5a524" bioc:fill="#2b2114"><dc:Bounds x="1352.0" y="592.0" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="1311.0" y="632.0" width="118" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="s_t1_di" bpmnElement="s_t1" bioc:stroke="#f5a524" bioc:fill="#2b2114"><dc:Bounds x="1461.0" y="575.0" width="118" height="70" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="s_e1_di" bpmnElement="s_e1" bioc:stroke="#f5a524" bioc:fill="#2b2114"><dc:Bounds x="1652.0" y="592.0" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="1611.0" y="632.0" width="118" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="s_s2_di" bpmnElement="s_s2" bioc:stroke="#f0566f" bioc:fill="#3a1a28"><dc:Bounds x="1052.0" y="704.0" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="1011.0" y="744.0" width="118" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="s_t2_di" bpmnElement="s_t2" bioc:stroke="#f0566f" bioc:fill="#3a1a28"><dc:Bounds x="1161.0" y="687.0" width="118" height="70" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="s_e2_di" bpmnElement="s_e2" bioc:stroke="#f0566f" bioc:fill="#3a1a28"><dc:Bounds x="1352.0" y="704.0" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="1311.0" y="744.0" width="118" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Part_pas_di" bpmnElement="Part_pas" isHorizontal="true" bioc:stroke="#334155" bioc:fill="#0a1020"><dc:Bounds x="20" y="856" width="1780" height="140" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="x_s_di" bpmnElement="x_s" bioc:stroke="#f0566f" bioc:fill="#3a1a28"><dc:Bounds x="1052.0" y="908.0" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="1011.0" y="948.0" width="118" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="x_t_di" bpmnElement="x_t" bioc:stroke="#f0566f" bioc:fill="#3a1a28"><dc:Bounds x="1161.0" y="891.0" width="118" height="70" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="x_e_di" bpmnElement="x_e" bioc:stroke="#f0566f" bioc:fill="#3a1a28"><dc:Bounds x="1352.0" y="908.0" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="1311.0" y="948.0" width="118" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_pyme_0_di" bpmnElement="Flow_pyme_0" bioc:stroke="#cbd5e1"><di:waypoint x="188.0" y="202.0" /><di:waypoint x="261.0" y="202.0" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_pyme_1_di" bpmnElement="Flow_pyme_1" bioc:stroke="#cbd5e1"><di:waypoint x="379.0" y="202.0" /><di:waypoint x="411.0" y="202.0" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_pyme_2_di" bpmnElement="Flow_pyme_2" bioc:stroke="#cbd5e1"><di:waypoint x="529.0" y="202.0" /><di:waypoint x="595.0" y="202.0" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_pyme_3_di" bpmnElement="Flow_pyme_3" bioc:stroke="#cbd5e1"><di:waypoint x="645.0" y="202.0" /><di:waypoint x="711.0" y="202.0" /><bpmndi:BPMNLabel><dc:Bounds x="640.9" y="182.0" width="74.2" height="16" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_pyme_4_di" bpmnElement="Flow_pyme_4" bioc:stroke="#cbd5e1"><di:waypoint x="620" y="177.0" /><di:waypoint x="620" y="90.0" /><di:waypoint x="711.0" y="90.0" /><bpmndi:BPMNLabel><dc:Bounds x="619.1" y="70.0" width="92.8" height="16" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_pyme_5_di" bpmnElement="Flow_pyme_5" bioc:stroke="#cbd5e1"><di:waypoint x="829.0" y="90.0" /><di:waypoint x="895.0" y="90.0" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_pyme_6_di" bpmnElement="Flow_pyme_6" bioc:stroke="#cbd5e1"><di:waypoint x="945.0" y="90.0" /><di:waypoint x="1052.0" y="90.0" /><bpmndi:BPMNLabel><dc:Bounds x="970.7" y="70.0" width="55.6" height="16" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_pyme_7_di" bpmnElement="Flow_pyme_7" bioc:stroke="#cbd5e1"><di:waypoint x="920" y="65.0" /><di:waypoint x="920" y="41.0" /><di:waypoint x="320" y="41.0" /><di:waypoint x="320" y="167.0" /><bpmndi:BPMNLabel><dc:Bounds x="582.9" y="45.0" width="74.2" height="16" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_con_0_di" bpmnElement="Flow_con_0" bioc:stroke="#cbd5e1"><di:waypoint x="788.0" y="406.0" /><di:waypoint x="861.0" y="406.0" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_con_1_di" bpmnElement="Flow_con_1" bioc:stroke="#cbd5e1"><di:waypoint x="979.0" y="406.0" /><di:waypoint x="1011.0" y="406.0" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_con_2_di" bpmnElement="Flow_con_2" bioc:stroke="#cbd5e1"><di:waypoint x="1129.0" y="406.0" /><di:waypoint x="1161.0" y="406.0" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_con_3_di" bpmnElement="Flow_con_3" bioc:stroke="#cbd5e1"><di:waypoint x="1279.0" y="406.0" /><di:waypoint x="1352.0" y="406.0" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_sis_0_di" bpmnElement="Flow_sis_0" bioc:stroke="#cbd5e1"><di:waypoint x="1388.0" y="610.0" /><di:waypoint x="1461.0" y="610.0" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_sis_1_di" bpmnElement="Flow_sis_1" bioc:stroke="#cbd5e1"><di:waypoint x="1579.0" y="610.0" /><di:waypoint x="1652.0" y="610.0" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_sis_2_di" bpmnElement="Flow_sis_2" bioc:stroke="#cbd5e1"><di:waypoint x="1088.0" y="722.0" /><di:waypoint x="1161.0" y="722.0" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_sis_3_di" bpmnElement="Flow_sis_3" bioc:stroke="#cbd5e1"><di:waypoint x="1279.0" y="722.0" /><di:waypoint x="1352.0" y="722.0" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_pas_0_di" bpmnElement="Flow_pas_0" bioc:stroke="#cbd5e1"><di:waypoint x="1088.0" y="926.0" /><di:waypoint x="1161.0" y="926.0" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_pas_1_di" bpmnElement="Flow_pas_1" bioc:stroke="#cbd5e1"><di:waypoint x="1279.0" y="926.0" /><di:waypoint x="1352.0" y="926.0" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Msg_bpmn02-planificar-y-ejecutar-servicio_0_di" bpmnElement="Msg_bpmn02-planificar-y-ejecutar-servicio_0" bioc:stroke="#94a3b8"><di:waypoint x="770" y="237.0" /><di:waypoint x="770" y="388.0" /><bpmndi:BPMNLabel><dc:Bounds x="776.0" y="304.5" width="111.4" height="16" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Msg_bpmn02-planificar-y-ejecutar-servicio_1_di" bpmnElement="Msg_bpmn02-planificar-y-ejecutar-servicio_1" bioc:stroke="#94a3b8"><di:waypoint x="1370" y="424.0" /><di:waypoint x="1370" y="592.0" /><bpmndi:BPMNLabel><dc:Bounds x="1376.0" y="500.0" width="43.2" height="16" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Msg_bpmn02-planificar-y-ejecutar-servicio_2_di" bpmnElement="Msg_bpmn02-planificar-y-ejecutar-servicio_2" bioc:stroke="#94a3b8"><di:waypoint x="1070" y="441.0" /><di:waypoint x="1070" y="704.0" /><bpmndi:BPMNLabel><dc:Bounds x="1076.0" y="564.5" width="117.60000000000001" height="16" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Msg_bpmn02-planificar-y-ejecutar-servicio_3_di" bpmnElement="Msg_bpmn02-planificar-y-ejecutar-servicio_3" bioc:stroke="#94a3b8"><di:waypoint x="1220" y="757.0" /><di:waypoint x="1220" y="891.0" /><bpmndi:BPMNLabel><dc:Bounds x="1226.0" y="816.0" width="55.6" height="16" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

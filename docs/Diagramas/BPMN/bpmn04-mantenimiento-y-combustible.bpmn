@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:bioc="http://bpmn.io/schema/bpmn/biocolor/1.0" id="Definitions_bpmn04-mantenimiento-y-combustible" targetNamespace="http://trazza.cl/bpmn">
+  <bpmn:collaboration id="Collab_bpmn04-mantenimiento-y-combustible">
+    <bpmn:participant id="Part_fl" name="Pyme de transporte (Responsable de flota)" processRef="Proc_fl" />
+    <bpmn:participant id="Part_sis" name="TRAZZA / sistema" processRef="Proc_sis" />
+  </bpmn:collaboration>
+  <bpmn:process id="Proc_fl" isExecutable="false">
+    <bpmn:startEvent id="m_s" name="Necesidad de mantenimiento" />
+    <bpmn:task id="m_t1" name="Planificar mantenimiento" />
+    <bpmn:task id="m_t2" name="Ejecutar intervención y registrar cierre" />
+    <bpmn:task id="m_t3" name="Actualizar disponibilidad" />
+    <bpmn:endEvent id="m_e" name="Vehículo habilitado" />
+    <bpmn:sequenceFlow id="Flow_fl_0" sourceRef="m_s" targetRef="m_t1" />
+    <bpmn:sequenceFlow id="Flow_fl_1" sourceRef="m_t1" targetRef="m_t2" />
+    <bpmn:sequenceFlow id="Flow_fl_2" sourceRef="m_t2" targetRef="m_t3" />
+    <bpmn:sequenceFlow id="Flow_fl_3" sourceRef="m_t3" targetRef="m_e" />
+  </bpmn:process>
+  <bpmn:process id="Proc_sis" isExecutable="false">
+    <bpmn:startEvent id="f_s" name="Carga de combustible" />
+    <bpmn:task id="f_t1" name="Capturar comprobante y datos de carga" />
+    <bpmn:task id="f_t2" name="Validar y guardar registro" />
+    <bpmn:task id="f_t3" name="Actualizar kilometraje si corresponde" />
+    <bpmn:endEvent id="f_e" name="Carga registrada" />
+    <bpmn:sequenceFlow id="Flow_sis_0" sourceRef="f_s" targetRef="f_t1" />
+    <bpmn:sequenceFlow id="Flow_sis_1" sourceRef="f_t1" targetRef="f_t2" />
+    <bpmn:sequenceFlow id="Flow_sis_2" sourceRef="f_t2" targetRef="f_t3" />
+    <bpmn:sequenceFlow id="Flow_sis_3" sourceRef="f_t3" targetRef="f_e" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="Diagram_bpmn04-mantenimiento-y-combustible">
+    <bpmndi:BPMNPlane id="Plane_bpmn04-mantenimiento-y-combustible" bpmnElement="Collab_bpmn04-mantenimiento-y-combustible">
+      <bpmndi:BPMNShape id="Part_fl_di" bpmnElement="Part_fl" isHorizontal="true" bioc:stroke="#334155" bioc:fill="#0a1020"><dc:Bounds x="20" y="20" width="880" height="140" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="m_s_di" bpmnElement="m_s" bioc:stroke="#f5a524" bioc:fill="#2b2114"><dc:Bounds x="152.0" y="72.0" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="111.0" y="112.0" width="118" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="m_t1_di" bpmnElement="m_t1" bioc:stroke="#f5a524" bioc:fill="#2b2114"><dc:Bounds x="261.0" y="55.0" width="118" height="70" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="m_t2_di" bpmnElement="m_t2" bioc:stroke="#f5a524" bioc:fill="#2b2114"><dc:Bounds x="411.0" y="55.0" width="118" height="70" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="m_t3_di" bpmnElement="m_t3" bioc:stroke="#f5a524" bioc:fill="#2b2114"><dc:Bounds x="561.0" y="55.0" width="118" height="70" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="m_e_di" bpmnElement="m_e" bioc:stroke="#f5a524" bioc:fill="#2b2114"><dc:Bounds x="752.0" y="72.0" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="711.0" y="112.0" width="118" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Part_sis_di" bpmnElement="Part_sis" isHorizontal="true" bioc:stroke="#334155" bioc:fill="#0a1020"><dc:Bounds x="20" y="224" width="880" height="140" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="f_s_di" bpmnElement="f_s" bioc:stroke="#f5a524" bioc:fill="#2b2114"><dc:Bounds x="152.0" y="276.0" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="111.0" y="316.0" width="118" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="f_t1_di" bpmnElement="f_t1" bioc:stroke="#f5a524" bioc:fill="#2b2114"><dc:Bounds x="261.0" y="259.0" width="118" height="70" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="f_t2_di" bpmnElement="f_t2" bioc:stroke="#f5a524" bioc:fill="#2b2114"><dc:Bounds x="411.0" y="259.0" width="118" height="70" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="f_t3_di" bpmnElement="f_t3" bioc:stroke="#f5a524" bioc:fill="#2b2114"><dc:Bounds x="561.0" y="259.0" width="118" height="70" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="f_e_di" bpmnElement="f_e" bioc:stroke="#f5a524" bioc:fill="#2b2114"><dc:Bounds x="752.0" y="276.0" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="711.0" y="316.0" width="118" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_fl_0_di" bpmnElement="Flow_fl_0" bioc:stroke="#cbd5e1"><di:waypoint x="188.0" y="90.0" /><di:waypoint x="261.0" y="90.0" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_fl_1_di" bpmnElement="Flow_fl_1" bioc:stroke="#cbd5e1"><di:waypoint x="379.0" y="90.0" /><di:waypoint x="411.0" y="90.0" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_fl_2_di" bpmnElement="Flow_fl_2" bioc:stroke="#cbd5e1"><di:waypoint x="529.0" y="90.0" /><di:waypoint x="561.0" y="90.0" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_fl_3_di" bpmnElement="Flow_fl_3" bioc:stroke="#cbd5e1"><di:waypoint x="679.0" y="90.0" /><di:waypoint x="752.0" y="90.0" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_sis_0_di" bpmnElement="Flow_sis_0" bioc:stroke="#cbd5e1"><di:waypoint x="188.0" y="294.0" /><di:waypoint x="261.0" y="294.0" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_sis_1_di" bpmnElement="Flow_sis_1" bioc:stroke="#cbd5e1"><di:waypoint x="379.0" y="294.0" /><di:waypoint x="411.0" y="294.0" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_sis_2_di" bpmnElement="Flow_sis_2" bioc:stroke="#cbd5e1"><di:waypoint x="529.0" y="294.0" /><di:waypoint x="561.0" y="294.0" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_sis_3_di" bpmnElement="Flow_sis_3" bioc:stroke="#cbd5e1"><di:waypoint x="679.0" y="294.0" /><di:waypoint x="752.0" y="294.0" /></bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
