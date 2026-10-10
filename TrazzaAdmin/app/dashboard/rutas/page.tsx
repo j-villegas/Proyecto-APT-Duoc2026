@@ -1,11 +1,16 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
-import { todayCL } from '@/lib/date'
+import { addDays, todayCL } from '@/lib/date'
+import { getServiceKpis } from '@/lib/service-kpis'
 import AddRouteModal from './components/AddRouteModal'
 import AddContractModal from './components/AddContractModal'
 import ContractsPanel from './components/ContractsPanel'
 import KpiCard from '../components/KpiCard'
+import ClickableRow from '../components/ClickableRow'
+import TrazoLine from '@/app/components/TrazoLine'
 import RoutesCatalog, { type CatalogRoute } from './components/RoutesCatalog'
+import { visualServiceStatus } from '@/lib/service-status'
+import Plate from '@/app/components/Plate'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -34,30 +39,7 @@ type ContractRow = {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-// Returns a display-only virtual status; never writes to DB.
-function visualStatus(
-  dbStatus: string | null,
-  scheduledDate: string | null,
-  scheduledTime: string | null,
-): string {
-  if (dbStatus !== 'scheduled') return dbStatus ?? ''
-  const dateStr = scheduledDate ?? ''
-  const timeStr = scheduledTime ?? '00:00:00'
-  if (!dateStr) return 'scheduled'
-  const scheduledAt = new Date(`${dateStr}T${timeStr}`)
-  return scheduledAt < new Date() ? 'overdue' : 'scheduled'
-}
 
-function statusMeta(vstatus: string | null): { label: string; bg: string; text: string } {
-  const map: Record<string, { label: string; bg: string; text: string }> = {
-    scheduled:   { label: 'Programado',   bg: '#183352', text: '#7dbbff' },
-    overdue:     { label: 'No iniciada',  bg: '#3b3020', text: '#fdba74' },
-    in_progress: { label: 'En Tránsito',  bg: '#3b3020', text: '#f8cb78' },
-    completed:   { label: 'Finalizado',   bg: '#123b35', text: '#55d9ad' },
-    cancelled:   { label: 'Cancelado',    bg: '#3d2332', text: '#fda4af' },
-  }
-  return map[vstatus ?? ''] ?? { label: vstatus ?? '—', bg: '#203650', text: '#bac9db' }
-}
 
 function formatTime(time: string | null): string {
   if (!time) return '—'
@@ -81,8 +63,8 @@ function SectionCard({ title, badge, children }: {
   children: React.ReactNode
 }) {
   return (
-    <div className="bg-[#142942] border border-[#2b405b] rounded-lg overflow-hidden flex flex-col h-full">
-      <div className="flex items-center justify-between px-4 py-2.5 border-b border-[#2b405b] gap-2 flex-shrink-0">
+    <div className="bg-surface border border-line rounded-lg overflow-hidden flex flex-col h-full">
+      <div className="flex items-center justify-between px-4 py-2.5 border-b border-line gap-2 flex-shrink-0">
         <h3 className="text-[11px] font-bold uppercase tracking-wider" style={{ color: '#f1f5f9' }}>
           {title}
         </h3>
@@ -95,28 +77,22 @@ function SectionCard({ title, badge, children }: {
 
 function CountBadge({ count }: { count: number }) {
   return (
-    <span className="text-[10px] bg-[#10223d] border border-[#2b405b] text-[#a8b8cc] px-2 py-0.5 rounded font-semibold">
+    <span className="text-[10px] bg-sunken border border-line text-muted px-2 py-0.5 rounded font-semibold">
       {count}
     </span>
   )
 }
 
-function EmptyStateCompact({ icon, message, sub }: {
+function EmptyStateCompact({ message, sub }: {
   icon?: React.ReactNode
   message: string
   sub?: string
 }) {
   return (
     <div className="flex flex-col items-center justify-center py-8 text-center px-4">
-      <div className="w-8 h-8 rounded-full bg-[#203650] flex items-center justify-center mb-2.5">
-        {icon ?? (
-          <svg className="w-4 h-4 text-[#a8b8cc]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-          </svg>
-        )}
-      </div>
-      <p className="text-[12px] font-medium text-[#a8b8cc]">{message}</p>
-      {sub && <p className="text-[11px] text-[#a8b8cc] mt-0.5">{sub}</p>}
+      <TrazoLine className="mb-2.5" />
+      <p className="text-[12px] font-semibold text-fg">{message}</p>
+      {sub && <p className="text-[11px] text-muted mt-0.5">{sub}</p>}
     </div>
   )
 }
@@ -137,46 +113,11 @@ export default async function RutasPage() {
     : { data: null }
 
   const [
-    { count: alertsOpen },
-    { count: servicesCompleted },
-    { count: servicesCancelled },
-    { count: servicesInProgressCount },
-    { count: servicesScheduledCount },
-    { data: overdueScheduledRows },
+    kpis,
     { data: rawServices },
     { data: rawContracts },
   ] = await Promise.all([
-    supabase
-      .from('operational_alerts')
-      .select('*', { count: 'exact', head: true })
-      .eq('status', 'open'),
-
-    supabase
-      .from('services')
-      .select('*', { count: 'exact', head: true })
-      .eq('status', 'completed'),
-
-    supabase
-      .from('services')
-      .select('*', { count: 'exact', head: true })
-      .eq('status', 'cancelled'),
-
-    supabase
-      .from('services')
-      .select('*', { count: 'exact', head: true })
-      .eq('status', 'in_progress'),
-
-    supabase
-      .from('services')
-      .select('*', { count: 'exact', head: true })
-      .eq('status', 'scheduled'),
-
-    // Scheduled services up to today — filtered in JS to find truly overdue ones
-    supabase
-      .from('services')
-      .select('scheduled_date, scheduled_start_time')
-      .eq('status', 'scheduled')
-      .lte('scheduled_date', today),
+    getServiceKpis(supabase),
 
     supabase
       .from('services')
@@ -189,9 +130,10 @@ export default async function RutasPage() {
         drivers ( id, full_name ),
         vehicles ( id, plate, model )
       `)
-      .in('status', ['scheduled', 'in_progress'])
+      // En curso: siempre (aunque sean de días anteriores, siguen activos y
+      // cuentan en el KPI "En Ruta"). Programados: solo la última semana.
+      .or(`status.eq.in_progress,and(status.eq.scheduled,scheduled_date.gte.${addDays(today, -7)})`)
       .is('deleted_at', null)
-      .gte('scheduled_date', (() => { const d = new Date(); d.setDate(d.getDate() - 7); return d.toISOString().slice(0, 10) })())
       .order('scheduled_date', { ascending: true })
       .order('scheduled_start_time', { ascending: true })
       .limit(30),
@@ -207,23 +149,8 @@ export default async function RutasPage() {
 
   const services  = (rawServices  ?? []) as ServiceRow[]
   const contracts = (rawContracts ?? []) as ContractRow[]
-
-  // Overdue = scheduled services whose date+time is already in the past
-  const overdueCount = ((overdueScheduledRows ?? []) as { scheduled_date: string | null; scheduled_start_time: string | null }[])
-    .filter(s => {
-      if (!s.scheduled_date) return false
-      const t = s.scheduled_start_time ?? '00:00:00'
-      return new Date(`${s.scheduled_date}T${t}`) < new Date()
-    }).length
-
-  const evaluableCount = (servicesCompleted ?? 0) + (servicesCancelled ?? 0) + overdueCount
-  const efficiencyPct  = evaluableCount > 0
-    ? Math.round((servicesCompleted ?? 0) / evaluableCount * 100)
-    : null
-
-  // Derived KPI counts
-  const inProgressKpi = servicesInProgressCount ?? 0
-  const scheduledFutureKpi = Math.max(0, (servicesScheduledCount ?? 0) - overdueCount)
+  const { compliancePct: efficiencyPct, completedCount, evaluableCount } = kpis
+  const overdueCount = kpis.overdueRows.length
 
   return (
     <div className="space-y-4">
@@ -244,20 +171,22 @@ export default async function RutasPage() {
         <KpiCard
           label="Cumplimiento de Rutas"
           value={efficiencyPct !== null ? `${efficiencyPct}%` : '—'}
-          sub={efficiencyPct !== null ? `${servicesCompleted ?? 0} / ${evaluableCount} servicios` : 'Sin servicios evaluables'}
+          sub={efficiencyPct !== null
+            ? `${completedCount} de ${evaluableCount} realizados${kpis.cancelledCount ? ` · ${kpis.cancelledCount} cancelados` : ''}`
+            : 'Aún no hay servicios por evaluar'}
           tone="green"
           icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="#55d9ad" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
         />
         <KpiCard
           label="Programadas"
-          value={scheduledFutureKpi}
+          value={kpis.scheduledFutureCount}
           sub="Servicios pendientes"
           tone="blue"
           icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="#7dbbff" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" /></svg>}
         />
         <KpiCard
           label="En Ruta"
-          value={inProgressKpi}
+          value={kpis.inProgressCount}
           sub="Servicios activos"
           tone="orange"
           icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="#10b98b" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z" /></svg>}
@@ -289,7 +218,7 @@ export default async function RutasPage() {
               message="No hay rutas en ejecución o programadas"
               sub="Los servicios activos y programados aparecerán aquí."
               icon={
-                <svg className="w-4 h-4 text-[#a8b8cc]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <svg className="w-4 h-4 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z" />
                 </svg>
               }
@@ -298,11 +227,11 @@ export default async function RutasPage() {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr style={{ backgroundColor: '#10223d' }} className="border-b border-[#203650]">
+                  <tr style={{ backgroundColor: '#10223d' }} className="border-b border-raised">
                     {['ID / Servicio', 'Conductor', 'Vehículo', 'Estado', 'ETA'].map((col) => (
                       <th
                         key={col}
-                        className="text-left text-[10px] font-bold uppercase tracking-wider px-4 py-2 text-[#a8b8cc] whitespace-nowrap"
+                        className="text-left text-[10px] font-bold uppercase tracking-wider px-4 py-2 text-muted whitespace-nowrap"
                       >
                         {col}
                       </th>
@@ -311,15 +240,15 @@ export default async function RutasPage() {
                 </thead>
                 <tbody>
                   {services.map((svc) => {
-                    const vstatus = visualStatus(svc.status, svc.scheduled_date, svc.scheduled_start_time)
-                    const sm      = statusMeta(vstatus)
+                    const sm      = visualServiceStatus(svc.status, svc.scheduled_date, svc.scheduled_start_time, kpis.now)
                     const driver  = Array.isArray(svc.drivers)  ? svc.drivers[0]  : svc.drivers
                     const vehicle = Array.isArray(svc.vehicles) ? svc.vehicles[0] : svc.vehicles
 
                     return (
-                      <tr
+                      <ClickableRow
                         key={svc.id}
-                        className="border-b border-[#203650] hover:bg-[#10223d] transition-colors cursor-default"
+                        href={`/dashboard/rutas/${svc.id}`}
+                        className="border-b border-raised hover:bg-sunken transition-colors"
                       >
                         <td className="px-4 py-2.5 whitespace-nowrap">
                           <Link
@@ -333,25 +262,25 @@ export default async function RutasPage() {
                               {svc.service_code ?? `#${svc.id.slice(0, 8).toUpperCase()}`}
                             </p>
                             {svc.scheduled_date && (
-                              <p className="text-[10px] text-[#a8b8cc]">{formatDate(svc.scheduled_date)}</p>
+                              <p className="text-[10px] text-muted">{formatDate(svc.scheduled_date)}</p>
                             )}
                           </Link>
                         </td>
                         <td className="px-4 py-2.5">
-                          <span className="text-[12px] text-[#d5e0ed]">
-                            {driver?.full_name ?? <span className="text-[#a8b8cc]">—</span>}
+                          <span className="text-[12px] text-soft">
+                            {driver?.full_name ?? <span className="text-muted">—</span>}
                           </span>
                         </td>
                         <td className="px-4 py-2.5">
                           {vehicle ? (
                             <div>
-                              <p className="text-[12px] font-medium text-[#d5e0ed]">{vehicle.plate ?? '—'}</p>
+                              <Plate value={vehicle.plate} />
                               {vehicle.model && (
-                                <p className="text-[10px] text-[#a8b8cc]">{vehicle.model}</p>
+                                <p className="text-[10px] text-muted">{vehicle.model}</p>
                               )}
                             </div>
                           ) : (
-                            <span className="text-[12px] text-[#a8b8cc]">—</span>
+                            <span className="text-[12px] text-muted">—</span>
                           )}
                         </td>
                         <td className="px-4 py-2.5 whitespace-nowrap">
@@ -363,11 +292,11 @@ export default async function RutasPage() {
                           </span>
                         </td>
                         <td className="px-4 py-2.5 whitespace-nowrap">
-                          <span className="text-[12px] text-[#a8b8cc]">
+                          <span className="text-[12px] text-muted">
                             {formatTime(svc.scheduled_start_time)}
                           </span>
                         </td>
-                      </tr>
+                      </ClickableRow>
                     )
                   })}
                 </tbody>
@@ -391,7 +320,7 @@ export default async function RutasPage() {
               message="Sin contratos activos"
               sub="Los contratos activos aparecerán aquí."
               icon={
-                <svg className="w-4 h-4 text-[#a8b8cc]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <svg className="w-4 h-4 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
                 </svg>
               }

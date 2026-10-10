@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import PlacesAutocompleteInput, { type PlaceResult } from '@/app/dashboard/components/PlacesAutocompleteInput'
+import { friendlyError } from '@/lib/errors'
 
 // ─── Dropdown option types ────────────────────────────────────────────────────
 
@@ -102,33 +103,14 @@ function validate(form: FormData, contractPassengerCount: number): FieldErrors {
   return e
 }
 
-const CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
-
-async function generateUniqueCode(
-  supabase: ReturnType<typeof createClient>,
-  companyId: string,
-): Promise<string> {
-  for (let attempt = 0; attempt < 10; attempt++) {
-    let code = ''
-    for (let i = 0; i < 6; i++) code += CHARS[Math.floor(Math.random() * CHARS.length)]
-    const { data } = await supabase
-      .from('passenger_service_access')
-      .select('id')
-      .eq('company_id', companyId)
-      .eq('access_code', code)
-      .maybeSingle()
-    if (!data) return code
-  }
-  throw new Error('No se pudo generar un código de acceso único.')
-}
 
 // ─── Shared styles ────────────────────────────────────────────────────────────
 
 const inputCls =
-  'w-full px-3 py-2 text-[12px] border border-[#2b405b] rounded-md bg-[#142942] text-[#f1f5f9] ' +
-  'placeholder-[#a8b8cc] focus:outline-none focus:ring-1 focus:ring-[#10b98b] focus:border-[#10b98b] transition'
+  'w-full px-3 py-2 text-[12px] border border-line rounded-md bg-surface text-fg ' +
+  'placeholder-muted focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent transition'
 
-const labelCls = 'block text-[11px] font-semibold uppercase tracking-wide text-[#a8b8cc] mb-1'
+const labelCls = 'block text-[11px] font-semibold uppercase tracking-wide text-muted mb-1'
 
 // ─── Field wrapper ────────────────────────────────────────────────────────────
 
@@ -152,7 +134,7 @@ function CoordIndicator({ entry }: { entry: LocationEntry }) {
   if (!entry.text.trim()) return null
   const confirmed = entry.lat !== null && entry.lng !== null
   return (
-    <div className={`flex items-center gap-1 mt-1 ${confirmed ? 'text-emerald-300' : 'text-[#a8b8cc]'}`}>
+    <div className={`flex items-center gap-1 mt-1 ${confirmed ? 'text-emerald-300' : 'text-muted'}`}>
       {confirmed ? (
         <svg className="w-3 h-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
           <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -219,55 +201,50 @@ export default function AddRouteModal() {
     setLoadingOptions(false)
   }, [])
 
-  useEffect(() => {
-    if (open) loadOptions()
-  }, [open, loadOptions])
 
-  // ── Load contract passengers whenever the selected contract changes ──
-  useEffect(() => {
-    if (!form.contract_id) {
-      setContractPassengers([])
-      setForm(prev => (prev.stops.length ? { ...prev, stops: [] } : prev))
+  // ── Al elegir un contrato, cargar su lista de pasajeros como paradas ──
+  // (en el evento de selección; contractRequest descarta respuestas de un
+  // contrato anterior si el usuario cambia rápido de opción).
+  const contractRequest = useRef(0)
+
+  async function selectContract(contractId: string) {
+    set('contract_id', contractId)
+    const request = ++contractRequest.current
+    setContractPassengers([])
+    setForm(prev => (prev.stops.length ? { ...prev, stops: [] } : prev))
+    if (!contractId) {
+      setLoadingPassengers(false)
       return
     }
-    let cancelled = false
-    const contractId = form.contract_id
+
     setLoadingPassengers(true)
-    const supabase = createClient()
+    const { data } = await createClient()
+      .from('contract_passengers')
+      .select('passenger_id, passengers ( id, full_name, rut )')
+      .eq('contract_id', contractId)
+      .is('deleted_at', null)
 
-    async function loadContractPassengers() {
-      const { data } = await supabase
-        .from('contract_passengers')
-        .select('passenger_id, passengers ( id, full_name, rut )')
-        .eq('contract_id', contractId)
-        .is('deleted_at', null)
-
-      if (cancelled) return
-      const list: ContractPassengerOption[] = (data ?? []).map(row => {
-        const p = Array.isArray(row.passengers) ? row.passengers[0] : row.passengers
-        return {
-          passenger_id: row.passenger_id,
-          full_name: p?.full_name ?? 'Pasajero',
-          rut: p?.rut ?? null,
-        }
-      })
-      setContractPassengers(list)
-      setForm(prev => ({
-        ...prev,
-        stops: list.map(p => ({
-          localId: p.passenger_id,
-          passengerId: p.passenger_id,
-          fullName: p.full_name,
-          text: '', address: '', lat: null, lng: null,
-        })),
-      }))
-      setLoadingPassengers(false)
-    }
-
-    loadContractPassengers()
-    return () => { cancelled = true }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [form.contract_id])
+    if (request !== contractRequest.current) return
+    const list: ContractPassengerOption[] = (data ?? []).map(row => {
+      const p = Array.isArray(row.passengers) ? row.passengers[0] : row.passengers
+      return {
+        passenger_id: row.passenger_id,
+        full_name: p?.full_name ?? 'Pasajero',
+        rut: p?.rut ?? null,
+      }
+    })
+    setContractPassengers(list)
+    setForm(prev => ({
+      ...prev,
+      stops: list.map(p => ({
+        localId: p.passenger_id,
+        passengerId: p.passenger_id,
+        fullName: p.full_name,
+        text: '', address: '', lat: null, lng: null,
+      })),
+    }))
+    setLoadingPassengers(false)
+  }
 
   // ── Close on Escape ──
   useEffect(() => {
@@ -275,7 +252,7 @@ export default function AddRouteModal() {
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') handleClose() }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   }, [open])
 
   function handleClose() {
@@ -284,6 +261,7 @@ export default function AddRouteModal() {
     setFieldErrors({})
     setSubmitError(null)
     setContractPassengers([])
+    contractRequest.current++
   }
 
   // ── Simple scalar field setter ──
@@ -355,223 +333,40 @@ export default function AddRouteModal() {
 
     const intermediateStops = form.stops.filter(s => s.text.trim())
 
-    let createdRouteId: string | null = null
-
     try {
-      // ── Auth + profile ──────────────────────────────────────────────────────
-      const { data: { user }, error: authErr } = await supabase.auth.getUser()
-      if (authErr || !user) throw new Error('No se pudo verificar la sesión.')
-
-      const { data: profile, error: profileErr } = await supabase
-        .from('profiles')
-        .select('company_id')
-        .eq('id', user.id)
-        .single()
-
-      if (profileErr || !profile?.company_id) throw new Error('No se encontró el perfil del usuario.')
-
-      const companyId = profile.company_id
-
-      if (process.env.NODE_ENV === 'development') {
-        console.log('[AddRouteModal] Enviando:', {
-          routeCode, companyId, contractId, driverId, vehicleId, scheduledDatetime,
-          originLat, originLng, destLat, destLng,
-        })
-      }
-
-      // ── Pre-flight: check for duplicate route_code ──────────────────────────
-      const { data: existing, error: checkErr } = await supabase
-        .from('routes')
-        .select('id')
-        .eq('company_id', companyId)
-        .eq('route_code', routeCode)
-        .is('deleted_at', null)
-        .maybeSingle()
-
-      if (checkErr) throw new Error(`Error al verificar el código de ruta: ${checkErr.message}`)
-
-      if (existing) {
-        setFieldErrors(prev => ({
-          ...prev,
-          route_code: 'Ya existe una ruta con este código. Usa otro ID de ruta.',
-        }))
-        return
-      }
-
-      // ── Parse datetime ──────────────────────────────────────────────────────
       const [scheduled_date, scheduled_start_time] = scheduledDatetime.split('T')
 
-      // ── Paso 1/4: Insert route ──────────────────────────────────────────────
-      const { data: routeData, error: routeErr } = await supabase
-        .from('routes')
-        .insert({
-          company_id:       companyId,
-          contract_id:      contractId,
-          route_code:       routeCode,
-          name:             routeCode,
-          origin_name:      originName,
-          destination_name: destName,
-          status:           'active',
-        })
-        .select('id')
-        .single()
+      // Ruta, paradas, servicio, pasajeros y códigos de acceso en una sola
+      // transacción (admin_create_route_service): si algo falla, no se crea nada.
+      const { error: createErr } = await supabase.rpc('admin_create_route_service', {
+        p_input: {
+          route_code: routeCode,
+          contract_id: contractId || null,
+          driver_id: driverId || null,
+          vehicle_id: vehicleId || null,
+          scheduled_date,
+          scheduled_start_time,
+          origin:      { name: originName, address: originAddress, lat: originLat, lng: originLng },
+          destination: { name: destName, address: destAddress, lat: destLat, lng: destLng },
+          stops: intermediateStops.map(st => ({
+            name: st.fullName,
+            address: st.address || st.text.trim(),
+            lat: st.lat,
+            lng: st.lng,
+            passenger_id: st.passengerId || null,
+          })),
+        },
+      })
 
-      if (routeErr || !routeData) {
-        const msg = routeErr?.message ?? ''
-        if (
-          msg.includes('routes_unique_code_per_company') ||
-          msg.includes('duplicate key') ||
-          msg.includes('unique constraint')
-        ) {
+      if (createErr) {
+        if (createErr.code === '23505' && createErr.message.includes('routes_unique_code_per_company')) {
           setFieldErrors(prev => ({
             ...prev,
-            route_code: 'Ya existe una ruta con este código. Usa otro ID de ruta.',
+            route_code: 'Ya existe una ruta con este código (aunque esté eliminada). Usa otro ID de ruta.',
           }))
           return
         }
-        throw new Error(`[Paso 1/4] Error al crear la ruta: ${msg || 'sin respuesta'}`)
-      }
-
-      createdRouteId = routeData.id
-
-      // ── Paso 2/4: Insert route_stops ────────────────────────────────────────
-      const routeStopsPayload: Array<{
-        company_id: string; route_id: string; stop_order: number; stop_type: string
-        name: string; address: string; latitude: number | null; longitude: number | null
-      }> = []
-
-      routeStopsPayload.push({
-        company_id: companyId, route_id: createdRouteId,
-        stop_order: 1, stop_type: 'origin',
-        name: originName, address: originAddress,
-        latitude: originLat, longitude: originLng,
-      })
-
-      const stopOrderToPassengerId = new Map<number, string>()
-
-      intermediateStops.forEach((s, i) => {
-        const stopOrder = i + 2
-        routeStopsPayload.push({
-          company_id: companyId, route_id: createdRouteId!,
-          stop_order: stopOrder, stop_type: 'pickup',
-          name: s.fullName, address: s.address || s.text.trim(),
-          latitude: s.lat, longitude: s.lng,
-        })
-        stopOrderToPassengerId.set(stopOrder, s.passengerId)
-      })
-
-      routeStopsPayload.push({
-        company_id: companyId, route_id: createdRouteId,
-        stop_order: intermediateStops.length + 2, stop_type: 'destination',
-        name: destName, address: destAddress,
-        latitude: destLat, longitude: destLng,
-      })
-
-      if (process.env.NODE_ENV === 'development') {
-        console.log('[AddRouteModal] route_stops payload:', JSON.stringify(routeStopsPayload, null, 2))
-      }
-
-      const { data: routeStopsData, error: stopsErr } = await supabase
-        .from('route_stops')
-        .insert(routeStopsPayload)
-        .select('id, stop_order, stop_type, name, address, latitude, longitude')
-
-      if (stopsErr) {
-        await supabase.from('routes').delete().eq('id', createdRouteId)
-        createdRouteId = null
-        throw new Error(
-          `[Paso 2/4] Error al crear las paradas. La ruta fue eliminada para evitar registros huérfanos. Inténtalo de nuevo.\nDetalle: ${stopsErr.message}`
-        )
-      }
-
-      // ── Paso 3/4: Insert service ────────────────────────────────────────────
-      const { data: serviceData, error: serviceErr } = await supabase
-        .from('services')
-        .insert({
-          company_id:           companyId,
-          contract_id:          contractId,
-          route_id:             createdRouteId,
-          service_code:         routeCode,
-          scheduled_date,
-          scheduled_start_time,
-          driver_id:            driverId,
-          vehicle_id:           vehicleId,
-          status:               'scheduled',
-        })
-        .select('id')
-        .single()
-
-      if (serviceErr || !serviceData) {
-        await supabase.from('routes').delete().eq('id', createdRouteId)
-        createdRouteId = null
-        const msg = serviceErr?.message ?? 'sin respuesta'
-        throw new Error(
-          `[Paso 3/4] Error al crear el servicio. La ruta fue eliminada para evitar registros huérfanos. Inténtalo de nuevo.\nDetalle: ${msg}`
-        )
-      }
-
-      const serviceId = serviceData.id
-
-      // ── Paso 4/4: Insert service_stops ──────────────────────────────────────
-      if (routeStopsData && routeStopsData.length > 0) {
-        const serviceStopsPayload = routeStopsData.map(rs => ({
-          company_id:    companyId,
-          service_id:    serviceId,
-          route_stop_id: rs.id,
-          stop_order:    rs.stop_order,
-          stop_type:     rs.stop_type,
-          name:          rs.name,
-          address:       rs.address ?? null,
-          latitude:      rs.latitude ?? null,
-          longitude:     rs.longitude ?? null,
-          status:        'pending',
-        }))
-
-        const { data: serviceStopsData, error: ssErr } = await supabase
-          .from('service_stops')
-          .insert(serviceStopsPayload)
-          .select('id, stop_order, stop_type')
-
-        if (ssErr) {
-          throw new Error(
-            `[Paso 4/4] La ruta y el servicio fueron creados, pero falló el registro de paradas de servicio. El registro principal existe — actualiza la página.\nDetalle: ${ssErr.message}`
-          )
-        }
-
-        // ── Paso 5/5: Asignar pasajeros + generar códigos de acceso ────────────
-        const pickupStops = (serviceStopsData ?? []).filter(ss => ss.stop_type === 'pickup')
-        if (pickupStops.length > 0) {
-          try {
-            for (const ss of pickupStops) {
-              const passengerId = stopOrderToPassengerId.get(ss.stop_order)
-              if (!passengerId) continue
-
-              const { data: spData, error: spErr } = await supabase
-                .from('service_passengers')
-                .insert({
-                  company_id: companyId, service_id: serviceId,
-                  passenger_id: passengerId, service_stop_id: ss.id,
-                  attendance_status: 'pending',
-                })
-                .select('id').single()
-              if (spErr || !spData) throw new Error(spErr?.message ?? 'sin respuesta')
-
-              const accessCode = await generateUniqueCode(supabase, companyId)
-              const { error: psaErr } = await supabase
-                .from('passenger_service_access')
-                .insert({
-                  company_id: companyId, service_id: serviceId, passenger_id: passengerId,
-                  service_passenger_id: spData.id, access_code: accessCode, status: 'active',
-                })
-              if (psaErr) throw new Error(psaErr.message)
-            }
-          } catch (passengerErr: unknown) {
-            const msg = passengerErr instanceof Error ? passengerErr.message : 'sin respuesta'
-            throw new Error(
-              `[Paso 5/5] La ruta y el servicio fueron creados, pero falló la asignación de pasajeros. El registro principal existe — actualiza la página y revisa "Gestionar Pasajeros".\nDetalle: ${msg}`
-            )
-          }
-        }
+        throw new Error(friendlyError(createErr, 'No se pudo crear la ruta'))
       }
 
       // ── Éxito ───────────────────────────────────────────────────────────────
@@ -579,7 +374,7 @@ export default function AddRouteModal() {
       router.refresh()
 
     } catch (err: unknown) {
-      setSubmitError(err instanceof Error ? err.message : 'Error desconocido. Inténtalo de nuevo.')
+      setSubmitError(err instanceof Error ? err.message : friendlyError(err))
     } finally {
       setLoading(false)
     }
@@ -591,8 +386,8 @@ export default function AddRouteModal() {
     <>
       {/* ── Trigger button ── */}
       <button
-        onClick={() => setOpen(true)}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-semibold text-[#0d1d37] transition-opacity hover:opacity-90 cursor-pointer"
+        onClick={() => { setOpen(true); loadOptions() }}
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-semibold text-canvas transition-opacity hover:opacity-90 cursor-pointer"
         style={{ backgroundColor: '#10b98b' }}
       >
         <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -608,26 +403,26 @@ export default function AddRouteModal() {
           style={{ backgroundColor: 'rgba(3,22,54,0.45)', backdropFilter: 'blur(2px)' }}
           onClick={(e) => { if (e.target === e.currentTarget) handleClose() }}
         >
-          <div
-            className="bg-[#142942] rounded-lg border border-[#2b405b] w-full flex flex-col"
+          <div role="dialog" aria-modal="true"
+            className="bg-surface rounded-lg border border-line w-full flex flex-col"
             style={{ maxWidth: 860, maxHeight: '90vh' }}
           >
             {/* ── Header ── */}
             <div
-              className="flex items-start justify-between px-6 py-4 border-b border-[#2b405b] flex-shrink-0"
+              className="flex items-start justify-between px-6 py-4 border-b border-line flex-shrink-0"
               style={{ backgroundColor: '#10223d' }}
             >
               <div>
                 <h2 className="text-[14px] font-bold" style={{ color: '#f1f5f9' }}>
                   Crear Nueva Ruta
                 </h2>
-                <p className="text-[11px] text-[#a8b8cc] mt-0.5">
+                <p className="text-[11px] text-muted mt-0.5">
                   Configure los parámetros de despacho y asignación de activos.
                 </p>
               </div>
-              <button
+              <button aria-label="Cerrar"
                 onClick={handleClose}
-                className="w-7 h-7 flex items-center justify-center rounded-md text-[#a8b8cc] hover:text-[#f1f5f9] hover:bg-[#2b405b] transition-colors flex-shrink-0 cursor-pointer mt-0.5"
+                className="w-7 h-7 flex items-center justify-center rounded-md text-muted hover:text-fg hover:bg-line transition-colors flex-shrink-0 cursor-pointer mt-0.5"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -641,7 +436,7 @@ export default function AddRouteModal() {
 
                 {/* Global submit error */}
                 {submitError && (
-                  <div className="flex items-start gap-2.5 bg-[#3d2332] border border-[#794052] text-rose-200 rounded-md px-4 py-3 mb-5 text-[12px]">
+                  <div className="flex items-start gap-2.5 bg-danger-bg border border-danger-line text-rose-200 rounded-md px-4 py-3 mb-5 text-[12px]">
                     <svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                     </svg>
@@ -650,7 +445,7 @@ export default function AddRouteModal() {
                 )}
 
                 {loadingOptions ? (
-                  <div className="flex items-center justify-center py-10 text-[12px] text-[#a8b8cc] gap-2">
+                  <div className="flex items-center justify-center py-10 text-[12px] text-muted gap-2">
                     <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
@@ -664,7 +459,7 @@ export default function AddRouteModal() {
                     <Field label="Contrato Activo" error={fieldErrors.contract_id}>
                       <select
                         value={form.contract_id}
-                        onChange={e => set('contract_id', e.target.value)}
+                        onChange={e => selectContract(e.target.value)}
                         className={inputCls}
                       >
                         <option value="">— Selecciona un contrato —</option>
@@ -771,7 +566,7 @@ export default function AddRouteModal() {
                       <div className="flex items-center justify-between mb-2">
                         <span className={labelCls}>Pasajeros del Contrato</span>
                         {contractPassengers.length > 0 && (
-                          <span className="text-[10px] text-[#a8b8cc]">
+                          <span className="text-[10px] text-muted">
                             {contractPassengers.length} pasajero{contractPassengers.length !== 1 ? 's' : ''}
                           </span>
                         )}
@@ -779,13 +574,13 @@ export default function AddRouteModal() {
 
                       {!form.contract_id ? (
                         <div
-                          className="border border-dashed border-[#2b405b] rounded-md px-4 py-3 text-center"
+                          className="border border-dashed border-line rounded-md px-4 py-3 text-center"
                           style={{ backgroundColor: '#10223d' }}
                         >
-                          <p className="text-[11px] text-[#a8b8cc]">Selecciona un contrato para ver sus pasajeros.</p>
+                          <p className="text-[11px] text-muted">Selecciona un contrato para ver sus pasajeros.</p>
                         </div>
                       ) : loadingPassengers ? (
-                        <div className="flex items-center justify-center py-4 text-[11px] text-[#a8b8cc] gap-2">
+                        <div className="flex items-center justify-center py-4 text-[11px] text-muted gap-2">
                           <svg className="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24">
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
@@ -793,7 +588,7 @@ export default function AddRouteModal() {
                           Cargando pasajeros...
                         </div>
                       ) : contractPassengers.length === 0 ? (
-                        <div className="border border-dashed border-[#794052] bg-[#3d2332] rounded-md px-4 py-3 text-center">
+                        <div className="border border-dashed border-danger-line bg-danger-bg rounded-md px-4 py-3 text-center">
                           <p className="text-[11px] text-rose-300">
                             Este contrato no tiene pasajeros registrados. Agrega pasajeros al contrato antes de crear la ruta.
                           </p>
@@ -835,19 +630,19 @@ export default function AddRouteModal() {
               </div>
 
               {/* ── Footer ── */}
-              <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[#2b405b] flex-shrink-0" style={{ backgroundColor: '#10223d' }}>
+              <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-line flex-shrink-0" style={{ backgroundColor: '#10223d' }}>
                 <button
                   type="button"
                   onClick={handleClose}
                   disabled={loading}
-                  className="px-4 py-2 rounded-md text-[12px] font-semibold border border-[#2b405b] text-[#a8b8cc] hover:bg-[#2b405b] transition-colors disabled:opacity-50 cursor-pointer"
+                  className="px-4 py-2 rounded-md text-[12px] font-semibold border border-line text-muted hover:bg-line transition-colors disabled:opacity-50 cursor-pointer"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={loading || loadingOptions}
-                  className="flex items-center gap-2 px-5 py-2 rounded-md text-[12px] font-semibold text-[#0d1d37] transition-opacity disabled:opacity-50 cursor-pointer"
+                  className="flex items-center gap-2 px-5 py-2 rounded-md text-[12px] font-semibold text-canvas transition-opacity disabled:opacity-50 cursor-pointer"
                   style={{ backgroundColor: '#10b98b' }}
                 >
                   {loading ? (

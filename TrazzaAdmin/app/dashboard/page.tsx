@@ -2,10 +2,15 @@
 
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { todayCL } from '@/lib/date'
+import { addDays, dayStartCL, todayCL } from '@/lib/date'
+import { getServiceKpis } from '@/lib/service-kpis'
 import DashboardAlertsModal from './components/DashboardAlertsModal'
 import KpiCard from './components/KpiCard'
-import GoogleMapPanel from './components/GoogleMapPanel'
+import ClickableRow from './components/ClickableRow'
+import TrazoLine from '@/app/components/TrazoLine'
+import LiveFleetMap, { LiveBadge } from './components/LiveFleetMap'
+import { visualServiceStatus } from '@/lib/service-status'
+import Plate from '@/app/components/Plate'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -15,8 +20,6 @@ type ServiceTodayRow = {
   status: string | null
   scheduled_date: string | null
   scheduled_start_time: string | null
-  origin: string | null
-  destination: string | null
   drivers: { full_name: string | null } | null
   vehicles: { plate: string | null; capacity_passengers: number | null } | null
 }
@@ -89,13 +92,9 @@ function AlertDot({ level }: { level: OpAlertLevel }) {
 function EmptyState({ message, sub }: { message: string; sub?: string }) {
   return (
     <div className="flex flex-col items-center justify-center py-10 text-center px-4">
-      <div className="w-10 h-10 rounded-full bg-[#203650] flex items-center justify-center mb-3">
-        <svg className="w-5 h-5 text-[#a8b8cc]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-        </svg>
-      </div>
-      <p className="text-[12px] font-medium text-[#a8b8cc]">{message}</p>
-      {sub && <p className="text-[11px] text-[#a8b8cc] mt-0.5">{sub}</p>}
+      <TrazoLine className="mb-3" />
+      <p className="text-[13px] font-semibold text-fg">{message}</p>
+      {sub && <p className="text-[11px] text-muted mt-0.5">{sub}</p>}
     </div>
   )
 }
@@ -104,8 +103,8 @@ function EmptyState({ message, sub }: { message: string; sub?: string }) {
 
 function Card({ title, badge, children }: { title: string; badge?: React.ReactNode; children: React.ReactNode }) {
   return (
-    <div className="bg-[#142942] border border-[#2b405b] rounded-lg overflow-hidden flex flex-col h-full">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-[#2b405b] flex-shrink-0">
+    <div className="bg-surface border border-line rounded-lg overflow-hidden flex flex-col h-full">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-line flex-shrink-0">
         <h3 className="text-[12px] font-bold uppercase tracking-wide" style={{ color: '#f1f5f9' }}>{title}</h3>
         {badge}
       </div>
@@ -120,15 +119,13 @@ export default async function DashboardPage() {
   const supabase = await createClient()
 
   const today    = todayCL()
-  const todayStart  = today + 'T00:00:00.000Z'
-  const tomorrowStart = new Date(Date.now() + 86400000).toISOString().split('T')[0] + 'T00:00:00.000Z'
-  const in7Days  = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10)
-  const in30Days = new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10)
+  const todayStart    = dayStartCL(today)
+  const tomorrowStart = dayStartCL(addDays(today, 1))
+  const in30Days = addDays(today, 30)
 
   const [
     { count: fleetActiveCount },
-    { count: completedCount },
-    { count: cancelledCount },
+    kpis,
     { count: critOACount },
     { data: fuelToday },
     { data: rawMaintAlerts },
@@ -136,18 +133,14 @@ export default async function DashboardPage() {
     { data: rawIncidents },
     { data: rawOAAlerts },
     { data: servicesToday },
-    { data: overdueScheduledRows },
   ] = await Promise.all([
     // KPI 1: active fleet (available + in_service + maintenance, not deleted)
     supabase.from('vehicles').select('*', { count: 'exact', head: true })
       .is('deleted_at', null)
       .in('status', ['available', 'in_service', 'maintenance']),
 
-    // KPI 2: cumplimiento — completed services
-    supabase.from('services').select('*', { count: 'exact', head: true }).eq('status', 'completed'),
-
-    // KPI 2: cumplimiento — cancelled services
-    supabase.from('services').select('*', { count: 'exact', head: true }).eq('status', 'cancelled'),
+    // KPI 2: cumplimiento + servicios no iniciados (excluye eliminados, hora de Chile)
+    getServiceKpis(supabase),
 
     // KPI 3 partial: operational_alerts critical + open
     supabase.from('operational_alerts').select('*', { count: 'exact', head: true })
@@ -181,18 +174,14 @@ export default async function DashboardPage() {
       .eq('status', 'open').in('severity', ['critical', 'high', 'medium'])
       .order('created_at', { ascending: false }).limit(15),
 
-    // Routes today: scheduled or in_progress with driver/vehicle join
+    // Routes today: scheduled today + in_progress from any day (still active)
     supabase.from('services')
-      .select('id, service_code, status, scheduled_date, scheduled_start_time, origin, destination, drivers:driver_id(full_name), vehicles:vehicle_id(plate, capacity_passengers)')
-      .eq('scheduled_date', today)
-      .in('status', ['scheduled', 'in_progress'])
+      .select('id, service_code, status, scheduled_date, scheduled_start_time, drivers:driver_id(full_name), vehicles:vehicle_id(plate, capacity_passengers)')
+      .or(`status.eq.in_progress,and(status.eq.scheduled,scheduled_date.eq.${today})`)
+      .is('deleted_at', null)
+      .order('scheduled_date', { ascending: true })
       .order('scheduled_start_time', { ascending: true })
       .limit(15),
-
-    // Overdue scheduled (for cumplimiento + critical KPI + alert list)
-    supabase.from('services')
-      .select('id, service_code, scheduled_date, scheduled_start_time')
-      .eq('status', 'scheduled').lte('scheduled_date', today),
   ])
 
   // ── Derived values ─────────────────────────────────────────────────────────
@@ -201,21 +190,13 @@ export default async function DashboardPage() {
     (acc, r) => acc + (r.liters ?? 0), 0
   )
 
-  const now = new Date()
-  type OverdueRow = { id: string; service_code: string | null; scheduled_date: string | null; scheduled_start_time: string | null }
-  const overdueRows   = ((overdueScheduledRows ?? []) as OverdueRow[]).filter(s => {
-    if (!s.scheduled_date) return false
-    const t = s.scheduled_start_time ?? '00:00:00'
-    return new Date(`${s.scheduled_date}T${t}`) < now
-  })
+  const { now, overdueRows, completedCount, evaluableCount, compliancePct: cumplimiento } = kpis
   const overdueCount  = overdueRows.length
 
-  const evaluableCount = (completedCount ?? 0) + (cancelledCount ?? 0) + overdueCount
-  const cumplimiento   = evaluableCount > 0
-    ? Math.round((completedCount ?? 0) / evaluableCount * 100) : null
-
   // KPI 3: aggregate all critical alert sources
-  const maintAlerts  = (rawMaintAlerts ?? []) as MaintAlertRow[]
+// supabase-js sin tipos generados infiere las relaciones embebidas como arreglos;
+  // en ejecución las many-to-one llegan como objeto, de ahí el doble cast.
+  const maintAlerts  = (rawMaintAlerts ?? []) as unknown as MaintAlertRow[]
   const driverLics   = (rawDriverLic   ?? []) as DriverLicRow[]
   const incidents    = (rawIncidents   ?? []) as IncidentAlertRow[]
 
@@ -304,18 +285,10 @@ export default async function DashboardPage() {
 
   // ── Route table helpers ────────────────────────────────────────────────────
 
-  const todayRoutes = (servicesToday ?? []) as ServiceTodayRow[]
+// supabase-js sin tipos generados infiere las relaciones embebidas como arreglos;
+  // en ejecución las many-to-one llegan como objeto, de ahí el doble cast.
+  const todayRoutes = (servicesToday ?? []) as unknown as ServiceTodayRow[]
 
-  function getVisualStatus(s: ServiceTodayRow) {
-    if (s.status === 'in_progress') return { label: 'En ruta',    bg: '#3b3020', text: '#f8cb78' }
-    if (s.status === 'scheduled') {
-      const t  = s.scheduled_start_time ?? '00:00:00'
-      const dt = new Date(`${s.scheduled_date}T${t}`)
-      if (dt < now) return { label: 'No iniciada', bg: '#3d2332', text: '#fda4af' }
-      return           { label: 'Programada',  bg: '#183352', text: '#7dbbff' }
-    }
-    return { label: s.status ?? '—', bg: '#203650', text: '#a8b8cc' }
-  }
 
   // ── Render ─────────────────────────────────────────────────────────────────
 
@@ -336,7 +309,9 @@ export default async function DashboardPage() {
         <KpiCard
           label="Cumplimiento"
           value={cumplimiento !== null ? `${cumplimiento}%` : '—'}
-          sub={cumplimiento !== null ? `${completedCount ?? 0} / ${evaluableCount} servicios` : 'Sin servicios evaluables'}
+          sub={cumplimiento !== null
+            ? `${completedCount} de ${evaluableCount} realizados${kpis.cancelledCount ? ` · ${kpis.cancelledCount} cancelados` : ''}`
+            : 'Aún no hay servicios por evaluar'}
           tone="green"
           icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="#55d9ad" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
         />
@@ -364,12 +339,8 @@ export default async function DashboardPage() {
 
         {/* Map — 2/3 */}
         <div className="lg:col-span-2">
-          <Card title="Localización en Tiempo Real"
-            badge={<span className="text-[10px] bg-[#0d1d37] border border-[#2b405b] text-[#a8b8cc] px-2 py-0.5 rounded font-medium">En vivo pendiente</span>}>
-            <GoogleMapPanel
-              height="300px"
-              overlayMessage="Ubicación en vivo pendiente de app conductor."
-            />
+          <Card title="Localización en Tiempo Real" badge={<LiveBadge />}>
+            <LiveFleetMap height="300px" />
           </Card>
         </div>
 
@@ -379,7 +350,7 @@ export default async function DashboardPage() {
             title="Alertas de Operación"
             badge={
               unifiedAlerts.length > 0
-                ? <span className="text-[10px] bg-[#3d2332] border border-rose-900 text-rose-300 px-2 py-0.5 rounded font-semibold">{unifiedAlerts.length}</span>
+                ? <span className="text-[10px] bg-danger-bg border border-rose-900 text-rose-300 px-2 py-0.5 rounded font-semibold">{unifiedAlerts.length}</span>
                 : undefined
             }
           >
@@ -387,13 +358,13 @@ export default async function DashboardPage() {
               {visibleAlerts.length === 0 ? (
                 <EmptyState message="Sin alertas activas" sub="La operación está en orden." />
               ) : (
-                <ul className="divide-y divide-[#203650]">
+                <ul className="divide-y divide-raised">
                   {visibleAlerts.map(a => (
                     <li key={a.id} className="px-4 py-3 flex items-start gap-2.5">
                       <AlertDot level={a.level} />
                       <div className="min-w-0 flex-1">
-                        <p className="text-[12px] font-semibold text-[#f1f5f9] leading-snug">{a.title}</p>
-                        <p className="text-[10px] text-[#a8b8cc] mt-0.5 leading-snug line-clamp-2">{a.detail}</p>
+                        <p className="text-[12px] font-semibold text-fg leading-snug">{a.title}</p>
+                        <p className="text-[10px] text-muted mt-0.5 leading-snug line-clamp-2">{a.detail}</p>
                       </div>
                     </li>
                   ))}
@@ -401,9 +372,9 @@ export default async function DashboardPage() {
               )}
             </div>
             {unifiedAlerts.length > 0 && (
-              <div className="px-4 py-2.5 border-t border-[#203650] flex items-center justify-between flex-shrink-0">
+              <div className="px-4 py-2.5 border-t border-raised flex items-center justify-between flex-shrink-0">
                 {unifiedAlerts.length > 5 && (
-                  <span className="text-[10px] text-[#a8b8cc]">+{unifiedAlerts.length - 5} más</span>
+                  <span className="text-[10px] text-muted">+{unifiedAlerts.length - 5} más</span>
                 )}
                 <div className="ml-auto">
                   <DashboardAlertsModal />
@@ -416,18 +387,18 @@ export default async function DashboardPage() {
 
       {/* ── Routes table ── */}
       <Card
-        title="Rutas Programadas de Hoy"
-        badge={<span className="text-[10px] bg-[#0d1d37] border border-[#2b405b] text-[#a8b8cc] px-2 py-0.5 rounded font-medium">{today}</span>}
+        title="Rutas de Hoy y en Curso"
+        badge={<span className="text-[10px] bg-canvas border border-line text-muted px-2 py-0.5 rounded font-medium">{today}</span>}
       >
         {todayRoutes.length === 0 ? (
-          <EmptyState message="No hay rutas programadas para hoy" sub="Los servicios de hoy aparecerán aquí." />
+          <EmptyState message="Operación en calma" sub="No hay servicios para hoy ni vehículos en ruta. Programa uno desde Gestión de Rutas." />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-[#203650]" style={{ backgroundColor: '#0d1d37' }}>
+                <tr className="border-b border-raised" style={{ backgroundColor: '#0d1d37' }}>
                   {['Servicio', 'Hora', 'Conductor', 'Vehículo', 'Cap.', 'Estado', 'Acción'].map(col => (
-                    <th key={col} className="text-left text-[10px] font-bold uppercase tracking-wider px-4 py-2.5 text-[#a8b8cc] whitespace-nowrap">
+                    <th key={col} className="text-left text-[10px] font-bold uppercase tracking-wider px-4 py-2.5 text-muted whitespace-nowrap">
                       {col}
                     </th>
                   ))}
@@ -437,27 +408,28 @@ export default async function DashboardPage() {
                 {todayRoutes.map(s => {
                   const drv = s.drivers as { full_name: string | null } | null
                   const veh = s.vehicles as { plate: string | null; capacity_passengers: number | null } | null
-                  const vs  = getVisualStatus(s)
+                  const vs  = visualServiceStatus(s.status, s.scheduled_date, s.scheduled_start_time, now)
                   return (
-                    <tr key={s.id} className="border-b border-[#203650] hover:bg-[#0d1d37] transition-colors">
+                    <ClickableRow key={s.id} href={`/dashboard/rutas/${s.id}`} className="border-b border-raised hover:bg-canvas transition-colors">
                       <td className="px-4 py-2.5 whitespace-nowrap">
                         <span className="text-[12px] font-bold font-mono" style={{ color: '#f1f5f9' }}>
                           {s.service_code ?? `#${s.id.slice(0, 8).toUpperCase()}`}
                         </span>
                       </td>
                       <td className="px-4 py-2.5 whitespace-nowrap">
-                        <span className="text-[12px] text-[#d5e0ed] tabular-nums">{fmtTime(s.scheduled_start_time)}</span>
+                        <span className="text-[12px] text-soft tabular-nums">{fmtTime(s.scheduled_start_time)}</span>
+                        {s.scheduled_date !== today && (
+                          <span className="block text-[10px] text-muted">{fmtDateShort(s.scheduled_date)}</span>
+                        )}
                       </td>
                       <td className="px-4 py-2.5">
-                        <span className="text-[12px] text-[#d5e0ed]">{drv?.full_name ?? '—'}</span>
+                        <span className="text-[12px] text-soft">{drv?.full_name ?? '—'}</span>
                       </td>
                       <td className="px-4 py-2.5 whitespace-nowrap">
-                        <span className="text-[12px] font-mono font-bold" style={{ color: '#f1f5f9' }}>
-                          {veh?.plate ?? '—'}
-                        </span>
+                        <Plate value={veh?.plate} />
                       </td>
                       <td className="px-4 py-2.5 whitespace-nowrap">
-                        <span className="text-[12px] text-[#a8b8cc] tabular-nums">
+                        <span className="text-[12px] text-muted tabular-nums">
                           {veh?.capacity_passengers != null ? veh.capacity_passengers : '—'}
                         </span>
                       </td>
@@ -470,12 +442,12 @@ export default async function DashboardPage() {
                       <td className="px-4 py-2.5 whitespace-nowrap">
                         <Link
                           href={`/dashboard/rutas/${s.id}`}
-                          className="text-[11px] font-semibold px-2.5 py-1 rounded border border-[#2b405b] text-[#d5e0ed] hover:bg-[#0d1d37] transition-colors whitespace-nowrap"
+                          className="text-[11px] font-semibold px-2.5 py-1 rounded border border-line text-soft hover:bg-canvas transition-colors whitespace-nowrap"
                         >
                           Ver detalle
                         </Link>
                       </td>
-                    </tr>
+                    </ClickableRow>
                   )
                 })}
               </tbody>

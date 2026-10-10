@@ -8,6 +8,8 @@ import FinishRouteModal from './components/FinishRouteModal'
 import CancelRouteModal from './components/CancelRouteModal'
 import EditScheduleModal from './components/EditScheduleModal'
 import GoogleMapPanel from '@/app/dashboard/components/GoogleMapPanel'
+import { visualServiceStatus } from '@/lib/service-status'
+import Plate from '@/app/components/Plate'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -45,16 +47,7 @@ type StopRow = {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const svcStatusMeta: Record<string, { label: string; bg: string; text: string; dot: string }> = {
-  scheduled:   { label: 'Programada',  bg: '#183352', text: '#7dbbff', dot: '#7dbbff' },
-  in_progress: { label: 'En Ruta',     bg: '#3b3020', text: '#fdba74', dot: '#fdba74' },
-  completed:   { label: 'Finalizada',  bg: '#123b35', text: '#55d9ad', dot: '#55d9ad' },
-  cancelled:   { label: 'Cancelada',   bg: '#3d2332', text: '#fda4af', dot: '#fda4af' },
-}
 
-function getSvcStatus(status: string | null) {
-  return svcStatusMeta[status ?? ''] ?? { label: status ?? '—', bg: '#203650', text: '#bac9db', dot: '#a8b8cc' }
-}
 
 const stopStatusMeta: Record<string, { label: string; color: string }> = {
   pending:   { label: 'Pendiente',  color: '#a8b8cc' },
@@ -93,8 +86,8 @@ function resolveOne<T>(val: T | T[] | null | undefined): T | null {
 
 function InfoCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="bg-[#142942] border border-[#2b405b] rounded-lg overflow-hidden">
-      <div className="px-4 py-2.5 border-b border-[#2b405b]" style={{ backgroundColor: '#10223d' }}>
+    <div className="bg-surface border border-line rounded-lg overflow-hidden">
+      <div className="px-4 py-2.5 border-b border-line" style={{ backgroundColor: '#10223d' }}>
         <h3 className="text-[11px] font-bold uppercase tracking-wider" style={{ color: '#f1f5f9' }}>{title}</h3>
       </div>
       <div className="px-4 py-3.5">{children}</div>
@@ -104,9 +97,9 @@ function InfoCard({ title, children }: { title: string; children: React.ReactNod
 
 function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div className="flex items-start justify-between gap-4 py-1.5 border-b border-[#203650] last:border-0">
-      <span className="text-[11px] text-[#a8b8cc] font-medium uppercase tracking-wide whitespace-nowrap flex-shrink-0">{label}</span>
-      <span className="text-[12px] font-medium text-[#f1f5f9] text-right">{value ?? '—'}</span>
+    <div className="flex items-start justify-between gap-4 py-1.5 border-b border-raised last:border-0">
+      <span className="text-[11px] text-muted font-medium uppercase tracking-wide whitespace-nowrap flex-shrink-0">{label}</span>
+      <span className="text-[12px] font-medium text-fg text-right">{value ?? '—'}</span>
     </div>
   )
 }
@@ -117,13 +110,13 @@ function Itinerary({ stops, serviceStatus }: { stops: StopRow[]; serviceStatus: 
   if (stops.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-8 text-center px-4">
-        <div className="w-8 h-8 rounded-full bg-[#203650] flex items-center justify-center mb-2.5">
-          <svg className="w-4 h-4 text-[#a8b8cc]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <div className="w-8 h-8 rounded-full bg-raised flex items-center justify-center mb-2.5">
+          <svg className="w-4 h-4 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z" />
           </svg>
         </div>
-        <p className="text-[12px] font-medium text-[#a8b8cc]">Sin paradas registradas</p>
-        <p className="text-[11px] text-[#a8b8cc] mt-0.5">El itinerario se definió sin paradas específicas.</p>
+        <p className="text-[12px] font-medium text-muted">Sin paradas registradas</p>
+        <p className="text-[11px] text-muted mt-0.5">El itinerario se definió sin paradas específicas.</p>
       </div>
     )
   }
@@ -187,7 +180,7 @@ function Itinerary({ stops, serviceStatus }: { stops: StopRow[]; serviceStatus: 
                   </p>
                 </div>
                 {stop.planned_arrival_time && (
-                  <span className="text-[11px] text-[#a8b8cc] flex-shrink-0 mt-0.5">
+                  <span className="text-[11px] text-muted flex-shrink-0 mt-0.5">
                     {formatTime(stop.planned_arrival_time)}
                   </span>
                 )}
@@ -248,14 +241,16 @@ export default async function ServiceDetailPage({
 
   if (!rawService) notFound()
 
-  const service  = rawService as ServiceDetail
+// supabase-js sin tipos generados infiere las relaciones embebidas como arreglos;
+  // en ejecución las many-to-one llegan como objeto, de ahí el doble cast.
+  const service  = rawService as unknown as ServiceDetail
   const stops    = (rawStops ?? []) as StopRow[]
   const contract = resolveOne(service.contracts)
   const route    = resolveOne(service.routes)
   const driver   = resolveOne(service.drivers)
   const vehicle  = resolveOne(service.vehicles)
 
-  const sm          = getSvcStatus(service.status)
+  const sm          = visualServiceStatus(service.status, service.scheduled_date, service.scheduled_start_time)
   const title       = service.service_code ?? `#${service.id.slice(0, 8).toUpperCase()}`
   const capacity    = vehicle?.capacity_passengers ?? null
   const passengers  = passengerCount ?? 0
@@ -302,19 +297,19 @@ export default async function ServiceDetailPage({
 
       {/* ── Breadcrumb + header ── */}
       <div>
-        <div className="flex items-center gap-1.5 text-[11px] text-[#a8b8cc] mb-3">
-          <Link href="/dashboard/rutas" className="hover:text-[#f1f5f9] transition-colors">
+        <div className="flex items-center gap-1.5 text-[11px] text-muted mb-3">
+          <Link href="/dashboard/rutas" className="hover:text-fg transition-colors">
             Gestión de Rutas
           </Link>
           <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
           </svg>
-          <span className="text-[#a8b8cc] font-medium">Detalle de Ruta</span>
+          <span className="text-muted font-medium">Detalle de Ruta</span>
         </div>
 
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-[#a8b8cc] mb-1">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-muted mb-1">
               Detalle de Ruta
             </p>
             <div className="flex items-center gap-3">
@@ -329,7 +324,7 @@ export default async function ServiceDetailPage({
                 {sm.label}
               </span>
               {incidents > 0 && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#3d2332] border border-[#794052] text-[10px] font-bold text-rose-300">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-danger-bg border border-danger-line text-[10px] font-bold text-rose-300">
                   <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
                   </svg>
@@ -338,7 +333,7 @@ export default async function ServiceDetailPage({
               )}
             </div>
             {(contract?.client_name || contract?.contract_name) && (
-              <p className="text-[12px] text-[#a8b8cc] mt-1">
+              <p className="text-[12px] text-muted mt-1">
                 {contract.client_name}
                 {contract.contract_name && contract.client_name && ' · '}
                 {contract.contract_name}
@@ -348,7 +343,7 @@ export default async function ServiceDetailPage({
 
           <Link
             href="/dashboard/rutas"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-[#2b405b] text-[11px] font-semibold text-[#a8b8cc] hover:bg-[#2b405b] transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-line text-[11px] font-semibold text-muted hover:bg-line transition-colors"
           >
             <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
@@ -367,20 +362,20 @@ export default async function ServiceDetailPage({
         <div className="space-y-4">
 
           {/* Map card */}
-          <div className="bg-[#142942] border border-[#2b405b] rounded-lg overflow-hidden">
-            <div className="flex items-center justify-between px-4 py-2.5 border-b border-[#2b405b]" style={{ backgroundColor: '#10223d' }}>
+          <div className="bg-surface border border-line rounded-lg overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-2.5 border-b border-line" style={{ backgroundColor: '#10223d' }}>
               <h3 className="text-[11px] font-bold uppercase tracking-wider" style={{ color: '#f1f5f9' }}>
                 Mapa de Ruta
               </h3>
               <div className="flex items-center gap-2">
                 {route?.origin_name && (
-                  <span className="text-[11px] text-[#a8b8cc]">
+                  <span className="text-[11px] text-muted">
                     {route.origin_name}
                     <span className="mx-1.5">→</span>
                     {route.destination_name ?? '—'}
                   </span>
                 )}
-                <span className="text-[10px] bg-[#3b3020] border border-[#755c33] text-amber-300 px-2 py-0.5 rounded font-semibold">
+                <span className="text-[10px] bg-warn-bg border border-warn-line text-amber-300 px-2 py-0.5 rounded font-semibold">
                   {stops.length} parada{stops.length !== 1 ? 's' : ''}
                 </span>
               </div>
@@ -395,13 +390,13 @@ export default async function ServiceDetailPage({
           </div>
 
           {/* Itinerary card */}
-          <div className="bg-[#142942] border border-[#2b405b] rounded-lg overflow-hidden">
-            <div className="flex items-center justify-between px-4 py-2.5 border-b border-[#2b405b]" style={{ backgroundColor: '#10223d' }}>
+          <div className="bg-surface border border-line rounded-lg overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-2.5 border-b border-line" style={{ backgroundColor: '#10223d' }}>
               <h3 className="text-[11px] font-bold uppercase tracking-wider" style={{ color: '#f1f5f9' }}>
                 Itinerario
               </h3>
               {stops.length > 0 && (
-                <span className="text-[10px] bg-[#10223d] border border-[#2b405b] text-[#a8b8cc] px-2 py-0.5 rounded font-semibold">
+                <span className="text-[10px] bg-sunken border border-line text-muted px-2 py-0.5 rounded font-semibold">
                   {stops.length} parada{stops.length !== 1 ? 's' : ''}
                 </span>
               )}
@@ -446,7 +441,7 @@ export default async function ServiceDetailPage({
           {/* Asignación */}
           <InfoCard title="Asignación">
             {/* Vehicle */}
-            <div className="flex items-center gap-3 py-2 border-b border-[#203650]">
+            <div className="flex items-center gap-3 py-2 border-b border-raised">
               <div
                 className="w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0"
                 style={{ backgroundColor: '#254b77' + '12' }}
@@ -456,16 +451,16 @@ export default async function ServiceDetailPage({
                 </svg>
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-[#a8b8cc]">Vehículo</p>
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">Vehículo</p>
                 {vehicle ? (
                   <>
-                    <p className="text-[13px] font-bold" style={{ color: '#f1f5f9' }}>{vehicle.plate ?? '—'}</p>
+                    <div className="my-1"><Plate value={vehicle.plate} size="md" /></div>
                     {(vehicle.brand || vehicle.model) && (
-                      <p className="text-[11px] text-[#a8b8cc]">{[vehicle.brand, vehicle.model].filter(Boolean).join(' ')}</p>
+                      <p className="text-[11px] text-muted">{[vehicle.brand, vehicle.model].filter(Boolean).join(' ')}</p>
                     )}
                   </>
                 ) : (
-                  <p className="text-[12px] text-[#a8b8cc]">Sin asignar</p>
+                  <p className="text-[12px] text-muted">Sin asignar</p>
                 )}
               </div>
             </div>
@@ -481,16 +476,16 @@ export default async function ServiceDetailPage({
                 </svg>
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-[#a8b8cc]">Conductor</p>
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">Conductor</p>
                 {driver ? (
                   <>
                     <p className="text-[13px] font-bold" style={{ color: '#f1f5f9' }}>{driver.full_name ?? '—'}</p>
                     {driver.phone && (
-                      <p className="text-[11px] text-[#a8b8cc]">{driver.phone}</p>
+                      <p className="text-[11px] text-muted">{driver.phone}</p>
                     )}
                   </>
                 ) : (
-                  <p className="text-[12px] text-[#a8b8cc]">Sin asignar</p>
+                  <p className="text-[12px] text-muted">Sin asignar</p>
                 )}
               </div>
             </div>
@@ -501,20 +496,18 @@ export default async function ServiceDetailPage({
             {service.status === 'completed' ? (
               <div className="flex items-center gap-2 py-2">
                 <span className="w-2 h-2 rounded-full bg-green-500" />
-                <p className="text-[12px] font-medium text-[#a8b8cc]">Servicio finalizado</p>
+                <p className="text-[12px] font-medium text-muted">Servicio finalizado</p>
               </div>
             ) : service.status === 'cancelled' ? (
               <div className="flex items-center gap-2 py-2">
                 <span className="w-2 h-2 rounded-full bg-red-400" />
-                <p className="text-[12px] font-medium text-[#a8b8cc]">Servicio cancelado</p>
+                <p className="text-[12px] font-medium text-muted">Servicio cancelado</p>
               </div>
             ) : service.status === 'scheduled' ? (
               <div className="space-y-2">
                 <StartRouteModal
                   serviceId={service.id}
                   serviceCode={service.service_code}
-                  vehicleId={service.vehicle_id}
-                  driverId={service.driver_id}
                   plate={vehicle?.plate ?? null}
                   driverName={driver?.full_name ?? null}
                   serviceStatus={service.status}
@@ -541,8 +534,6 @@ export default async function ServiceDetailPage({
                 <CancelRouteModal
                   serviceId={service.id}
                   serviceCode={service.service_code}
-                  vehicleId={service.vehicle_id}
-                  driverId={service.driver_id}
                   serviceStatus={service.status}
                 />
               </div>
@@ -569,9 +560,12 @@ export default async function ServiceDetailPage({
                 <FinishRouteModal
                   serviceId={service.id}
                   serviceCode={service.service_code}
-                  vehicleId={service.vehicle_id}
-                  driverId={service.driver_id}
                   actualStartAt={service.actual_start_at}
+                  serviceStatus={service.status}
+                />
+                <CancelRouteModal
+                  serviceId={service.id}
+                  serviceCode={service.service_code}
                   serviceStatus={service.status}
                 />
               </div>

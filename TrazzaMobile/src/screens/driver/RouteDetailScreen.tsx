@@ -31,7 +31,7 @@ export default function RouteDetailScreen({ route, navigation }: Props) {
         const svc = await getServiceById(serviceId);
         setService(svc);
         const [veh, stopList] = await Promise.all([
-          getVehicleById(svc.vehicle_id),
+          svc.vehicle_id ? getVehicleById(svc.vehicle_id) : Promise.resolve(null),
           getServiceStops(serviceId),
         ]);
         setVehicle(veh);

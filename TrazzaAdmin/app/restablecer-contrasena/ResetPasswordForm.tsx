@@ -31,15 +31,15 @@ export default function ResetPasswordForm() {
     } catch { setError('No se pudo conectar. Revisa tu conexión e intenta nuevamente.') }
     finally { setBusy(false) }
   }
-  if (done) return <div className="space-y-4"><p role="status">Tu contraseña se actualizó correctamente.</p><Link href="/login" className="text-[#10b98b] hover:underline">Ir al inicio de sesión</Link></div>
+  if (done) return <div className="space-y-4"><p role="status">Tu contraseña se actualizó correctamente.</p><Link href="/login" className="text-accent hover:underline">Ir al inicio de sesión</Link></div>
   return <form onSubmit={submit} aria-busy={busy} className="space-y-4">
-    <p className="text-sm text-[#a8b8cc]">Usa al menos 8 caracteres y una contraseña que no uses en otros servicios.</p>
+    <p className="text-sm text-muted">Usa al menos 8 caracteres y una contraseña que no uses en otros servicios.</p>
     {error && <p role="alert" className="text-sm text-rose-300">{error}</p>}
     <fieldset disabled={busy} className="space-y-4">
       <label htmlFor="new-password" className="block text-sm">Nueva contraseña<input id="new-password" name="password" type="password" autoComplete="new-password" minLength={8} required className="trazza-input mt-2 block w-full rounded-2xl p-4 text-slate-100" /></label>
       <label htmlFor="confirm-password" className="block text-sm">Confirmar contraseña<input id="confirm-password" name="confirmation" type="password" autoComplete="new-password" minLength={8} required className="trazza-input mt-2 block w-full rounded-2xl p-4 text-slate-100" /></label>
-      <button className="w-full rounded-2xl bg-[#10b98b] p-4 font-bold text-[#0d1d37] disabled:opacity-60">{busy ? 'Guardando…' : 'Guardar nueva contraseña'}</button>
+      <button className="w-full rounded-2xl bg-accent p-4 font-bold text-canvas disabled:opacity-60">{busy ? 'Guardando…' : 'Guardar nueva contraseña'}</button>
     </fieldset>
-    <Link href="/recuperar-contrasena" className="block text-sm text-[#10b98b] hover:underline">Solicitar otro enlace</Link>
+    <Link href="/recuperar-contrasena" className="block text-sm text-accent hover:underline">Solicitar otro enlace</Link>
   </form>
 }

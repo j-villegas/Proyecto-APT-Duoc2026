@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { friendlyError } from '@/lib/errors'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -108,7 +109,7 @@ function Field({
 }) {
   return (
     <div className={span === 2 ? 'col-span-2' : ''}>
-      <label className="block text-[10px] font-semibold uppercase tracking-wide text-[#a8b8cc] mb-1">
+      <label className="block text-[10px] font-semibold uppercase tracking-wide text-muted mb-1">
         {label}{required && <span className="text-red-400 ml-0.5">*</span>}
       </label>
       {children}
@@ -120,18 +121,18 @@ function Field({
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
     <div className="col-span-2 flex items-center gap-2 pt-1">
-      <p className="text-[10px] font-bold uppercase tracking-widest text-[#a8b8cc]">{children}</p>
-      <div className="flex-1 h-px bg-[#203650]" />
+      <p className="text-[10px] font-bold uppercase tracking-widest text-muted">{children}</p>
+      <div className="flex-1 h-px bg-raised" />
     </div>
   )
 }
 
 const inputCls = (hasErr?: boolean) =>
-  `w-full px-2.5 py-1.5 text-[12px] border rounded-md bg-[#142942] text-[#f1f5f9] placeholder-[#a8b8cc]
+  `w-full px-2.5 py-1.5 text-[12px] border rounded-md bg-surface text-fg placeholder-muted
    focus:outline-none focus:ring-1 transition
    ${hasErr
-     ? 'border-[#794052] focus:ring-red-300 focus:border-[#794052]'
-     : 'border-[#2b405b] focus:ring-[#f1f5f9] focus:border-[#f1f5f9]'}`
+     ? 'border-danger-line focus:ring-red-300 focus:border-danger-line'
+     : 'border-line focus:ring-fg focus:border-fg'}`
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -159,7 +160,6 @@ export default function FuelLogModal() {
     setLoadingV(false)
   }, [])
 
-  useEffect(() => { if (open) loadVehicles() }, [open, loadVehicles])
 
   useEffect(() => {
     if (!open) return
@@ -278,7 +278,7 @@ export default function FuelLogModal() {
       }
 
       const { error: insertErr } = await supabase.from('fuel_logs').insert(payload)
-      if (insertErr) throw new Error(`Error al registrar la carga: ${insertErr.message}`)
+      if (insertErr) throw new Error(friendlyError(insertErr, 'No se pudo registrar la carga'))
 
       // Update vehicle odometer if new km is greater
       const newKm = num(form.odometer_km)
@@ -311,10 +311,10 @@ export default function FuelLogModal() {
     <>
       {/* Trigger */}
       <button
-        onClick={() => setOpen(true)}
-        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md border border-[#2b405b] text-[12px] font-medium text-[#d5e0ed] hover:bg-[#10223d] transition-colors text-left cursor-pointer"
+        onClick={() => { setOpen(true); loadVehicles() }}
+        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md border border-line text-[12px] font-medium text-soft hover:bg-sunken transition-colors text-left cursor-pointer"
       >
-        <svg className="w-4 h-4 text-[#10b98b] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+        <svg className="w-4 h-4 text-accent flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
         </svg>
         <span className="flex-1">Registrar Carga de Combustible</span>
@@ -326,13 +326,13 @@ export default function FuelLogModal() {
           style={{ backgroundColor: 'rgba(3,22,54,0.52)', backdropFilter: 'blur(2px)' }}
           onClick={e => { if (e.target === e.currentTarget && !saving) handleClose() }}
         >
-          <div
-            className="bg-[#142942] rounded-lg border border-[#2b405b] w-full flex flex-col"
+          <div role="dialog" aria-modal="true"
+            className="bg-surface rounded-lg border border-line w-full flex flex-col"
             style={{ maxWidth: 760, maxHeight: '94vh' }}
           >
             {/* ── Header ── */}
             <div
-              className="flex items-start justify-between px-6 py-4 border-b border-[#2b405b] flex-shrink-0"
+              className="flex items-start justify-between px-6 py-4 border-b border-line flex-shrink-0"
               style={{ backgroundColor: '#10223d' }}
             >
               <div className="flex items-center gap-3">
@@ -348,15 +348,15 @@ export default function FuelLogModal() {
                   <h2 className="text-[14px] font-bold" style={{ color: '#f1f5f9' }}>
                     Registrar Carga de Combustible
                   </h2>
-                  <p className="text-[11px] text-[#a8b8cc] mt-0.5">
+                  <p className="text-[11px] text-muted mt-0.5">
                     Registra una nueva carga asociada a un vehículo de la flota.
                   </p>
                 </div>
               </div>
-              <button
+              <button aria-label="Cerrar"
                 onClick={handleClose}
                 disabled={saving}
-                className="w-7 h-7 flex items-center justify-center rounded-md text-[#a8b8cc] hover:text-[#f1f5f9] hover:bg-[#2b405b] transition-colors cursor-pointer disabled:opacity-40"
+                className="w-7 h-7 flex items-center justify-center rounded-md text-muted hover:text-fg hover:bg-line transition-colors cursor-pointer disabled:opacity-40"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -387,7 +387,7 @@ export default function FuelLogModal() {
                     ))}
                   </select>
                   {selectedVehicle?.fuel_type && (
-                    <p className="text-[10px] text-[#a8b8cc] mt-0.5">
+                    <p className="text-[10px] text-muted mt-0.5">
                       Combustible registrado: {FUEL_TYPE_LABELS[vehicleFuelMap[selectedVehicle.fuel_type] ?? selectedVehicle.fuel_type] ?? selectedVehicle.fuel_type}
                     </p>
                   )}
@@ -407,7 +407,7 @@ export default function FuelLogModal() {
                       : '0'}
                   />
                   {selectedVehicle?.current_odometer_km != null && !errors.odometer_km && (
-                    <p className="text-[10px] text-[#a8b8cc] mt-0.5">
+                    <p className="text-[10px] text-muted mt-0.5">
                       Último registrado: {selectedVehicle.current_odometer_km.toLocaleString('es-CL')} km
                     </p>
                   )}
@@ -522,23 +522,23 @@ export default function FuelLogModal() {
               {/* ── Resumen calculado ── */}
               {showSummary && (
                 <div
-                  className="mt-4 rounded-md border border-[#2b405b] overflow-hidden"
+                  className="mt-4 rounded-md border border-line overflow-hidden"
                 >
                   <div
-                    className="px-4 py-2 border-b border-[#203650]"
+                    className="px-4 py-2 border-b border-raised"
                     style={{ backgroundColor: '#10223d' }}
                   >
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-[#a8b8cc]">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-muted">
                       Resumen Calculado
                     </p>
                   </div>
-                  <div className="flex divide-x divide-[#203650]">
+                  <div className="flex divide-x divide-raised">
                     {costPerLiter != null && (
                       <div className="flex-1 px-5 py-3 text-center">
                         <p className="text-[22px] font-bold leading-none" style={{ color: '#10b98b' }}>
                           ${costPerLiter}
                         </p>
-                        <p className="text-[10px] text-[#a8b8cc] mt-1">Costo por litro</p>
+                        <p className="text-[10px] text-muted mt-1">Costo por litro</p>
                       </div>
                     )}
                     {levelDiff != null && (
@@ -549,7 +549,7 @@ export default function FuelLogModal() {
                         >
                           {levelDiff > 0 ? '+' : ''}{levelDiff}/8
                         </p>
-                        <p className="text-[10px] text-[#a8b8cc] mt-1">Diferencia de nivel</p>
+                        <p className="text-[10px] text-muted mt-1">Diferencia de nivel</p>
                       </div>
                     )}
                     {!isNaN(litersNum) && litersNum > 0 && (
@@ -557,7 +557,7 @@ export default function FuelLogModal() {
                         <p className="text-[22px] font-bold leading-none" style={{ color: '#f1f5f9' }}>
                           {litersNum.toFixed(litersNum % 1 === 0 ? 0 : 2)} L
                         </p>
-                        <p className="text-[10px] text-[#a8b8cc] mt-1">Total cargado</p>
+                        <p className="text-[10px] text-muted mt-1">Total cargado</p>
                       </div>
                     )}
                   </div>
@@ -566,7 +566,7 @@ export default function FuelLogModal() {
 
               {/* Error message */}
               {submitError && (
-                <div className="flex items-start gap-2.5 bg-[#3d2332] border border-[#794052] text-rose-200 rounded-md px-4 py-3 text-[12px] mt-4">
+                <div className="flex items-start gap-2.5 bg-danger-bg border border-danger-line text-rose-200 rounded-md px-4 py-3 text-[12px] mt-4">
                   <svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                   </svg>
@@ -577,14 +577,14 @@ export default function FuelLogModal() {
 
             {/* ── Footer ── */}
             <div
-              className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[#2b405b] flex-shrink-0"
+              className="flex items-center justify-end gap-3 px-6 py-4 border-t border-line flex-shrink-0"
               style={{ backgroundColor: '#10223d' }}
             >
               <button
                 type="button"
                 onClick={handleClose}
                 disabled={saving}
-                className="px-4 py-2 rounded-md text-[12px] font-semibold border border-[#2b405b] text-[#a8b8cc] hover:bg-[#2b405b] transition-colors disabled:opacity-50 cursor-pointer"
+                className="px-4 py-2 rounded-md text-[12px] font-semibold border border-line text-muted hover:bg-line transition-colors disabled:opacity-50 cursor-pointer"
               >
                 Cancelar
               </button>
@@ -592,7 +592,7 @@ export default function FuelLogModal() {
                 type="button"
                 onClick={handleSubmit}
                 disabled={saving || loadingVehicles}
-                className="flex items-center gap-2 px-5 py-2 rounded-md text-[12px] font-semibold text-[#0d1d37] transition-opacity disabled:opacity-50 cursor-pointer"
+                className="flex items-center gap-2 px-5 py-2 rounded-md text-[12px] font-semibold text-canvas transition-opacity disabled:opacity-50 cursor-pointer"
                 style={{ backgroundColor: '#10b98b' }}
               >
                 {saving ? (

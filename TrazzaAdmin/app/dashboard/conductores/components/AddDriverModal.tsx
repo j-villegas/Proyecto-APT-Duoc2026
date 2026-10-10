@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { friendlyError } from '@/lib/errors'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -39,10 +40,10 @@ function validate(f: Form): FieldErrors {
 // ─── Shared UI atoms ──────────────────────────────────────────────────────────
 
 const inputCls =
-  'w-full px-3 py-2 text-[12px] border border-[#2b405b] rounded-md bg-[#142942] text-[#f1f5f9] ' +
-  'placeholder-[#a8b8cc] focus:outline-none focus:ring-1 focus:ring-[#10b98b] focus:border-[#10b98b] transition'
+  'w-full px-3 py-2 text-[12px] border border-line rounded-md bg-surface text-fg ' +
+  'placeholder-muted focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent transition'
 
-const labelCls = 'block text-[11px] font-semibold uppercase tracking-wide text-[#a8b8cc] mb-1'
+const labelCls = 'block text-[11px] font-semibold uppercase tracking-wide text-muted mb-1'
 
 function Field({ label, error, required, children }: {
   label: string; error?: string; required?: boolean; children: React.ReactNode
@@ -61,8 +62,8 @@ function Field({ label, error, required, children }: {
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex items-center gap-3 pt-1">
-      <p className="text-[10px] font-bold uppercase tracking-widest text-[#a8b8cc] whitespace-nowrap">{children}</p>
-      <div className="flex-1 h-px bg-[#2b405b]" />
+      <p className="text-[10px] font-bold uppercase tracking-widest text-muted whitespace-nowrap">{children}</p>
+      <div className="flex-1 h-px bg-line" />
     </div>
   )
 }
@@ -82,7 +83,7 @@ export default function AddDriverModal() {
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') handleClose() }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   }, [open])
 
   function handleClose() {
@@ -131,7 +132,7 @@ export default function AddDriverModal() {
       if (form.notes.trim())            payload.notes               = form.notes.trim()
 
       const { error: insertErr } = await supabase.from('drivers').insert(payload)
-      if (insertErr) throw new Error(`Error al guardar: ${insertErr.message}`)
+      if (insertErr) throw new Error(friendlyError(insertErr, 'No se pudo guardar'))
 
       handleClose()
       router.refresh()
@@ -148,7 +149,7 @@ export default function AddDriverModal() {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-semibold text-[#0d1d37] hover:opacity-90 transition-opacity cursor-pointer"
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-semibold text-canvas hover:opacity-90 transition-opacity cursor-pointer"
         style={{ backgroundColor: '#10b98b' }}
       >
         <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -163,17 +164,17 @@ export default function AddDriverModal() {
           style={{ backgroundColor: 'rgba(3,22,54,0.45)', backdropFilter: 'blur(2px)' }}
           onClick={e => { if (e.target === e.currentTarget) handleClose() }}
         >
-          <div
-            className="bg-[#142942] rounded-lg border border-[#2b405b] w-full flex flex-col"
+          <div role="dialog" aria-modal="true"
+            className="bg-surface rounded-lg border border-line w-full flex flex-col"
             style={{ maxWidth: 720, maxHeight: '92vh' }}
           >
             {/* Header */}
-            <div className="flex items-start justify-between px-6 py-4 border-b border-[#2b405b] flex-shrink-0" style={{ backgroundColor: '#10223d' }}>
+            <div className="flex items-start justify-between px-6 py-4 border-b border-line flex-shrink-0" style={{ backgroundColor: '#10223d' }}>
               <div>
                 <h2 className="text-[14px] font-bold" style={{ color: '#f1f5f9' }}>Registrar Conductor</h2>
-                <p className="text-[11px] text-[#a8b8cc] mt-0.5">Complete los datos del conductor para incorporarlo a la operación.</p>
+                <p className="text-[11px] text-muted mt-0.5">Complete los datos del conductor para incorporarlo a la operación.</p>
               </div>
-              <button onClick={handleClose} className="w-7 h-7 flex items-center justify-center rounded-md text-[#a8b8cc] hover:text-[#f1f5f9] hover:bg-[#2b405b] transition-colors cursor-pointer mt-0.5">
+              <button aria-label="Cerrar" onClick={handleClose} className="w-7 h-7 flex items-center justify-center rounded-md text-muted hover:text-fg hover:bg-line transition-colors cursor-pointer mt-0.5">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
@@ -184,7 +185,7 @@ export default function AddDriverModal() {
               <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
 
                 {submitError && (
-                  <div className="flex items-start gap-2.5 bg-[#3d2332] border border-[#794052] text-rose-200 rounded-md px-4 py-3 text-[12px]">
+                  <div className="flex items-start gap-2.5 bg-danger-bg border border-danger-line text-rose-200 rounded-md px-4 py-3 text-[12px]">
                     <svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                     </svg>
@@ -269,13 +270,13 @@ export default function AddDriverModal() {
               </div>
 
               {/* Footer */}
-              <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[#2b405b] flex-shrink-0" style={{ backgroundColor: '#10223d' }}>
+              <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-line flex-shrink-0" style={{ backgroundColor: '#10223d' }}>
                 <button type="button" onClick={handleClose} disabled={loading}
-                  className="px-4 py-2 rounded-md text-[12px] font-semibold border border-[#2b405b] text-[#a8b8cc] hover:bg-[#2b405b] transition-colors disabled:opacity-50 cursor-pointer">
+                  className="px-4 py-2 rounded-md text-[12px] font-semibold border border-line text-muted hover:bg-line transition-colors disabled:opacity-50 cursor-pointer">
                   Cancelar
                 </button>
                 <button type="submit" disabled={loading}
-                  className="flex items-center gap-2 px-5 py-2 rounded-md text-[12px] font-semibold text-[#0d1d37] transition-opacity disabled:opacity-50 cursor-pointer"
+                  className="flex items-center gap-2 px-5 py-2 rounded-md text-[12px] font-semibold text-canvas transition-opacity disabled:opacity-50 cursor-pointer"
                   style={{ backgroundColor: '#10b98b' }}>
                   {loading ? (
                     <>

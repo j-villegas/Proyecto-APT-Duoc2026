@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { friendlyError, friendlyReason } from '@/lib/errors'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -60,10 +61,10 @@ function validatePassengers(rows: PassengerEntry[]): Map<string, PassengerErrors
 // ─── Shared atoms ─────────────────────────────────────────────────────────────
 
 const inputCls =
-  'w-full px-3 py-2 text-[12px] border border-[#2b405b] rounded-md bg-[#142942] text-[#f1f5f9] ' +
-  'placeholder-[#a8b8cc] focus:outline-none focus:ring-1 focus:ring-[#10b98b] focus:border-[#10b98b] transition'
+  'w-full px-3 py-2 text-[12px] border border-line rounded-md bg-surface text-fg ' +
+  'placeholder-muted focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent transition'
 
-const labelCls = 'block text-[11px] font-semibold uppercase tracking-wide text-[#a8b8cc] mb-1'
+const labelCls = 'block text-[11px] font-semibold uppercase tracking-wide text-muted mb-1'
 
 function Field({ label, error, required, children }: {
   label: string; error?: string; required?: boolean; children: React.ReactNode
@@ -96,7 +97,7 @@ export default function AddContractModal() {
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') handleClose() }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   }, [open])
 
   function handleClose() {
@@ -173,7 +174,7 @@ export default function AddContractModal() {
 
       const { data: contractData, error: insertErr } = await supabase
         .from('contracts').insert(payload).select('id').single()
-      if (insertErr || !contractData) throw new Error(`Error al guardar: ${insertErr?.message ?? 'sin respuesta'}`)
+      if (insertErr || !contractData) throw new Error(friendlyError(insertErr, 'No se pudo guardar'))
 
       const contractId = contractData.id
       const passengerRows = passengers.filter(p => p.full_name.trim() && p.rut.trim())
@@ -207,7 +208,7 @@ export default function AddContractModal() {
           const { data: newP, error: newPErr } = await supabase
             .from('passengers').insert(insertPayload).select('id').single()
           if (newPErr || !newP) {
-            throw new Error(`El contrato fue creado, pero falló al registrar a ${row.full_name.trim()}: ${newPErr?.message ?? 'sin respuesta'}`)
+            throw new Error(`El contrato se creó, pero no se pudo registrar a ${row.full_name.trim()}. ${friendlyReason(newPErr)}`)
           }
           passengerId = newP.id
         }
@@ -215,8 +216,8 @@ export default function AddContractModal() {
         const { error: cpErr } = await supabase
           .from('contract_passengers')
           .insert({ company_id: companyId, contract_id: contractId, passenger_id: passengerId })
-        if (cpErr && !cpErr.message.includes('duplicate') && !cpErr.message.includes('unique')) {
-          throw new Error(`El contrato fue creado, pero falló al asociar a ${row.full_name.trim()}: ${cpErr.message}`)
+        if (cpErr && cpErr.code !== '23505') {
+          throw new Error(`El contrato se creó, pero no se pudo asociar a ${row.full_name.trim()}. ${friendlyReason(cpErr)}`)
         }
       }
 
@@ -237,7 +238,7 @@ export default function AddContractModal() {
       <button
         onClick={() => setOpen(true)}
         title="Añadir Contrato"
-        className="w-6 h-6 flex items-center justify-center rounded border border-[#2b405b] text-[#a8b8cc] hover:border-[#10b98b] hover:text-[#10b98b] hover:bg-[#3b3020] transition-colors cursor-pointer flex-shrink-0"
+        className="w-6 h-6 flex items-center justify-center rounded border border-line text-muted hover:border-accent hover:text-accent hover:bg-warn-bg transition-colors cursor-pointer flex-shrink-0"
       >
         <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
@@ -250,21 +251,21 @@ export default function AddContractModal() {
           style={{ backgroundColor: 'rgba(3,22,54,0.45)', backdropFilter: 'blur(2px)' }}
           onClick={e => { if (e.target === e.currentTarget) handleClose() }}
         >
-          <div
-            className="bg-[#142942] rounded-lg border border-[#2b405b] w-full flex flex-col"
+          <div role="dialog" aria-modal="true"
+            className="bg-surface rounded-lg border border-line w-full flex flex-col"
             style={{ maxWidth: 640, maxHeight: '92vh' }}
           >
             {/* Header */}
-            <div className="flex items-start justify-between px-6 py-4 border-b border-[#2b405b] flex-shrink-0" style={{ backgroundColor: '#10223d' }}>
+            <div className="flex items-start justify-between px-6 py-4 border-b border-line flex-shrink-0" style={{ backgroundColor: '#10223d' }}>
               <div>
                 <h2 className="text-[14px] font-bold" style={{ color: '#f1f5f9' }}>Añadir Contrato</h2>
-                <p className="text-[11px] text-[#a8b8cc] mt-0.5">
+                <p className="text-[11px] text-muted mt-0.5">
                   Registra un contrato operativo y sus pasajeros para asociarlo a rutas y servicios.
                 </p>
               </div>
-              <button
+              <button aria-label="Cerrar"
                 onClick={handleClose}
-                className="w-7 h-7 flex items-center justify-center rounded-md text-[#a8b8cc] hover:text-[#f1f5f9] hover:bg-[#2b405b] transition-colors cursor-pointer mt-0.5"
+                className="w-7 h-7 flex items-center justify-center rounded-md text-muted hover:text-fg hover:bg-line transition-colors cursor-pointer mt-0.5"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -276,7 +277,7 @@ export default function AddContractModal() {
               <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
 
                 {submitError && (
-                  <div className="flex items-start gap-2.5 bg-[#3d2332] border border-[#794052] text-rose-200 rounded-md px-4 py-3 text-[12px]">
+                  <div className="flex items-start gap-2.5 bg-danger-bg border border-danger-line text-rose-200 rounded-md px-4 py-3 text-[12px]">
                     <svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                     </svg>
@@ -329,10 +330,10 @@ export default function AddContractModal() {
 
                   {passengers.length === 0 ? (
                     <div
-                      className="border border-dashed border-[#2b405b] rounded-md px-4 py-3 text-center"
+                      className="border border-dashed border-line rounded-md px-4 py-3 text-center"
                       style={{ backgroundColor: '#10223d' }}
                     >
-                      <p className="text-[11px] text-[#a8b8cc]">
+                      <p className="text-[11px] text-muted">
                         Sin pasajeros registrados. La dirección de cada uno se define al crear la ruta.
                       </p>
                     </div>
@@ -368,7 +369,7 @@ export default function AddContractModal() {
                             <button
                               type="button"
                               onClick={() => removePassenger(p.localId)}
-                              className="w-7 h-7 flex items-center justify-center rounded-md text-[#a8b8cc] hover:text-rose-300 hover:bg-[#3d2332] transition-colors flex-shrink-0 cursor-pointer mt-1"
+                              className="w-7 h-7 flex items-center justify-center rounded-md text-muted hover:text-rose-300 hover:bg-danger-bg transition-colors flex-shrink-0 cursor-pointer mt-1"
                             >
                               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -384,13 +385,13 @@ export default function AddContractModal() {
               </div>
 
               {/* Footer */}
-              <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[#2b405b] flex-shrink-0" style={{ backgroundColor: '#10223d' }}>
+              <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-line flex-shrink-0" style={{ backgroundColor: '#10223d' }}>
                 <button type="button" onClick={handleClose} disabled={loading}
-                  className="px-4 py-2 rounded-md text-[12px] font-semibold border border-[#2b405b] text-[#a8b8cc] hover:bg-[#2b405b] transition-colors disabled:opacity-50 cursor-pointer">
+                  className="px-4 py-2 rounded-md text-[12px] font-semibold border border-line text-muted hover:bg-line transition-colors disabled:opacity-50 cursor-pointer">
                   Cancelar
                 </button>
                 <button type="submit" disabled={loading}
-                  className="flex items-center gap-2 px-5 py-2 rounded-md text-[12px] font-semibold text-[#0d1d37] transition-opacity disabled:opacity-50 cursor-pointer"
+                  className="flex items-center gap-2 px-5 py-2 rounded-md text-[12px] font-semibold text-canvas transition-opacity disabled:opacity-50 cursor-pointer"
                   style={{ backgroundColor: '#10b98b' }}>
                   {loading ? (
                     <>

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import MapView, { Marker } from "react-native-maps";
+import MapView, { Marker } from "../lib/maps";
 import * as Location from "expo-location";
 import { Button } from "./Button";
 import { useAuth } from "../context/AuthContext";
@@ -53,9 +53,8 @@ export function DriverActiveRouteView({ serviceId, onReportIncident }: Props) {
   }, []);
 
   useDriverLocationBroadcast({
-    driverId: profile?.id ?? "",
     serviceId,
-    enabled: !!profile,
+    enabled: !!profile && service?.status === "en_ruta",
   });
 
   const nextStop = stops.find((s) => s.status !== "completada");
@@ -70,6 +69,7 @@ export function DriverActiveRouteView({ serviceId, onReportIncident }: Props) {
     const remaining = stops.filter((s) => s.id !== nextStop?.id && s.status !== "completada");
     if (remaining.length === 0 && service) {
       await updateServiceStatus(service.id, "finalizado");
+      setService({ ...service, status: "finalizado" });
     }
   };
 

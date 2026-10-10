@@ -72,7 +72,6 @@ export default function DriverReportIncidentScreen({ route, navigation }: Props)
       );
       await createIncident({
         serviceId: serviceId ?? null,
-        reporterId: profile.id,
         category,
         title,
         description,

@@ -140,6 +140,36 @@ describe("inicio de sesión", () => {
     ).toBeTruthy();
     expect(screen.getByText("Iniciar sesión")).toBeTruthy();
   });
+
+  it("no deja entrar a un administrador del panel", async () => {
+    mockSupabase = createSupabaseMock({
+      profiles: [makeProfile(JUAN, { role: "admin", passengers: [] }), makeProfile(CARLOS)],
+    });
+    await renderApp();
+    await login(JUAN.email, JUAN.password);
+
+    expect(
+      await screen.findByText(
+        "Esta app es para conductores y pasajeros. Usa el panel web de administración."
+      )
+    ).toBeTruthy();
+    expect(screen.queryByText("Hola, Juan")).toBeNull();
+  });
+
+  it("avisa cuando el conductor no está vinculado a un registro del panel", async () => {
+    mockSupabase = createSupabaseMock({
+      profiles: [makeProfile(JUAN), makeProfile(CARLOS, { drivers: [] })],
+    });
+    await renderApp();
+    await login(CARLOS.email, CARLOS.password);
+
+    expect(
+      await screen.findByText(
+        "Tu cuenta no está vinculada a un conductor del panel. Contacta al administrador."
+      )
+    ).toBeTruthy();
+    expect(screen.queryByText("Hola, Carlos")).toBeNull();
+  });
 });
 
 describe("restablecer contraseña", () => {

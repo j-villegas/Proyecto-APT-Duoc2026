@@ -64,8 +64,14 @@ export default function PrepareServiceScreen({ route, navigation }: Props) {
     }
     setSubmitting(true);
     try {
-      await updateServiceStatus(serviceId, "en_ruta");
+      const odometerKm = Number(mileage.replace(/\./g, "").replace(",", "."));
+      await updateServiceStatus(serviceId, "en_ruta", {
+        odometerKm: Number.isFinite(odometerKm) ? odometerKm : null,
+      });
       navigation.replace("ActiveRoute", { serviceId });
+    } catch (err) {
+      const message = (err as { message?: string } | null)?.message;
+      Alert.alert("No se pudo iniciar la ruta", message ?? "Intenta nuevamente en unos segundos.");
     } finally {
       setSubmitting(false);
     }

@@ -1,13 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import MapView, { Marker } from "react-native-maps";
+import MapView, { Marker } from "../lib/maps";
 import { StatusStepper, type Step } from "./StatusStepper";
 import { Button } from "./Button";
-import { getServiceById } from "../services/services";
+import { getServiceById, getServiceDriver } from "../services/services";
 import { useDriverLocationSubscription } from "../hooks/useDriverLocationSubscription";
-import { supabase } from "../lib/supabase";
-import type { Profile, Service } from "../types/database";
+import type { DriverInfo, Service } from "../types/database";
 import { colors, radius, spacing, typography } from "../constants/theme";
 import { darkMapStyle } from "../constants/mapStyle";
 import { mapProvider, supportsCustomMapStyle } from "../constants/mapProvider";
@@ -28,26 +27,21 @@ interface TripTrackingViewProps {
 
 export function TripTrackingView({ serviceId, onReportIncident }: TripTrackingViewProps) {
   const [service, setService] = useState<Service | null>(null);
-  const [driver, setDriver] = useState<Profile | null>(null);
+  const [driver, setDriver] = useState<DriverInfo | null>(null);
 
   useEffect(() => {
     (async () => {
       try {
         const svc = await getServiceById(serviceId);
         setService(svc);
-        const { data } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", svc.driver_id)
-          .maybeSingle();
-        setDriver(data as Profile | null);
+        setDriver(await getServiceDriver(serviceId));
       } catch (err) {
         console.warn("No se pudo cargar el viaje:", err);
       }
     })();
   }, [serviceId]);
 
-  const driverLocation = useDriverLocationSubscription(service?.driver_id ?? null);
+  const driverLocation = useDriverLocationSubscription(service ? serviceId : null);
   const currentIndex = service ? STATUS_ORDER.indexOf(service.status) : 0;
 
   const steps: Step[] = [

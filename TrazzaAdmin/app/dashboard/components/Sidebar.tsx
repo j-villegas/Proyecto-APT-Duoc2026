@@ -79,22 +79,22 @@ export default function Sidebar({ companyName, userEmail }: { companyName: strin
   }
 
   return (
-    <aside className="flex w-full shrink-0 flex-col border-b border-[#2b405b] bg-[#10223d] text-slate-100 md:h-full md:w-60 md:border-r md:border-b-0">
+    <aside className="flex w-full shrink-0 flex-col border-b border-line bg-sunken text-slate-100 md:h-full md:w-60 md:border-r md:border-b-0">
       <div className="flex items-center gap-3 px-5 py-4 md:py-6">
         <TrazzaMark className="h-10 w-10 shrink-0" />
         <div className="min-w-0">
           <p className="text-xl font-bold tracking-[0.12em]">TRAZZA</p>
-          <p className="truncate text-xs text-[#a8b8cc]" title={companyName}>{companyName}</p>
+          <p className="truncate text-xs text-muted" title={companyName}>{companyName}</p>
         </div>
       </div>
       <nav aria-label="Navegación principal" className="overflow-x-auto px-3 pb-3 md:flex-1 md:overflow-y-auto md:pt-4">
-        <p className="mb-3 hidden px-3 text-[10px] font-semibold uppercase tracking-widest text-[#a8b8cc] md:block">Operaciones</p>
+        <p className="mb-3 hidden px-3 text-[10px] font-semibold uppercase tracking-widest text-muted md:block">Operaciones</p>
         <ul className="flex gap-1 md:flex-col">
           {mainNav.map(item => {
             const isActive = item.href === '/dashboard' ? pathname === '/dashboard' : pathname.startsWith(item.href)
             return (
               <li key={item.href} className="shrink-0">
-                <Link href={item.href} aria-current={isActive ? 'page' : undefined} className={`flex items-center gap-3 whitespace-nowrap rounded-xl border px-3 py-3 text-sm font-medium transition-colors ${isActive ? 'border-[#246354] bg-[#143c39] text-[#62e7bd]' : 'border-transparent text-[#a8b8cc] hover:bg-[#1b3552] hover:text-white'}`}>
+                <Link href={item.href} aria-current={isActive ? 'page' : undefined} className={`flex items-center gap-3 whitespace-nowrap rounded-xl border px-3 py-3 text-sm font-medium transition-colors ${isActive ? 'border-[#246354] bg-[#143c39] text-[#62e7bd]' : 'border-transparent text-muted hover:bg-[#1b3552] hover:text-white'}`}>
                   {item.icon}{item.label}
                 </Link>
               </li>
@@ -102,13 +102,13 @@ export default function Sidebar({ companyName, userEmail }: { companyName: strin
           })}
         </ul>
       </nav>
-      <div className="flex items-center gap-3 border-t border-[#2b405b] px-5 py-3 md:py-5">
+      <div className="flex items-center gap-3 border-t border-line px-5 py-3 md:py-5">
         <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#143c39] text-xs font-bold text-[#62e7bd]">{initials}</span>
         <div className="min-w-0 flex-1">
           <p className="truncate text-xs" title={userEmail}>{userEmail}</p>
-          <p className="mt-1 text-[10px] text-[#a8b8cc]">Administrador</p>
+          <p className="mt-1 text-[10px] text-muted">Administrador</p>
         </div>
-        <button onClick={handleLogout} title="Cerrar sesión" aria-label="Cerrar sesión" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-[#a8b8cc] hover:bg-rose-950 hover:text-rose-200">
+        <button onClick={handleLogout} title="Cerrar sesión" aria-label="Cerrar sesión" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-muted hover:bg-rose-950 hover:text-rose-200">
           <svg aria-hidden="true" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5H5v14h4m5-14 7 7-7 7m7-7H9" /></svg>
         </button>
       </div>

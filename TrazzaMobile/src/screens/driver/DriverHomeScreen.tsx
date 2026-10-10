@@ -27,11 +27,11 @@ export default function DriverHomeScreen({ navigation }: { navigation: Nav }) {
   const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(async () => {
-    if (!profile) return;
+    if (!profile?.driver_id) return;
     try {
-      const list = await getDriverServices(profile.id);
+      const list = await getDriverServices(profile.driver_id);
       setServices(list);
-      if (list[0]) {
+      if (list[0]?.vehicle_id) {
         const veh = await getVehicleById(list[0].vehicle_id);
         setVehicle(veh);
       }

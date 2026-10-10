@@ -24,9 +24,9 @@ export default function PassengerHomeScreen({ navigation }: { navigation: Nav })
   const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(async () => {
-    if (!profile) return;
+    if (!profile?.passenger_id) return;
     try {
-      const next = await getNextServiceForPassenger(profile.id);
+      const next = await getNextServiceForPassenger(profile.passenger_id);
       setTrip(next);
     } catch {
       setTrip(null);

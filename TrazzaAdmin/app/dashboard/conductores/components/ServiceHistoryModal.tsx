@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { serviceStatusMeta } from '@/lib/service-status'
+import Plate from '@/app/components/Plate'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -30,12 +32,6 @@ type DateFilter   = 'all' | 'today' | '7days' | '30days'
 
 const PAGE_SIZE = 10
 
-const STATUS_META: Record<string, { label: string; bg: string; text: string }> = {
-  scheduled:   { label: 'Programado', bg: '#183352', text: '#7dbbff' },
-  in_progress: { label: 'En ruta',    bg: '#3b3020', text: '#f8cb78' },
-  completed:   { label: 'Finalizado', bg: '#123b35', text: '#55d9ad' },
-  cancelled:   { label: 'Cancelado',  bg: '#203650', text: '#a8b8cc' },
-}
 
 const STATUS_FILTER_LABELS: Record<StatusFilter, string> = {
   all:         'Todos',
@@ -116,20 +112,27 @@ export default function ServiceHistoryModal() {
         .is('deleted_at', null)
         .order('full_name', { ascending: true }),
     ])
-    setLogs((logsResult.data ?? []) as ServiceLog[])
+// supabase-js sin tipos generados infiere las relaciones embebidas como arreglos;
+    // en ejecución las many-to-one llegan como objeto, de ahí el doble cast.
+    setLogs((logsResult.data ?? []) as unknown as ServiceLog[])
     setDrivers((driversResult.data ?? []) as DriverOption[])
     setLoading(false)
   }, [])
 
-  useEffect(() => { if (open) loadData() }, [open, loadData])
-  useEffect(() => { setPage(1) }, [search, driverFilter, statusFilter, dateFilter])
+  // Volver a la página 1 al cambiar un filtro (ajuste durante el render, sin efecto).
+  const filterKey = String(search) + "|" + String(driverFilter) + "|" + String(statusFilter) + "|" + String(dateFilter)
+  const [prevFilterKey, setPrevFilterKey] = useState(filterKey)
+  if (filterKey !== prevFilterKey) {
+    setPrevFilterKey(filterKey)
+    setPage(1)
+  }
 
   useEffect(() => {
     if (!open) return
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') handleClose() }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   }, [open])
 
   function handleClose() {
@@ -162,7 +165,7 @@ export default function ServiceHistoryModal() {
       {/* Trigger */}
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={() => { setOpen(true); loadData() }}
         className="text-[11px] font-semibold transition-colors cursor-pointer"
         style={{ color: '#10b98b' }}
       >
@@ -175,13 +178,13 @@ export default function ServiceHistoryModal() {
           style={{ backgroundColor: 'rgba(3,22,54,0.52)', backdropFilter: 'blur(2px)' }}
           onClick={e => { if (e.target === e.currentTarget) handleClose() }}
         >
-          <div
-            className="bg-[#142942] rounded-lg border border-[#2b405b] w-full flex flex-col"
+          <div role="dialog" aria-modal="true"
+            className="bg-surface rounded-lg border border-line w-full flex flex-col"
             style={{ maxWidth: 920, maxHeight: '92vh' }}
           >
             {/* Header */}
             <div
-              className="flex items-start justify-between px-6 py-4 border-b border-[#2b405b] flex-shrink-0"
+              className="flex items-start justify-between px-6 py-4 border-b border-line flex-shrink-0"
               style={{ backgroundColor: '#10223d' }}
             >
               <div className="flex items-center gap-3">
@@ -192,10 +195,10 @@ export default function ServiceHistoryModal() {
                 </div>
                 <div>
                   <h2 className="text-[14px] font-bold" style={{ color: '#f1f5f9' }}>Historial de Servicios</h2>
-                  <p className="text-[11px] text-[#a8b8cc] mt-0.5">Consulta los servicios asociados a conductores.</p>
+                  <p className="text-[11px] text-muted mt-0.5">Consulta los servicios asociados a conductores.</p>
                 </div>
               </div>
-              <button onClick={handleClose} className="w-7 h-7 flex items-center justify-center rounded-md text-[#a8b8cc] hover:text-[#f1f5f9] hover:bg-[#2b405b] transition-colors cursor-pointer">
+              <button aria-label="Cerrar" onClick={handleClose} className="w-7 h-7 flex items-center justify-center rounded-md text-muted hover:text-fg hover:bg-line transition-colors cursor-pointer">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
@@ -203,20 +206,20 @@ export default function ServiceHistoryModal() {
             </div>
 
             {/* Filters */}
-            <div className="flex flex-wrap items-center gap-3 px-6 py-3 border-b border-[#203650] flex-shrink-0" style={{ backgroundColor: '#10223d' }}>
+            <div className="flex flex-wrap items-center gap-3 px-6 py-3 border-b border-raised flex-shrink-0" style={{ backgroundColor: '#10223d' }}>
               <div className="relative flex-1 min-w-[180px] max-w-xs">
-                <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#a8b8cc]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
                 <input
                   type="text" value={search} onChange={e => setSearch(e.target.value)}
                   placeholder="Conductor, código, patente, servicio..."
-                  className="w-full pl-8 pr-3 py-1.5 text-[12px] border border-[#2b405b] rounded-md bg-[#142942] text-[#f1f5f9] placeholder-[#a8b8cc] focus:outline-none focus:ring-1 focus:ring-[#f1f5f9] focus:border-[#f1f5f9] transition"
+                  className="w-full pl-8 pr-3 py-1.5 text-[12px] border border-line rounded-md bg-surface text-fg placeholder-muted focus:outline-none focus:ring-1 focus:ring-fg focus:border-fg transition"
                 />
               </div>
               <select
                 value={driverFilter} onChange={e => setDFilter(e.target.value)}
-                className="py-1.5 pl-2.5 pr-7 text-[12px] border border-[#2b405b] rounded-md bg-[#142942] text-[#d5e0ed] focus:outline-none focus:ring-1 focus:ring-[#f1f5f9] transition cursor-pointer"
+                className="py-1.5 pl-2.5 pr-7 text-[12px] border border-line rounded-md bg-surface text-soft focus:outline-none focus:ring-1 focus:ring-fg transition cursor-pointer"
               >
                 <option value="">Todos los conductores</option>
                 {drivers.map(d => (
@@ -249,24 +252,24 @@ export default function ServiceHistoryModal() {
 
             {/* Summary bar */}
             {!loading && filtered.length > 0 && (
-              <div className="flex items-center gap-6 px-6 py-2.5 border-b border-[#203650] flex-shrink-0 bg-[#142942]">
+              <div className="flex items-center gap-6 px-6 py-2.5 border-b border-raised flex-shrink-0 bg-surface">
                 <div className="flex items-center gap-1.5">
-                  <span className="text-[10px] font-semibold uppercase tracking-wide text-[#a8b8cc]">Total</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-wide text-muted">Total</span>
                   <span className="text-[13px] font-bold" style={{ color: '#f1f5f9' }}>{filtered.length}</span>
                 </div>
-                <div className="w-px h-4 bg-[#2b405b]" />
+                <div className="w-px h-4 bg-line" />
                 <div className="flex items-center gap-1.5">
-                  <span className="text-[10px] font-semibold uppercase tracking-wide text-[#a8b8cc]">Finalizados</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-wide text-muted">Finalizados</span>
                   <span className="text-[13px] font-bold" style={{ color: '#55d9ad' }}>{countCompleted}</span>
                 </div>
-                <div className="w-px h-4 bg-[#2b405b]" />
+                <div className="w-px h-4 bg-line" />
                 <div className="flex items-center gap-1.5">
-                  <span className="text-[10px] font-semibold uppercase tracking-wide text-[#a8b8cc]">En ruta</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-wide text-muted">En ruta</span>
                   <span className="text-[13px] font-bold" style={{ color: '#f8cb78' }}>{countInProgress}</span>
                 </div>
-                <div className="w-px h-4 bg-[#2b405b]" />
+                <div className="w-px h-4 bg-line" />
                 <div className="flex items-center gap-1.5">
-                  <span className="text-[10px] font-semibold uppercase tracking-wide text-[#a8b8cc]">Cancelados</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-wide text-muted">Cancelados</span>
                   <span className="text-[13px] font-bold" style={{ color: '#a8b8cc' }}>{countCancelled}</span>
                 </div>
               </div>
@@ -275,7 +278,7 @@ export default function ServiceHistoryModal() {
             {/* Body */}
             <div className="flex-1 overflow-y-auto">
               {loading ? (
-                <div className="flex items-center justify-center gap-3 py-16 text-[#a8b8cc]">
+                <div className="flex items-center justify-center gap-3 py-16 text-muted">
                   <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
@@ -284,20 +287,20 @@ export default function ServiceHistoryModal() {
                 </div>
               ) : filtered.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 text-center">
-                  <div className="w-10 h-10 rounded-full bg-[#203650] flex items-center justify-center mb-3">
-                    <svg className="w-5 h-5 text-[#a8b8cc]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <div className="w-10 h-10 rounded-full bg-raised flex items-center justify-center mb-3">
+                    <svg className="w-5 h-5 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
                     </svg>
                   </div>
-                  <p className="text-[13px] font-medium text-[#a8b8cc]">Sin servicios registrados</p>
-                  <p className="text-[11px] text-[#a8b8cc] mt-0.5">Ajusta los filtros para ver más resultados.</p>
+                  <p className="text-[13px] font-medium text-muted">Sin servicios registrados</p>
+                  <p className="text-[11px] text-muted mt-0.5">Ajusta los filtros para ver más resultados.</p>
                 </div>
               ) : (
                 <table className="w-full">
                   <thead>
-                    <tr style={{ backgroundColor: '#10223d' }} className="border-b border-[#203650]">
+                    <tr style={{ backgroundColor: '#10223d' }} className="border-b border-raised">
                       {['Fecha', 'Conductor', 'Servicio', 'Vehículo', 'Ruta', 'Estado'].map(col => (
-                        <th key={col} className="text-left text-[10px] font-bold uppercase tracking-wider px-4 py-2.5 text-[#a8b8cc] whitespace-nowrap">
+                        <th key={col} className="text-left text-[10px] font-bold uppercase tracking-wider px-4 py-2.5 text-muted whitespace-nowrap">
                           {col}
                         </th>
                       ))}
@@ -307,29 +310,27 @@ export default function ServiceHistoryModal() {
                     {paginated.map(log => {
                       const drv    = log.drivers as { full_name: string | null; driver_code: string | null } | null
                       const veh    = log.vehicles as { plate: string | null } | null
-                      const sm     = STATUS_META[log.status ?? ''] ?? { label: log.status ?? '—', bg: '#203650', text: '#a8b8cc' }
+                      const sm     = serviceStatusMeta(log.status)
                       const route  = [log.origin, log.destination].filter(Boolean).join(' → ') || '—'
                       return (
-                        <tr key={log.id} className="border-b border-[#203650] hover:bg-[#10223d] transition-colors">
+                        <tr key={log.id} className="border-b border-raised hover:bg-sunken transition-colors">
                           <td className="px-4 py-2.5 whitespace-nowrap">
-                            <span className="text-[11px] text-[#a8b8cc]">{fmtDate(log.scheduled_date)}</span>
+                            <span className="text-[11px] text-muted">{fmtDate(log.scheduled_date)}</span>
                           </td>
                           <td className="px-4 py-2.5">
-                            <p className="text-[12px] font-semibold text-[#f1f5f9] leading-snug">{drv?.full_name ?? '—'}</p>
-                            {drv?.driver_code && <p className="text-[10px] text-[#a8b8cc]">{drv.driver_code}</p>}
+                            <p className="text-[12px] font-semibold text-fg leading-snug">{drv?.full_name ?? '—'}</p>
+                            {drv?.driver_code && <p className="text-[10px] text-muted">{drv.driver_code}</p>}
                           </td>
                           <td className="px-4 py-2.5 whitespace-nowrap">
-                            <span className="text-[12px] font-mono text-[#d5e0ed]">
+                            <span className="text-[12px] font-mono text-soft">
                               {log.service_code ?? `#${log.id.slice(0, 8)}`}
                             </span>
                           </td>
                           <td className="px-4 py-2.5 whitespace-nowrap">
-                            <span className="text-[12px] font-mono font-bold" style={{ color: '#f1f5f9' }}>
-                              {veh?.plate ?? '—'}
-                            </span>
+                            <Plate value={veh?.plate} />
                           </td>
                           <td className="px-4 py-2.5 max-w-[180px]">
-                            <span className="text-[11px] text-[#a8b8cc] line-clamp-1">{route}</span>
+                            <span className="text-[11px] text-muted line-clamp-1">{route}</span>
                           </td>
                           <td className="px-4 py-2.5 whitespace-nowrap">
                             <span className="text-[10px] font-semibold px-2 py-0.5 rounded" style={{ backgroundColor: sm.bg, color: sm.text }}>
@@ -346,11 +347,11 @@ export default function ServiceHistoryModal() {
 
             {/* Pagination / Footer */}
             <div
-              className="flex items-center justify-between px-6 py-3 border-t border-[#2b405b] flex-shrink-0"
+              className="flex items-center justify-between px-6 py-3 border-t border-line flex-shrink-0"
               style={{ backgroundColor: '#10223d' }}
             >
               {totalPages > 1 ? (
-                <p className="text-[11px] text-[#a8b8cc]">
+                <p className="text-[11px] text-muted">
                   Mostrando {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} de {filtered.length}
                 </p>
               ) : (
@@ -360,20 +361,20 @@ export default function ServiceHistoryModal() {
                 {totalPages > 1 && (
                   <>
                     <button type="button" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
-                      className="px-3 py-1.5 text-[11px] font-semibold rounded border border-[#2b405b] text-[#d5e0ed] hover:bg-[#142942] transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-default">
+                      className="px-3 py-1.5 text-[11px] font-semibold rounded border border-line text-soft hover:bg-surface transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-default">
                       ← Anterior
                     </button>
                     <span className="px-3 py-1.5 text-[11px] font-bold rounded" style={{ backgroundColor: '#254b77', color: 'white' }}>
                       {page} / {totalPages}
                     </span>
                     <button type="button" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
-                      className="px-3 py-1.5 text-[11px] font-semibold rounded border border-[#2b405b] text-[#d5e0ed] hover:bg-[#142942] transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-default">
+                      className="px-3 py-1.5 text-[11px] font-semibold rounded border border-line text-soft hover:bg-surface transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-default">
                       Siguiente →
                     </button>
                   </>
                 )}
                 <button type="button" onClick={handleClose}
-                  className="px-4 py-1.5 rounded-md text-[12px] font-semibold border border-[#2b405b] text-[#a8b8cc] hover:bg-[#2b405b] transition-colors cursor-pointer">
+                  className="px-4 py-1.5 rounded-md text-[12px] font-semibold border border-line text-muted hover:bg-line transition-colors cursor-pointer">
                   Cerrar
                 </button>
               </div>

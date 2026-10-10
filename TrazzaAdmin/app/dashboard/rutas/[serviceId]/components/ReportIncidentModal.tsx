@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { friendlyError } from '@/lib/errors'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -28,10 +29,10 @@ const SEVERITY_OPTIONS: { value: Severity; label: string; bg: string; text: stri
 // ─── Shared atoms ─────────────────────────────────────────────────────────────
 
 const inputCls =
-  'w-full px-3 py-2 text-[12px] border border-[#2b405b] rounded-md bg-[#142942] text-[#f1f5f9] ' +
-  'placeholder-[#a8b8cc] focus:outline-none focus:ring-1 focus:ring-[#10b98b] focus:border-[#10b98b] transition'
+  'w-full px-3 py-2 text-[12px] border border-line rounded-md bg-surface text-fg ' +
+  'placeholder-muted focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent transition'
 
-const labelCls = 'block text-[11px] font-semibold uppercase tracking-wide text-[#a8b8cc] mb-1'
+const labelCls = 'block text-[11px] font-semibold uppercase tracking-wide text-muted mb-1'
 
 function Field({ label, error, required, children }: {
   label: string; error?: string; required?: boolean; children: React.ReactNode
@@ -98,14 +99,13 @@ export default function ReportIncidentModal({
     setLoadingTypes(false)
   }, [])
 
-  useEffect(() => { if (open) loadTypes() }, [open, loadTypes])
 
   useEffect(() => {
     if (!open) return
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') handleClose() }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   }, [open])
 
   function handleClose() {
@@ -167,20 +167,19 @@ export default function ReportIncidentModal({
       if (vehicleId)    incidentPayload.vehicle_id       = vehicleId
       if (driverId)     incidentPayload.driver_id        = driverId
 
-      const { error: incidentErr } = await supabase.from('incidents').insert(incidentPayload)
-      if (incidentErr) throw new Error(`Error al registrar la incidencia: ${incidentErr.message}`)
+      const { data: incident, error: incidentErr } = await supabase
+        .from('incidents').insert(incidentPayload).select('id').single()
+      if (incidentErr) throw new Error(friendlyError(incidentErr, 'No se pudo registrar la incidencia'))
 
-      // service_events — optional; silently skip on any error
-      try {
-        await supabase.from('service_events').insert({
-          company_id:  companyId,
-          service_id:  serviceId,
-          event_type:  'incident_reported',
-          description: `Incidencia reportada: ${typeName} (${severity})`,
-        })
-      } catch {
-        // service_events is optional — ignore failure
-      }
+      // Bitácora: no bloquea el reporte si falla (la incidencia ya se guardó).
+      await supabase.from('service_events').insert({
+        company_id: companyId,
+        service_id: serviceId,
+        actor_type: 'admin',
+        actor_id:   profile.id,
+        event_type: 'incident_reported',
+        payload:    { source: 'panel', incident_id: incident?.id ?? null, title: typeName, severity },
+      })
 
       handleClose()
       router.refresh()
@@ -206,8 +205,8 @@ export default function ReportIncidentModal({
     <>
       {/* Trigger — full-width action button */}
       <button
-        onClick={() => setOpen(true)}
-        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md border border-[#794052] text-[12px] font-medium text-rose-300 hover:bg-[#3d2332] transition-colors text-left cursor-pointer"
+        onClick={() => { setOpen(true); loadTypes() }}
+        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md border border-danger-line text-[12px] font-medium text-rose-300 hover:bg-danger-bg transition-colors text-left cursor-pointer"
       >
         <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
@@ -221,21 +220,21 @@ export default function ReportIncidentModal({
           style={{ backgroundColor: 'rgba(3,22,54,0.50)', backdropFilter: 'blur(2px)' }}
           onClick={e => { if (e.target === e.currentTarget) handleClose() }}
         >
-          <div
-            className="bg-[#142942] rounded-lg border border-[#2b405b] w-full flex flex-col"
+          <div role="dialog" aria-modal="true"
+            className="bg-surface rounded-lg border border-line w-full flex flex-col"
             style={{ maxWidth: 580, maxHeight: '92vh' }}
           >
             {/* Header */}
-            <div className="flex items-start justify-between px-6 py-4 border-b border-[#2b405b] flex-shrink-0" style={{ backgroundColor: '#10223d' }}>
+            <div className="flex items-start justify-between px-6 py-4 border-b border-line flex-shrink-0" style={{ backgroundColor: '#10223d' }}>
               <div>
                 <h2 className="text-[14px] font-bold" style={{ color: '#f1f5f9' }}>Reportar Incidencia</h2>
-                <p className="text-[11px] text-[#a8b8cc] mt-0.5">
+                <p className="text-[11px] text-muted mt-0.5">
                   Registra un evento operacional asociado a esta ruta.
                 </p>
               </div>
-              <button
+              <button aria-label="Cerrar"
                 onClick={handleClose}
-                className="w-7 h-7 flex items-center justify-center rounded-md text-[#a8b8cc] hover:text-[#f1f5f9] hover:bg-[#2b405b] transition-colors cursor-pointer mt-0.5 flex-shrink-0"
+                className="w-7 h-7 flex items-center justify-center rounded-md text-muted hover:text-fg hover:bg-line transition-colors cursor-pointer mt-0.5 flex-shrink-0"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -261,7 +260,7 @@ export default function ReportIncidentModal({
                     <p className="text-[12px] font-bold truncate" style={{ color: '#f1f5f9' }}>
                       Ruta {titleCode}
                     </p>
-                    <p className="text-[11px] text-[#a8b8cc] truncate mt-0.5">
+                    <p className="text-[11px] text-muted truncate mt-0.5">
                       {[plate ? `Vehículo ${plate}` : null, driverName ? `Conductor ${driverName}` : null]
                         .filter(Boolean).join(' · ') || 'Sin asignación registrada'}
                     </p>
@@ -269,7 +268,7 @@ export default function ReportIncidentModal({
                 </div>
 
                 {submitError && (
-                  <div className="flex items-start gap-2.5 bg-[#3d2332] border border-[#794052] text-rose-200 rounded-md px-4 py-3 text-[12px]">
+                  <div className="flex items-start gap-2.5 bg-danger-bg border border-danger-line text-rose-200 rounded-md px-4 py-3 text-[12px]">
                     <svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                     </svg>
@@ -280,7 +279,7 @@ export default function ReportIncidentModal({
                 {/* Tipo de incidencia */}
                 <Field label="Tipo de Incidencia" required error={errors.type}>
                   {loadingTypes ? (
-                    <div className="flex items-center gap-2 px-3 py-2 border border-[#2b405b] rounded-md text-[12px] text-[#a8b8cc]">
+                    <div className="flex items-center gap-2 px-3 py-2 border border-line rounded-md text-[12px] text-muted">
                       <svg className="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
@@ -344,13 +343,13 @@ export default function ReportIncidentModal({
               </div>
 
               {/* Footer */}
-              <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[#2b405b] flex-shrink-0" style={{ backgroundColor: '#10223d' }}>
+              <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-line flex-shrink-0" style={{ backgroundColor: '#10223d' }}>
                 <button type="button" onClick={handleClose} disabled={loading}
-                  className="px-4 py-2 rounded-md text-[12px] font-semibold border border-[#2b405b] text-[#a8b8cc] hover:bg-[#2b405b] transition-colors disabled:opacity-50 cursor-pointer">
+                  className="px-4 py-2 rounded-md text-[12px] font-semibold border border-line text-muted hover:bg-line transition-colors disabled:opacity-50 cursor-pointer">
                   Cancelar
                 </button>
                 <button type="submit" disabled={loading}
-                  className="flex items-center gap-2 px-5 py-2 rounded-md text-[12px] font-semibold text-[#0d1d37] transition-opacity disabled:opacity-50 cursor-pointer"
+                  className="flex items-center gap-2 px-5 py-2 rounded-md text-[12px] font-semibold text-canvas transition-opacity disabled:opacity-50 cursor-pointer"
                   style={{ backgroundColor: '#10b98b' }}>
                   {loading ? (
                     <>

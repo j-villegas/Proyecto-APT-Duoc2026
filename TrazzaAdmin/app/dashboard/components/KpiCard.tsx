@@ -71,7 +71,7 @@ export default function KpiCard({
   }
 
   return (
-    <div className="bg-[#142942] border border-[#2b405b] rounded-lg px-4 py-3.5 flex items-center gap-4 min-w-0">
+    <div className="bg-surface border border-line rounded-lg px-4 py-3.5 flex items-center gap-4 min-w-0">
       <div
         className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
         style={{ backgroundColor: t.iconBg }}
@@ -79,13 +79,13 @@ export default function KpiCard({
         {icon}
       </div>
       <div className="min-w-0 flex-1">
-        <p className="text-[10px] font-semibold uppercase tracking-wider text-[#a8b8cc] leading-none">
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted leading-none">
           {label}
         </p>
         <p className="text-[22px] font-bold leading-tight mt-1" style={{ color: '#f1f5f9' }}>
           {value}
         </p>
-        <p className="text-[11px] text-[#a8b8cc] leading-none mt-0.5 truncate">{sub}</p>
+        <p className="text-[11px] text-muted leading-none mt-0.5 truncate">{sub}</p>
       </div>
       <div
         className="w-1 h-9 rounded-full flex-shrink-0 ml-1"

@@ -21,8 +21,8 @@ export default function PassengerHistoryScreen({ navigation }: { navigation: Nav
 
   useFocusEffect(
     useCallback(() => {
-      if (!profile) return;
-      getPassengerHistory(profile.id)
+      if (!profile?.passenger_id) return;
+      getPassengerHistory(profile.passenger_id)
         .then(setTrips)
         .catch(() => setTrips([]));
     }, [profile])
