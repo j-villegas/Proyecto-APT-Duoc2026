@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import MapView, { Marker } from "react-native-maps";
+import MapView, { Marker } from "../lib/maps";
 import * as Location from "expo-location";
 import { Button } from "./Button";
 import { useAuth } from "../context/AuthContext";

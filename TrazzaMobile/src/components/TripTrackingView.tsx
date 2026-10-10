@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import MapView, { Marker } from "react-native-maps";
+import MapView, { Marker } from "../lib/maps";
 import { StatusStepper, type Step } from "./StatusStepper";
 import { Button } from "./Button";
 import { getServiceById, getServiceDriver } from "../services/services";

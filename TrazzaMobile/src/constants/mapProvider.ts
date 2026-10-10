@@ -1,6 +1,6 @@
 import { Platform } from "react-native";
 import Constants, { ExecutionEnvironment } from "expo-constants";
-import { PROVIDER_GOOGLE } from "react-native-maps";
+import { PROVIDER_GOOGLE } from "../lib/maps";
 
 const isExpoGo = Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
 

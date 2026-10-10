@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as Linking from "expo-linking";
-import MapView, { Marker } from "react-native-maps";
+import MapView, { Marker } from "../lib/maps";
 import { darkMapStyle } from "../constants/mapStyle";
 import { mapProvider, supportsCustomMapStyle } from "../constants/mapProvider";
 import { colors, radius, spacing, typography } from "../constants/theme";
