@@ -74,7 +74,7 @@ Nota: en una base vacía, `001` falla porque sus funciones SQL referencian
 con `set check_function_bodies = off`.
 
 Antes de crear uno nuevo:
-- Usa el siguiente número disponible (el próximo es `026`).
+- Usa el siguiente número disponible (el próximo es `027`).
 - Si toca RLS, deja explícito qué patrón de aislamiento asume (ej.
   `profiles.company_id` vía `current_profile_company_id()`) por si el
   proyecto cambia de convención.
