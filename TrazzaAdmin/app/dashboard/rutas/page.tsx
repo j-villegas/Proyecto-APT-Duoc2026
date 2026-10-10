@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
-import { todayCL } from '@/lib/date'
+import { addDays, isPastCL, nowCL, todayCL } from '@/lib/date'
+import { getServiceKpis } from '@/lib/service-kpis'
 import AddRouteModal from './components/AddRouteModal'
 import AddContractModal from './components/AddContractModal'
 import ContractsPanel from './components/ContractsPanel'
@@ -39,13 +40,10 @@ function visualStatus(
   dbStatus: string | null,
   scheduledDate: string | null,
   scheduledTime: string | null,
+  now: ReturnType<typeof nowCL>,
 ): string {
   if (dbStatus !== 'scheduled') return dbStatus ?? ''
-  const dateStr = scheduledDate ?? ''
-  const timeStr = scheduledTime ?? '00:00:00'
-  if (!dateStr) return 'scheduled'
-  const scheduledAt = new Date(`${dateStr}T${timeStr}`)
-  return scheduledAt < new Date() ? 'overdue' : 'scheduled'
+  return isPastCL(scheduledDate, scheduledTime, now) ? 'overdue' : 'scheduled'
 }
 
 function statusMeta(vstatus: string | null): { label: string; bg: string; text: string } {
@@ -137,46 +135,11 @@ export default async function RutasPage() {
     : { data: null }
 
   const [
-    { count: alertsOpen },
-    { count: servicesCompleted },
-    { count: servicesCancelled },
-    { count: servicesInProgressCount },
-    { count: servicesScheduledCount },
-    { data: overdueScheduledRows },
+    kpis,
     { data: rawServices },
     { data: rawContracts },
   ] = await Promise.all([
-    supabase
-      .from('operational_alerts')
-      .select('*', { count: 'exact', head: true })
-      .eq('status', 'open'),
-
-    supabase
-      .from('services')
-      .select('*', { count: 'exact', head: true })
-      .eq('status', 'completed'),
-
-    supabase
-      .from('services')
-      .select('*', { count: 'exact', head: true })
-      .eq('status', 'cancelled'),
-
-    supabase
-      .from('services')
-      .select('*', { count: 'exact', head: true })
-      .eq('status', 'in_progress'),
-
-    supabase
-      .from('services')
-      .select('*', { count: 'exact', head: true })
-      .eq('status', 'scheduled'),
-
-    // Scheduled services up to today — filtered in JS to find truly overdue ones
-    supabase
-      .from('services')
-      .select('scheduled_date, scheduled_start_time')
-      .eq('status', 'scheduled')
-      .lte('scheduled_date', today),
+    getServiceKpis(supabase),
 
     supabase
       .from('services')
@@ -191,7 +154,7 @@ export default async function RutasPage() {
       `)
       .in('status', ['scheduled', 'in_progress'])
       .is('deleted_at', null)
-      .gte('scheduled_date', (() => { const d = new Date(); d.setDate(d.getDate() - 7); return d.toISOString().slice(0, 10) })())
+      .gte('scheduled_date', addDays(today, -7))
       .order('scheduled_date', { ascending: true })
       .order('scheduled_start_time', { ascending: true })
       .limit(30),
@@ -207,23 +170,8 @@ export default async function RutasPage() {
 
   const services  = (rawServices  ?? []) as ServiceRow[]
   const contracts = (rawContracts ?? []) as ContractRow[]
-
-  // Overdue = scheduled services whose date+time is already in the past
-  const overdueCount = ((overdueScheduledRows ?? []) as { scheduled_date: string | null; scheduled_start_time: string | null }[])
-    .filter(s => {
-      if (!s.scheduled_date) return false
-      const t = s.scheduled_start_time ?? '00:00:00'
-      return new Date(`${s.scheduled_date}T${t}`) < new Date()
-    }).length
-
-  const evaluableCount = (servicesCompleted ?? 0) + (servicesCancelled ?? 0) + overdueCount
-  const efficiencyPct  = evaluableCount > 0
-    ? Math.round((servicesCompleted ?? 0) / evaluableCount * 100)
-    : null
-
-  // Derived KPI counts
-  const inProgressKpi = servicesInProgressCount ?? 0
-  const scheduledFutureKpi = Math.max(0, (servicesScheduledCount ?? 0) - overdueCount)
+  const { compliancePct: efficiencyPct, completedCount, evaluableCount } = kpis
+  const overdueCount = kpis.overdueRows.length
 
   return (
     <div className="space-y-4">
@@ -244,20 +192,20 @@ export default async function RutasPage() {
         <KpiCard
           label="Cumplimiento de Rutas"
           value={efficiencyPct !== null ? `${efficiencyPct}%` : '—'}
-          sub={efficiencyPct !== null ? `${servicesCompleted ?? 0} / ${evaluableCount} servicios` : 'Sin servicios evaluables'}
+          sub={efficiencyPct !== null ? `${completedCount} / ${evaluableCount} servicios` : 'Sin servicios evaluables'}
           tone="green"
           icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="#55d9ad" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
         />
         <KpiCard
           label="Programadas"
-          value={scheduledFutureKpi}
+          value={kpis.scheduledFutureCount}
           sub="Servicios pendientes"
           tone="blue"
           icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="#7dbbff" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" /></svg>}
         />
         <KpiCard
           label="En Ruta"
-          value={inProgressKpi}
+          value={kpis.inProgressCount}
           sub="Servicios activos"
           tone="orange"
           icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="#10b98b" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z" /></svg>}
@@ -311,7 +259,7 @@ export default async function RutasPage() {
                 </thead>
                 <tbody>
                   {services.map((svc) => {
-                    const vstatus = visualStatus(svc.status, svc.scheduled_date, svc.scheduled_start_time)
+                    const vstatus = visualStatus(svc.status, svc.scheduled_date, svc.scheduled_start_time, kpis.now)
                     const sm      = statusMeta(vstatus)
                     const driver  = Array.isArray(svc.drivers)  ? svc.drivers[0]  : svc.drivers
                     const vehicle = Array.isArray(svc.vehicles) ? svc.vehicles[0] : svc.vehicles

@@ -2,7 +2,8 @@
 
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { todayCL } from '@/lib/date'
+import { addDays, dayStartCL, isPastCL, todayCL } from '@/lib/date'
+import { getServiceKpis } from '@/lib/service-kpis'
 import DashboardAlertsModal from './components/DashboardAlertsModal'
 import KpiCard from './components/KpiCard'
 import GoogleMapPanel from './components/GoogleMapPanel'
@@ -15,8 +16,6 @@ type ServiceTodayRow = {
   status: string | null
   scheduled_date: string | null
   scheduled_start_time: string | null
-  origin: string | null
-  destination: string | null
   drivers: { full_name: string | null } | null
   vehicles: { plate: string | null; capacity_passengers: number | null } | null
 }
@@ -120,15 +119,13 @@ export default async function DashboardPage() {
   const supabase = await createClient()
 
   const today    = todayCL()
-  const todayStart  = today + 'T00:00:00.000Z'
-  const tomorrowStart = new Date(Date.now() + 86400000).toISOString().split('T')[0] + 'T00:00:00.000Z'
-  const in7Days  = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10)
-  const in30Days = new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10)
+  const todayStart    = dayStartCL(today)
+  const tomorrowStart = dayStartCL(addDays(today, 1))
+  const in30Days = addDays(today, 30)
 
   const [
     { count: fleetActiveCount },
-    { count: completedCount },
-    { count: cancelledCount },
+    kpis,
     { count: critOACount },
     { data: fuelToday },
     { data: rawMaintAlerts },
@@ -136,18 +133,14 @@ export default async function DashboardPage() {
     { data: rawIncidents },
     { data: rawOAAlerts },
     { data: servicesToday },
-    { data: overdueScheduledRows },
   ] = await Promise.all([
     // KPI 1: active fleet (available + in_service + maintenance, not deleted)
     supabase.from('vehicles').select('*', { count: 'exact', head: true })
       .is('deleted_at', null)
       .in('status', ['available', 'in_service', 'maintenance']),
 
-    // KPI 2: cumplimiento — completed services
-    supabase.from('services').select('*', { count: 'exact', head: true }).eq('status', 'completed'),
-
-    // KPI 2: cumplimiento — cancelled services
-    supabase.from('services').select('*', { count: 'exact', head: true }).eq('status', 'cancelled'),
+    // KPI 2: cumplimiento + servicios no iniciados (excluye eliminados, hora de Chile)
+    getServiceKpis(supabase),
 
     // KPI 3 partial: operational_alerts critical + open
     supabase.from('operational_alerts').select('*', { count: 'exact', head: true })
@@ -183,16 +176,12 @@ export default async function DashboardPage() {
 
     // Routes today: scheduled or in_progress with driver/vehicle join
     supabase.from('services')
-      .select('id, service_code, status, scheduled_date, scheduled_start_time, origin, destination, drivers:driver_id(full_name), vehicles:vehicle_id(plate, capacity_passengers)')
+      .select('id, service_code, status, scheduled_date, scheduled_start_time, drivers:driver_id(full_name), vehicles:vehicle_id(plate, capacity_passengers)')
       .eq('scheduled_date', today)
+      .is('deleted_at', null)
       .in('status', ['scheduled', 'in_progress'])
       .order('scheduled_start_time', { ascending: true })
       .limit(15),
-
-    // Overdue scheduled (for cumplimiento + critical KPI + alert list)
-    supabase.from('services')
-      .select('id, service_code, scheduled_date, scheduled_start_time')
-      .eq('status', 'scheduled').lte('scheduled_date', today),
   ])
 
   // ── Derived values ─────────────────────────────────────────────────────────
@@ -201,18 +190,8 @@ export default async function DashboardPage() {
     (acc, r) => acc + (r.liters ?? 0), 0
   )
 
-  const now = new Date()
-  type OverdueRow = { id: string; service_code: string | null; scheduled_date: string | null; scheduled_start_time: string | null }
-  const overdueRows   = ((overdueScheduledRows ?? []) as OverdueRow[]).filter(s => {
-    if (!s.scheduled_date) return false
-    const t = s.scheduled_start_time ?? '00:00:00'
-    return new Date(`${s.scheduled_date}T${t}`) < now
-  })
+  const { now, overdueRows, completedCount, evaluableCount, compliancePct: cumplimiento } = kpis
   const overdueCount  = overdueRows.length
-
-  const evaluableCount = (completedCount ?? 0) + (cancelledCount ?? 0) + overdueCount
-  const cumplimiento   = evaluableCount > 0
-    ? Math.round((completedCount ?? 0) / evaluableCount * 100) : null
 
   // KPI 3: aggregate all critical alert sources
   const maintAlerts  = (rawMaintAlerts ?? []) as MaintAlertRow[]
@@ -309,9 +288,7 @@ export default async function DashboardPage() {
   function getVisualStatus(s: ServiceTodayRow) {
     if (s.status === 'in_progress') return { label: 'En ruta',    bg: '#3b3020', text: '#f8cb78' }
     if (s.status === 'scheduled') {
-      const t  = s.scheduled_start_time ?? '00:00:00'
-      const dt = new Date(`${s.scheduled_date}T${t}`)
-      if (dt < now) return { label: 'No iniciada', bg: '#3d2332', text: '#fda4af' }
+      if (isPastCL(s.scheduled_date, s.scheduled_start_time, now)) return { label: 'No iniciada', bg: '#3d2332', text: '#fda4af' }
       return           { label: 'Programada',  bg: '#183352', text: '#7dbbff' }
     }
     return { label: s.status ?? '—', bg: '#203650', text: '#a8b8cc' }
@@ -336,7 +313,7 @@ export default async function DashboardPage() {
         <KpiCard
           label="Cumplimiento"
           value={cumplimiento !== null ? `${cumplimiento}%` : '—'}
-          sub={cumplimiento !== null ? `${completedCount ?? 0} / ${evaluableCount} servicios` : 'Sin servicios evaluables'}
+          sub={cumplimiento !== null ? `${completedCount} / ${evaluableCount} servicios` : 'Sin servicios evaluables'}
           tone="green"
           icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="#55d9ad" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
         />

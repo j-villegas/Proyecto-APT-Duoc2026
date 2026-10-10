@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import Sidebar from './components/Sidebar'
 import Header from './components/Header'
 import GoogleMapsProvider from './components/GoogleMapsProvider'
+import LiveRefresh from './components/LiveRefresh'
 
 export default async function DashboardLayout({
   children,
@@ -72,6 +73,7 @@ export default async function DashboardLayout({
       <Sidebar companyName={company?.name ?? 'Empresa'} userEmail={user.email ?? ''} />
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         <Header />
+        <LiveRefresh />
         <GoogleMapsProvider>
           <main className="flex-1 overflow-y-auto p-4 md:p-6" style={{ backgroundColor: '#0d1d37' }}>
             {children}
