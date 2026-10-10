@@ -1,3 +1,6 @@
+// Tipos que usan las pantallas de la app. La base es la del panel
+// (TrazzaAdmin/migrations); src/services/* traduce sus filas a estos tipos.
+
 export type UserRole = "pasajero" | "conductor";
 
 export type ServiceStatus =
@@ -24,12 +27,25 @@ export type IncidentPriority = "baja" | "media" | "alta";
 
 export interface Profile {
   id: string;
+  company_id: string;
   full_name: string;
   role: UserRole;
   phone: string | null;
+  /** Fila de drivers vinculada (solo conductores). */
+  driver_id: string | null;
+  /** Fila de passengers vinculada (solo pasajeros). */
+  passenger_id: string | null;
   avatar_url: string | null;
   rating: number | null;
   created_at: string;
+}
+
+/** Datos públicos del conductor de un servicio (función get_service_driver). */
+export interface DriverInfo {
+  id: string;
+  full_name: string;
+  phone: string | null;
+  rating: number | null;
 }
 
 export interface Vehicle {
@@ -38,7 +54,6 @@ export interface Vehicle {
   model: string;
   brand: string;
   capacity: number;
-  driver_id: string | null;
 }
 
 export interface ServiceStop {
@@ -56,8 +71,9 @@ export interface Service {
   id: string;
   code: string;
   contract_name: string | null;
-  driver_id: string;
-  vehicle_id: string;
+  /** drivers.id (no el id del perfil). */
+  driver_id: string | null;
+  vehicle_id: string | null;
   origin_label: string;
   origin_address: string;
   destination_label: string;
@@ -74,47 +90,85 @@ export interface Service {
   created_at: string;
 }
 
-export interface TripPassenger {
-  id: string;
-  service_id: string;
-  passenger_id: string;
-  pickup_stop_id: string | null;
-}
-
 export interface DriverLocation {
-  driver_id: string;
-  service_id: string | null;
+  service_id: string;
   latitude: number;
   longitude: number;
   heading: number | null;
+  /** km/h */
   speed: number | null;
   updated_at: string;
 }
 
-export interface Incident {
+// Filas de la base del panel ------------------------------------------------
+
+export type DbProfileRole = "admin" | "driver" | "passenger";
+export type DbServiceStatus = "scheduled" | "in_progress" | "completed" | "cancelled";
+export type DbStopStatus = "pending" | "next" | "arrived" | "completed" | "skipped";
+
+/** Los numeric de Postgres pueden llegar como string. */
+type Numeric = number | string;
+
+export interface DbProfile {
   id: string;
-  service_id: string | null;
-  reporter_id: string;
-  category: IncidentType;
-  title: string;
-  description: string;
-  priority: IncidentPriority;
-  photo_urls: string[];
-  latitude: number | null;
-  longitude: number | null;
+  company_id: string;
+  full_name: string;
+  email: string;
+  phone: string | null;
+  role: DbProfileRole;
+  status: string;
   created_at: string;
+  drivers?: { id: string; deleted_at: string | null }[] | null;
+  passengers?: { id: string; deleted_at: string | null }[] | null;
 }
 
-export interface Database {
-  public: {
-    Tables: {
-      profiles: { Row: Profile; Insert: Partial<Profile>; Update: Partial<Profile> };
-      vehicles: { Row: Vehicle; Insert: Partial<Vehicle>; Update: Partial<Vehicle> };
-      services: { Row: Service; Insert: Partial<Service>; Update: Partial<Service> };
-      service_stops: { Row: ServiceStop; Insert: Partial<ServiceStop>; Update: Partial<ServiceStop> };
-      trip_passengers: { Row: TripPassenger; Insert: Partial<TripPassenger>; Update: Partial<TripPassenger> };
-      driver_locations: { Row: DriverLocation; Insert: Partial<DriverLocation>; Update: Partial<DriverLocation> };
-      incidents: { Row: Incident; Insert: Partial<Incident>; Update: Partial<Incident> };
-    };
-  };
+export interface DbServiceRow {
+  id: string;
+  service_code: string;
+  status: DbServiceStatus;
+  driver_id: string | null;
+  vehicle_id: string | null;
+  created_at: string;
+  scheduled_at: string;
+  eta: string | null;
+  passenger_count: number | null;
+  route: {
+    origin_name: string | null;
+    origin_address: string | null;
+    origin_latitude: Numeric | null;
+    origin_longitude: Numeric | null;
+    destination_name: string | null;
+    destination_address: string | null;
+    destination_latitude: Numeric | null;
+    destination_longitude: Numeric | null;
+  } | null;
+  contract: { contract_name: string | null; client_name: string } | null;
+}
+
+export interface DbServiceStopRow {
+  id: string;
+  service_id: string;
+  stop_order: number;
+  name: string;
+  address: string | null;
+  status: DbStopStatus;
+  eta: string | null;
+  passenger_count: number | null;
+}
+
+export interface DbVehicleRow {
+  id: string;
+  plate: string;
+  brand: string | null;
+  model: string | null;
+  capacity_passengers: number | null;
+}
+
+export interface DbServiceLocationRow {
+  service_id: string;
+  latitude: Numeric;
+  longitude: Numeric;
+  heading: Numeric | null;
+  speed_kmh: Numeric | null;
+  recorded_at: string;
 }

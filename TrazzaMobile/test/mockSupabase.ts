@@ -1,5 +1,5 @@
 import type { Session } from "@supabase/supabase-js";
-import type { Profile } from "../src/types/database";
+import type { DbProfile } from "../src/types/database";
 
 type Listener = (event: string, session: Session | null) => void;
 
@@ -20,16 +20,20 @@ export const CARLOS: FakeUser = {
   password: "Conductor123!",
 };
 
-export function makeProfile(user: FakeUser, overrides: Partial<Profile> = {}): Profile {
+/** Fila de profiles tal como la devuelve la base del panel (con su conductor/pasajero vinculado). */
+export function makeProfile(user: FakeUser, overrides: Partial<DbProfile> = {}): DbProfile {
   const isJuan = user.id === JUAN.id;
   return {
     id: user.id,
+    company_id: "c0000000-0000-4000-8000-000000000001",
     full_name: isJuan ? "Juan Marchant" : "Carlos Mendoza",
-    role: isJuan ? "pasajero" : "conductor",
+    email: user.email,
+    role: isJuan ? "passenger" : "driver",
+    status: "active",
     phone: null,
-    avatar_url: null,
-    rating: null,
     created_at: "2026-01-01T00:00:00Z",
+    drivers: isJuan ? [] : [{ id: `driver-${user.id}`, deleted_at: null }],
+    passengers: isJuan ? [{ id: `passenger-${user.id}`, deleted_at: null }] : [],
     ...overrides,
   };
 }

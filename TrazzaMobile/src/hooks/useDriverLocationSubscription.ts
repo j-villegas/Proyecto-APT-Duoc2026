@@ -1,36 +1,43 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
-import type { DriverLocation } from "../types/database";
+import { mapLocation } from "../services/mappers";
+import type { DbServiceLocationRow, DriverLocation } from "../types/database";
 
-export function useDriverLocationSubscription(driverId: string | null) {
+/** Última posición del conductor de un servicio, en vivo. */
+export function useDriverLocationSubscription(serviceId: string | null) {
   const [location, setLocation] = useState<DriverLocation | null>(null);
 
   useEffect(() => {
-    if (!driverId) return;
+    if (!serviceId) return;
 
     let active = true;
 
     supabase
-      .from("driver_locations")
-      .select("*")
-      .eq("driver_id", driverId)
+      .from("service_locations")
+      .select("service_id, latitude, longitude, heading, speed_kmh, recorded_at")
+      .eq("service_id", serviceId)
+      .order("recorded_at", { ascending: false })
+      .limit(1)
       .maybeSingle()
       .then(({ data }) => {
-        if (active && data) setLocation(data as DriverLocation);
+        const mapped = data ? mapLocation(data as DbServiceLocationRow) : null;
+        if (active && mapped) setLocation(mapped);
       });
 
+    // service_locations es append-only: cada ping es un INSERT.
     const channel = supabase
-      .channel(`driver-location-${driverId}`)
+      .channel(`service-location-${serviceId}`)
       .on(
         "postgres_changes",
         {
-          event: "*",
+          event: "INSERT",
           schema: "public",
-          table: "driver_locations",
-          filter: `driver_id=eq.${driverId}`,
+          table: "service_locations",
+          filter: `service_id=eq.${serviceId}`,
         },
         (payload) => {
-          if (active) setLocation(payload.new as DriverLocation);
+          const mapped = mapLocation(payload.new as DbServiceLocationRow);
+          if (active && mapped) setLocation(mapped);
         }
       )
       .subscribe();
@@ -39,7 +46,7 @@ export function useDriverLocationSubscription(driverId: string | null) {
       active = false;
       supabase.removeChannel(channel);
     };
-  }, [driverId]);
+  }, [serviceId]);
 
   return location;
 }

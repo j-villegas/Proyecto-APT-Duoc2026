@@ -38,7 +38,6 @@ export default function ReportIncidentScreen({ route, navigation }: Props) {
     try {
       await createIncident({
         serviceId,
-        reporterId: profile.id,
         category: selected,
         title: CATEGORIES.find((c) => c.key === selected)?.label ?? selected,
         description,

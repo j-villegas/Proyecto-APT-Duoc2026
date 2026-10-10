@@ -48,8 +48,33 @@ que **todavía no está aplicado** en la base real — es la causa del error
 "Could not find the table 'public.contract_passengers'" al asociar
 pasajeros a un contrato. Hay que correrlo en el SQL Editor.
 
+## 025: app móvil
+
+`025_mobile_app.sql` conecta la app móvil (`TrazzaMobile`) a esta misma
+base. Antes la app tenía su propio proyecto de Supabase.
+
+- Los pasajeros pueden tener login (`profiles.role = 'passenger'`,
+  `passengers.profile_id`). `current_profile_company_id()` devuelve `null`
+  para ellos: no ven datos de la empresa, solo sus propios servicios
+  (policies `*_passenger`).
+- Conductores y pasajeros escriben solo mediante funciones `mobile_*`
+  (security definer): iniciar/finalizar servicio, estado de paradas,
+  ubicación GPS e incidentes. Cada función valida que el servicio sea
+  del usuario que la llama, y registra en `service_events`.
+- **Cuentas:** al crear un usuario en Authentication > Users con el mismo
+  correo de un conductor o pasajero del panel, se crea su perfil y se
+  vincula solo (también funciona en el orden inverso).
+- Agrega `incidents.photo_urls`, el bucket `incident-photos` y realtime
+  para `services`, `service_stops` y `service_locations`.
+- Corrige las policies de `contract_passengers` (024) para que usen
+  `current_profile_company_id()`.
+
+Nota: en una base vacía, `001` falla porque sus funciones SQL referencian
+`profiles` antes de que exista. Para construir el schema desde cero, corre
+con `set check_function_bodies = off`.
+
 Antes de crear uno nuevo:
-- Usa el siguiente número disponible (el próximo es `025`).
+- Usa el siguiente número disponible (el próximo es `026`).
 - Si toca RLS, deja explícito qué patrón de aislamiento asume (ej.
   `profiles.company_id` vía `current_profile_company_id()`) por si el
   proyecto cambia de convención.

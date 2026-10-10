@@ -53,9 +53,8 @@ export function DriverActiveRouteView({ serviceId, onReportIncident }: Props) {
   }, []);
 
   useDriverLocationBroadcast({
-    driverId: profile?.id ?? "",
     serviceId,
-    enabled: !!profile,
+    enabled: !!profile && service?.status === "en_ruta",
   });
 
   const nextStop = stops.find((s) => s.status !== "completada");
@@ -70,6 +69,7 @@ export function DriverActiveRouteView({ serviceId, onReportIncident }: Props) {
     const remaining = stops.filter((s) => s.id !== nextStop?.id && s.status !== "completada");
     if (remaining.length === 0 && service) {
       await updateServiceStatus(service.id, "finalizado");
+      setService({ ...service, status: "finalizado" });
     }
   };
 

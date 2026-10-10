@@ -29,8 +29,8 @@ export default function DriverRoutesScreen({ navigation }: { navigation: Nav }) 
 
   useFocusEffect(
     useCallback(() => {
-      if (!profile) return;
-      getDriverServices(profile.id)
+      if (!profile?.driver_id) return;
+      getDriverServices(profile.driver_id)
         .then(setServices)
         .catch(() => setServices([]));
     }, [profile])

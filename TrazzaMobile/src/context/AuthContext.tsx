@@ -4,7 +4,8 @@ import * as Linking from "expo-linking";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
 import { getPasswordResetRedirectUrl, parseAuthRedirect } from "../lib/authLinks";
-import type { Profile } from "../types/database";
+import { mapProfile } from "../services/mappers";
+import type { DbProfile, Profile } from "../types/database";
 
 type Result = { error: string | null };
 
@@ -40,21 +41,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     currentUserId.current = userId;
     const { data, error } = await supabase
       .from("profiles")
-      .select("*")
+      .select(
+        "id, company_id, full_name, email, phone, role, status, created_at, drivers(id, deleted_at), passengers(id, deleted_at)"
+      )
       .eq("id", userId)
       .maybeSingle();
 
     if (currentUserId.current !== userId) return;
+    const row = data as DbProfile | null;
+    const mapped = row ? mapProfile(row) : null;
     if (error) {
       console.warn("[auth] error al cargar el perfil", error.message);
       setProfileError("No pudimos cargar tu perfil. Intenta de nuevo.");
       setProfile(null);
-    } else if (!data || data.id !== userId) {
+    } else if (!row || row.id !== userId) {
       setProfileError("Tu cuenta no tiene un perfil asignado. Contacta al administrador.");
+      setProfile(null);
+    } else if (row.status !== "active") {
+      setProfileError("Tu cuenta está desactivada. Contacta al administrador.");
+      setProfile(null);
+    } else if (!mapped) {
+      setProfileError("Esta app es para conductores y pasajeros. Usa el panel web de administración.");
+      setProfile(null);
+    } else if (!mapped.driver_id && !mapped.passenger_id) {
+      setProfileError(
+        mapped.role === "conductor"
+          ? "Tu cuenta no está vinculada a un conductor del panel. Contacta al administrador."
+          : "Tu cuenta no está vinculada a un pasajero del panel. Contacta al administrador."
+      );
       setProfile(null);
     } else {
       setProfileError(null);
-      setProfile(data);
+      setProfile(mapped);
     }
   };
 

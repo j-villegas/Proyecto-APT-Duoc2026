@@ -9,9 +9,8 @@ import { Button } from "../../components/Button";
 import { StatusBadge } from "../../components/StatusBadge";
 import { RoutePoints } from "../../components/RoutePoints";
 import { TripRouteMap } from "../../components/TripRouteMap";
-import { getServiceById, getVehicleById } from "../../services/services";
-import { supabase } from "../../lib/supabase";
-import type { Profile, Service, Vehicle } from "../../types/database";
+import { getServiceById, getServiceDriver, getVehicleById } from "../../services/services";
+import type { DriverInfo, Service, Vehicle } from "../../types/database";
 import { colors, spacing, typography } from "../../constants/theme";
 import { formatTime } from "../../utils/format";
 import type { PassengerStackParamList } from "../../navigation/types";
@@ -22,7 +21,7 @@ export default function TripDetailScreen({ route, navigation }: Props) {
   const { serviceId } = route.params;
   const [service, setService] = useState<Service | null>(null);
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
-  const [driver, setDriver] = useState<Profile | null>(null);
+  const [driver, setDriver] = useState<DriverInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,12 +32,12 @@ export default function TripDetailScreen({ route, navigation }: Props) {
       try {
         const svc = await getServiceById(serviceId);
         setService(svc);
-        const [veh, { data: driverData }] = await Promise.all([
-          getVehicleById(svc.vehicle_id),
-          supabase.from("profiles").select("*").eq("id", svc.driver_id).maybeSingle(),
+        const [veh, driverInfo] = await Promise.all([
+          svc.vehicle_id ? getVehicleById(svc.vehicle_id) : Promise.resolve(null),
+          getServiceDriver(serviceId),
         ]);
         setVehicle(veh);
-        setDriver(driverData as Profile | null);
+        setDriver(driverInfo);
       } catch (err) {
         setError(err instanceof Error ? err.message : "No se pudo cargar el viaje.");
       } finally {

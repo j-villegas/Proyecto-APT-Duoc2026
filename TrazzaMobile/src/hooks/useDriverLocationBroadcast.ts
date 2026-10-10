@@ -3,12 +3,12 @@ import * as Location from "expo-location";
 import { supabase } from "../lib/supabase";
 
 interface Options {
-  driverId: string;
   serviceId: string;
   enabled: boolean;
 }
 
-export function useDriverLocationBroadcast({ driverId, serviceId, enabled }: Options) {
+/** Publica la posición del conductor en service_locations (la ve el pasajero y el panel). */
+export function useDriverLocationBroadcast({ serviceId, enabled }: Options) {
   const [error, setError] = useState<string | null>(null);
   const subscriptionRef = useRef<Location.LocationSubscription | null>(null);
 
@@ -36,16 +36,17 @@ export function useDriverLocationBroadcast({ driverId, serviceId, enabled }: Opt
         },
         async (location) => {
           if (cancelled) return;
-          const { latitude, longitude, heading, speed } = location.coords;
-          await supabase.from("driver_locations").upsert({
-            driver_id: driverId,
-            service_id: serviceId,
-            latitude,
-            longitude,
-            heading,
-            speed,
-            updated_at: new Date().toISOString(),
+          const { latitude, longitude, heading, speed, accuracy } = location.coords;
+          const { error: rpcError } = await supabase.rpc("mobile_report_location", {
+            p_service_id: serviceId,
+            p_latitude: latitude,
+            p_longitude: longitude,
+            // expo-location entrega m/s y -1 cuando no hay dato.
+            p_speed_kmh: speed !== null && speed >= 0 ? speed * 3.6 : null,
+            p_heading: heading !== null && heading >= 0 ? heading : null,
+            p_accuracy_meters: accuracy,
           });
+          if (rpcError) setError(rpcError.message);
         }
       );
 
@@ -61,7 +62,7 @@ export function useDriverLocationBroadcast({ driverId, serviceId, enabled }: Opt
       subscriptionRef.current?.remove();
       subscriptionRef.current = null;
     };
-  }, [driverId, serviceId, enabled]);
+  }, [serviceId, enabled]);
 
   return { error };
 }

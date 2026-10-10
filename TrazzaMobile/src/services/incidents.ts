@@ -3,7 +3,6 @@ import type { IncidentPriority, IncidentType } from "../types/database";
 
 export interface CreateIncidentInput {
   serviceId: string | null;
-  reporterId: string;
   category: IncidentType;
   title: string;
   description: string;
@@ -12,17 +11,20 @@ export interface CreateIncidentInput {
   longitude?: number | null;
 }
 
+/**
+ * La base identifica al conductor o pasajero por la sesión y completa empresa,
+ * ruta, vehículo y tipo de incidente (mobile_report_incident).
+ */
 export async function createIncident(input: CreateIncidentInput & { photoUrls?: string[] }) {
-  const { error } = await supabase.from("incidents").insert({
-    service_id: input.serviceId,
-    reporter_id: input.reporterId,
-    category: input.category,
-    title: input.title,
-    description: input.description,
-    priority: input.priority ?? "media",
-    latitude: input.latitude ?? null,
-    longitude: input.longitude ?? null,
-    photo_urls: input.photoUrls ?? [],
+  const { error } = await supabase.rpc("mobile_report_incident", {
+    p_service_id: input.serviceId,
+    p_category: input.category,
+    p_title: input.title,
+    p_description: input.description,
+    p_priority: input.priority ?? "media",
+    p_latitude: input.latitude ?? null,
+    p_longitude: input.longitude ?? null,
+    p_photo_urls: input.photoUrls ?? [],
   });
   if (error) throw error;
 }

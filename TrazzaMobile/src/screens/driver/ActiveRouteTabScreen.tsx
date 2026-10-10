@@ -19,9 +19,9 @@ export default function ActiveRouteTabScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      if (!profile) return;
+      if (!profile?.driver_id) return;
       setLoading(true);
-      getDriverServices(profile.id)
+      getDriverServices(profile.driver_id)
         .then((list) => {
           const active = list.find((s) => s.status === "en_ruta" || s.status === "en_camino");
           setServiceId(active?.id ?? null);

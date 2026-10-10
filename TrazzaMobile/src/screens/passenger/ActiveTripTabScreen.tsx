@@ -23,9 +23,9 @@ export default function ActiveTripTabScreen(_props: TabProps) {
 
   useFocusEffect(
     useCallback(() => {
-      if (!profile) return;
+      if (!profile?.passenger_id) return;
       setLoading(true);
-      getNextServiceForPassenger(profile.id)
+      getNextServiceForPassenger(profile.passenger_id)
         .then((service) => setServiceId(service?.id ?? null))
         .catch(() => setServiceId(null))
         .finally(() => setLoading(false));
