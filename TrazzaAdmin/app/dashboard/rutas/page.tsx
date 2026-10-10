@@ -152,9 +152,10 @@ export default async function RutasPage() {
         drivers ( id, full_name ),
         vehicles ( id, plate, model )
       `)
-      .in('status', ['scheduled', 'in_progress'])
+      // En curso: siempre (aunque sean de días anteriores, siguen activos y
+      // cuentan en el KPI "En Ruta"). Programados: solo la última semana.
+      .or(`status.eq.in_progress,and(status.eq.scheduled,scheduled_date.gte.${addDays(today, -7)})`)
       .is('deleted_at', null)
-      .gte('scheduled_date', addDays(today, -7))
       .order('scheduled_date', { ascending: true })
       .order('scheduled_start_time', { ascending: true })
       .limit(30),
