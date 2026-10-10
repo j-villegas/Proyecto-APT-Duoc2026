@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { friendlyError } from '@/lib/errors'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -96,7 +97,7 @@ function Field({
 }) {
   return (
     <div className={span === 2 ? 'col-span-2' : ''}>
-      <label className="block text-[10px] font-semibold uppercase tracking-wide text-[#a8b8cc] mb-1">
+      <label className="block text-[10px] font-semibold uppercase tracking-wide text-muted mb-1">
         {label}{required && <span className="text-red-400 ml-0.5">*</span>}
       </label>
       {children}
@@ -108,18 +109,18 @@ function Field({
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
     <div className="col-span-2 flex items-center gap-2 pt-1">
-      <p className="text-[10px] font-bold uppercase tracking-widest text-[#a8b8cc]">{children}</p>
-      <div className="flex-1 h-px bg-[#203650]" />
+      <p className="text-[10px] font-bold uppercase tracking-widest text-muted">{children}</p>
+      <div className="flex-1 h-px bg-raised" />
     </div>
   )
 }
 
 const inputCls = (hasErr?: boolean) =>
-  `w-full px-2.5 py-1.5 text-[12px] border rounded-md bg-[#142942] text-[#f1f5f9] placeholder-[#a8b8cc]
+  `w-full px-2.5 py-1.5 text-[12px] border rounded-md bg-surface text-fg placeholder-muted
    focus:outline-none focus:ring-1 transition
    ${hasErr
-     ? 'border-[#794052] focus:ring-red-300 focus:border-[#794052]'
-     : 'border-[#2b405b] focus:ring-[#f1f5f9] focus:border-[#f1f5f9]'}`
+     ? 'border-danger-line focus:ring-red-300 focus:border-danger-line'
+     : 'border-line focus:ring-fg focus:border-fg'}`
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -146,7 +147,6 @@ export default function MaintenanceModal() {
     setLoadingV(false)
   }, [])
 
-  useEffect(() => { if (open) loadVehicles() }, [open, loadVehicles])
 
   useEffect(() => {
     if (!open) return
@@ -258,7 +258,7 @@ export default function MaintenanceModal() {
         .from('maintenance_orders')
         .insert(orderPayload)
 
-      if (orderErr) throw new Error(`Error al registrar: ${orderErr.message}`)
+      if (orderErr) throw new Error(friendlyError(orderErr, 'No se pudo registrar'))
 
       // If immediate → set vehicle to maintenance status
       if (form.action === 'immediate_maintenance') {
@@ -266,7 +266,7 @@ export default function MaintenanceModal() {
           .from('vehicles')
           .update({ status: 'maintenance' })
           .eq('id', form.vehicle_id)
-        if (vErr) throw new Error(`Error al actualizar el vehículo: ${vErr.message}`)
+        if (vErr) throw new Error(friendlyError(vErr, 'No se pudo actualizar el vehículo'))
       }
 
       // Optional: create operational_alert — silently ignore on failure
@@ -302,10 +302,10 @@ export default function MaintenanceModal() {
     <>
       {/* Trigger */}
       <button
-        onClick={() => setOpen(true)}
-        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md border border-[#2b405b] text-[12px] font-medium text-[#d5e0ed] hover:bg-[#10223d] transition-colors text-left cursor-pointer"
+        onClick={() => { setOpen(true); loadVehicles() }}
+        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md border border-line text-[12px] font-medium text-soft hover:bg-sunken transition-colors text-left cursor-pointer"
       >
-        <svg className="w-4 h-4 text-[#fda4af] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+        <svg className="w-4 h-4 text-danger-fg flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
         </svg>
         <span className="flex-1">Avisar Falla Mecánica</span>
@@ -317,17 +317,17 @@ export default function MaintenanceModal() {
           style={{ backgroundColor: 'rgba(3,22,54,0.52)', backdropFilter: 'blur(2px)' }}
           onClick={e => { if (e.target === e.currentTarget && !saving) handleClose() }}
         >
-          <div
-            className="bg-[#142942] rounded-lg border border-[#2b405b] w-full flex flex-col"
+          <div role="dialog" aria-modal="true"
+            className="bg-surface rounded-lg border border-line w-full flex flex-col"
             style={{ maxWidth: 760, maxHeight: '94vh' }}
           >
             {/* ── Header ── */}
             <div
-              className="flex items-start justify-between px-6 py-4 border-b border-[#2b405b] flex-shrink-0"
+              className="flex items-start justify-between px-6 py-4 border-b border-line flex-shrink-0"
               style={{ backgroundColor: '#10223d' }}
             >
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-md flex items-center justify-center flex-shrink-0 bg-[#3d2332]">
+                <div className="w-9 h-9 rounded-md flex items-center justify-center flex-shrink-0 bg-danger-bg">
                   <svg className="w-5 h-5 text-rose-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
                   </svg>
@@ -336,15 +336,15 @@ export default function MaintenanceModal() {
                   <h2 className="text-[14px] font-bold" style={{ color: '#f1f5f9' }}>
                     Avisar Falla / Ingreso a Mantención
                   </h2>
-                  <p className="text-[11px] text-[#a8b8cc] mt-0.5">
+                  <p className="text-[11px] text-muted mt-0.5">
                     Registra una falla o mantenimiento asociado a un vehículo.
                   </p>
                 </div>
               </div>
-              <button
+              <button aria-label="Cerrar"
                 onClick={handleClose}
                 disabled={saving}
-                className="w-7 h-7 flex items-center justify-center rounded-md text-[#a8b8cc] hover:text-[#f1f5f9] hover:bg-[#2b405b] transition-colors cursor-pointer disabled:opacity-40"
+                className="w-7 h-7 flex items-center justify-center rounded-md text-muted hover:text-fg hover:bg-line transition-colors cursor-pointer disabled:opacity-40"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -386,7 +386,7 @@ export default function MaintenanceModal() {
                       ? String(selectedVehicle.current_odometer_km) : '0'}
                   />
                   {selectedVehicle?.current_odometer_km != null && !errors.odometer_km && (
-                    <p className="text-[10px] text-[#a8b8cc] mt-0.5">
+                    <p className="text-[10px] text-muted mt-0.5">
                       Último registrado: {selectedVehicle.current_odometer_km.toLocaleString('es-CL')} km
                     </p>
                   )}
@@ -497,7 +497,7 @@ export default function MaintenanceModal() {
                             <p className="text-[12px] font-semibold" style={{ color: active ? opt.iconColor : '#d5e0ed' }}>
                               {opt.label}
                             </p>
-                            <p className="text-[10px] text-[#a8b8cc] mt-0.5">{opt.sub}</p>
+                            <p className="text-[10px] text-muted mt-0.5">{opt.sub}</p>
                           </div>
                           {active && (
                             <svg className="w-4 h-4 ml-auto flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke={opt.iconColor} strokeWidth={2.5}>
@@ -563,18 +563,18 @@ export default function MaintenanceModal() {
 
               {/* Action summary banner */}
               {form.action === 'immediate_maintenance' && (
-                <div className="mt-4 flex items-start gap-3 bg-[#3d2332] border border-[#794052] rounded-md px-4 py-3">
+                <div className="mt-4 flex items-start gap-3 bg-danger-bg border border-danger-line rounded-md px-4 py-3">
                   <svg className="w-4 h-4 text-rose-300 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
                   </svg>
                   <p className="text-[12px] text-rose-200">
-                    Al confirmar, <strong>el vehículo quedará en estado "Mantención"</strong> y no estará disponible para nuevos servicios hasta que se reintegre manualmente.
+                    Al confirmar, <strong>el vehículo quedará en estado «Mantención»</strong> y no estará disponible para nuevos servicios hasta que se reintegre manualmente.
                   </p>
                 </div>
               )}
 
               {form.action === 'scheduled_maintenance' && form.scheduled_date && (
-                <div className="mt-4 flex items-start gap-3 bg-[#183352] border border-[#355979] rounded-md px-4 py-3">
+                <div className="mt-4 flex items-start gap-3 bg-info-bg border border-[#355979] rounded-md px-4 py-3">
                   <svg className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
@@ -585,7 +585,7 @@ export default function MaintenanceModal() {
               )}
 
               {submitError && (
-                <div className="flex items-start gap-2.5 bg-[#3d2332] border border-[#794052] text-rose-200 rounded-md px-4 py-3 text-[12px] mt-4">
+                <div className="flex items-start gap-2.5 bg-danger-bg border border-danger-line text-rose-200 rounded-md px-4 py-3 text-[12px] mt-4">
                   <svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                   </svg>
@@ -596,14 +596,14 @@ export default function MaintenanceModal() {
 
             {/* ── Footer ── */}
             <div
-              className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[#2b405b] flex-shrink-0"
+              className="flex items-center justify-end gap-3 px-6 py-4 border-t border-line flex-shrink-0"
               style={{ backgroundColor: '#10223d' }}
             >
               <button
                 type="button"
                 onClick={handleClose}
                 disabled={saving}
-                className="px-4 py-2 rounded-md text-[12px] font-semibold border border-[#2b405b] text-[#a8b8cc] hover:bg-[#2b405b] transition-colors disabled:opacity-50 cursor-pointer"
+                className="px-4 py-2 rounded-md text-[12px] font-semibold border border-line text-muted hover:bg-line transition-colors disabled:opacity-50 cursor-pointer"
               >
                 Cancelar
               </button>

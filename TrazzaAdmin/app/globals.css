@@ -10,11 +10,40 @@
 }
 
 @theme inline {
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-manrope);
+  --font-mono: var(--font-jetbrains-mono);
+}
+
+/*
+ * Paleta de marca por significado. Se usan como clases de Tailwind:
+ * bg-surface, border-line, text-muted, bg-accent, text-danger-fg, etc.
+ * Cambiar un color aquí lo cambia en todo el panel.
+ */
+@theme {
+  --color-canvas:       #0d1d37; /* fondo de la aplicación */
+  --color-sunken:       #10223d; /* zonas hundidas: encabezados de tabla, inputs */
+  --color-surface:      #142942; /* tarjetas y modales */
+  --color-raised:       #203650; /* elementos sobre una tarjeta */
+  --color-line:         #2b405b; /* bordes y divisores */
+  --color-fg:           #f1f5f9; /* texto principal */
+  --color-soft:         #d5e0ed; /* texto secundario fuerte */
+  --color-muted:        #a8b8cc; /* texto secundario */
+  --color-accent:       #10b98b; /* en movimiento / acción principal */
+  --color-accent-hover: #36d3a7;
+  --color-accent-soft:  #55d9ad;
+  --color-success-bg:   #123b35;
+  --color-info-bg:      #183352;
+  --color-info-fg:      #7dbbff;
+  --color-warn-bg:      #3b3020;
+  --color-warn-line:    #755c33;
+  --color-warn-fg:      #fdba74;
+  --color-danger-bg:    #3d2332;
+  --color-danger-line:  #794052;
+  --color-danger-fg:    #fda4af;
 }
 
 @layer base {
-  body { margin: 0; }
+  body { margin: 0; font-feature-settings: "tnum" 1; } /* cifras tabulares: KPIs y tablas no "bailan" */
   button:not(:disabled), a, input { -webkit-tap-highlight-color: transparent; }
   :focus-visible { outline: 2px solid var(--trazza-accent); outline-offset: 3px; }
 }
@@ -29,3 +58,10 @@
 .trazza-dashboard input,
 .trazza-dashboard select,
 .trazza-dashboard textarea { color-scheme: dark; }
+
+/* Trazo de marca: la ruta se "dibuja" al aparecer. */
+.trazo-line .trazo-path { stroke-dashoffset: 120; animation: trazo-draw 1.2s ease-out forwards; }
+@keyframes trazo-draw { to { stroke-dashoffset: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .trazo-line .trazo-path { animation: none; stroke-dashoffset: 0; }
+}

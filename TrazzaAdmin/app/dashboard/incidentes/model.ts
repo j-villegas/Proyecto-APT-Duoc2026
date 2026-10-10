@@ -5,8 +5,8 @@ export const severities = { low: 'Baja', medium: 'Media', high: 'Alta', critical
 export type Status = keyof typeof statuses
 export type Severity = keyof typeof severities
 export type ActionState = { error?: string; success?: string; revision?: string }
-export const inputClass = 'w-full rounded-xl border border-[#2b405b] bg-[#10223d] px-3 py-2.5 text-sm text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#10b98b]'
-export const buttonClass = 'inline-flex items-center justify-center rounded-xl bg-[#10b98b] px-4 py-2.5 text-sm font-semibold text-[#0d1d37] hover:bg-[#36d3a7] disabled:cursor-wait disabled:opacity-50'
+export const inputClass = 'w-full rounded-xl border border-line bg-sunken px-3 py-2.5 text-sm text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-accent'
+export const buttonClass = 'inline-flex items-center justify-center rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-canvas hover:bg-accent-hover disabled:cursor-wait disabled:opacity-50'
 
 export function isStatus(value: string): value is Status {
   return Object.prototype.hasOwnProperty.call(statuses, value)

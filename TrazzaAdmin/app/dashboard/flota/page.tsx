@@ -2,9 +2,11 @@ import { createClient } from '@/lib/supabase/server'
 import KpiCard from '../components/KpiCard'
 import AddVehicleModal from './components/AddVehicleModal'
 import VehicleDetailModal from './components/VehicleDetailModal'
+import DeleteVehicleButton from './components/DeleteVehicleButton'
 import FuelLogModal from './components/FuelLogModal'
 import FuelHistoryModal from './components/FuelHistoryModal'
 import MaintenanceModal from './components/MaintenanceModal'
+import Plate from '@/app/components/Plate'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -108,8 +110,8 @@ function SectionCard({ title, badge, children }: {
   title: string; badge?: React.ReactNode; children: React.ReactNode
 }) {
   return (
-    <div className="bg-[#142942] border border-[#2b405b] rounded-lg overflow-hidden flex flex-col">
-      <div className="flex items-center justify-between px-4 py-2.5 border-b border-[#2b405b] flex-shrink-0">
+    <div className="bg-surface border border-line rounded-lg overflow-hidden flex flex-col">
+      <div className="flex items-center justify-between px-4 py-2.5 border-b border-line flex-shrink-0">
         <h3 className="text-[11px] font-bold uppercase tracking-wider" style={{ color: '#f1f5f9' }}>
           {title}
         </h3>
@@ -122,7 +124,7 @@ function SectionCard({ title, badge, children }: {
 
 function CountBadge({ n }: { n: number }) {
   return (
-    <span className="text-[10px] bg-[#10223d] border border-[#2b405b] text-[#a8b8cc] px-2 py-0.5 rounded font-semibold">
+    <span className="text-[10px] bg-sunken border border-line text-muted px-2 py-0.5 rounded font-semibold">
       {n}
     </span>
   )
@@ -131,15 +133,15 @@ function CountBadge({ n }: { n: number }) {
 function EmptyState({ icon, message, sub }: { icon?: React.ReactNode; message: string; sub?: string }) {
   return (
     <div className="flex flex-col items-center justify-center py-8 text-center px-4">
-      <div className="w-8 h-8 rounded-full bg-[#203650] flex items-center justify-center mb-2.5">
+      <div className="w-8 h-8 rounded-full bg-raised flex items-center justify-center mb-2.5">
         {icon ?? (
-          <svg className="w-4 h-4 text-[#a8b8cc]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+          <svg className="w-4 h-4 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
           </svg>
         )}
       </div>
-      <p className="text-[12px] font-medium text-[#a8b8cc]">{message}</p>
-      {sub && <p className="text-[11px] text-[#a8b8cc] mt-0.5">{sub}</p>}
+      <p className="text-[12px] font-medium text-muted">{message}</p>
+      {sub && <p className="text-[11px] text-muted mt-0.5">{sub}</p>}
     </div>
   )
 }
@@ -215,10 +217,12 @@ export default async function FlotaPage() {
   ])
 
   const vehicles        = (rawVehicles        ?? []) as VehicleRow[]
-  const ordersScheduled = (rawOrdersScheduled ?? []) as MaintenanceOrderRow[]
-  const ordersOpen      = (rawOrdersOpen      ?? []) as MaintenanceOrderRow[]
-  const incidents       = (rawIncidents       ?? []) as IncidentRow[]
-  const recentFuelLogs  = (rawFuelLogs        ?? []) as FuelLogRow[]
+// supabase-js sin tipos generados infiere las relaciones embebidas como arreglos;
+  // en ejecución las many-to-one llegan como objeto, de ahí el doble cast.
+  const ordersScheduled = (rawOrdersScheduled ?? []) as unknown as MaintenanceOrderRow[]
+  const ordersOpen      = (rawOrdersOpen      ?? []) as unknown as MaintenanceOrderRow[]
+  const incidents       = (rawIncidents       ?? []) as unknown as IncidentRow[]
+  const recentFuelLogs  = (rawFuelLogs        ?? []) as unknown as FuelLogRow[]
 
   // ── Build unified fleet alerts ────────────────────────────────────────────
   const fleetAlerts: FleetAlert[] = []
@@ -346,15 +350,15 @@ export default async function FlotaPage() {
             <EmptyState
               message="No hay vehículos registrados"
               sub={'Haz clic en "+ Añadir Vehículo" para incorporar el primero.'}
-              icon={<svg className="w-4 h-4 text-[#a8b8cc]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" /></svg>}
+              icon={<svg className="w-4 h-4 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" /></svg>}
             />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr style={{ backgroundColor: '#10223d' }} className="border-b border-[#203650]">
+                  <tr style={{ backgroundColor: '#10223d' }} className="border-b border-raised">
                     {['Patente', 'Vehículo', 'Tipo', 'Estado', 'KM Actual', 'Acción'].map(col => (
-                      <th key={col} className="text-left text-[10px] font-bold uppercase tracking-wider px-4 py-2 text-[#a8b8cc] whitespace-nowrap">
+                      <th key={col} className="text-left text-[10px] font-bold uppercase tracking-wider px-4 py-2 text-muted whitespace-nowrap">
                         {col}
                       </th>
                     ))}
@@ -364,19 +368,17 @@ export default async function FlotaPage() {
                   {vehicles.map(v => {
                     const sm = getStatus(v.status)
                     return (
-                      <tr key={v.id} className="border-b border-[#203650] hover:bg-[#10223d] transition-colors">
+                      <tr key={v.id} className="border-b border-raised hover:bg-sunken transition-colors">
                         <td className="px-4 py-2.5 whitespace-nowrap">
-                          <p className="text-[12px] font-bold font-mono tracking-wide" style={{ color: '#f1f5f9' }}>
-                            {v.plate ?? '—'}
-                          </p>
+                          <Plate value={v.plate} />
                         </td>
                         <td className="px-4 py-2.5">
-                          <p className="text-[12px] font-medium text-[#d5e0ed]">
+                          <p className="text-[12px] font-medium text-soft">
                             {[v.brand, v.model].filter(Boolean).join(' ') || '—'}
                           </p>
                         </td>
                         <td className="px-4 py-2.5 whitespace-nowrap">
-                          <span className="text-[12px] text-[#a8b8cc]">
+                          <span className="text-[12px] text-muted">
                             {vehicleTypeLabel[v.vehicle_type ?? ''] ?? v.vehicle_type ?? '—'}
                           </span>
                         </td>
@@ -390,14 +392,17 @@ export default async function FlotaPage() {
                           </span>
                         </td>
                         <td className="px-4 py-2.5 whitespace-nowrap">
-                          <span className="text-[12px] text-[#a8b8cc] tabular-nums">
+                          <span className="text-[12px] text-muted tabular-nums">
                             {v.current_odometer_km != null
                               ? v.current_odometer_km.toLocaleString('es-CL') + ' km'
                               : '—'}
                           </span>
                         </td>
                         <td className="px-4 py-2.5 whitespace-nowrap">
-                          <VehicleDetailModal vehicleId={v.id} />
+                          <div className="flex items-center gap-2">
+                            <VehicleDetailModal vehicleId={v.id} />
+                            <DeleteVehicleButton vehicleId={v.id} plate={v.plate} />
+                          </div>
                         </td>
                       </tr>
                     )
@@ -421,13 +426,13 @@ export default async function FlotaPage() {
                 message="Sin alertas de flota"
                 sub="Las alertas de vehículos aparecerán aquí."
                 icon={
-                  <svg className="w-4 h-4 text-[#a8b8cc]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <svg className="w-4 h-4 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
                   </svg>
                 }
               />
             ) : (
-              <ul className="divide-y divide-[#203650] max-h-64 overflow-y-auto">
+              <ul className="divide-y divide-raised max-h-64 overflow-y-auto">
                 {visibleAlerts.map(a => {
                   const st = fleetAlertStyle[a.level]
                   return (
@@ -440,7 +445,7 @@ export default async function FlotaPage() {
                         <p className="text-[12px] font-semibold leading-snug" style={{ color: '#f1f5f9' }}>
                           {a.title}
                         </p>
-                        <p className="text-[11px] text-[#a8b8cc] mt-0.5 leading-snug line-clamp-2">
+                        <p className="text-[11px] text-muted mt-0.5 leading-snug line-clamp-2">
                           {a.detail}
                         </p>
                       </div>
@@ -455,7 +460,7 @@ export default async function FlotaPage() {
                 })}
                 {fleetAlerts.length > 5 && (
                   <li className="px-4 py-2 text-center">
-                    <span className="text-[10px] text-[#a8b8cc]">
+                    <span className="text-[10px] text-muted">
                       +{fleetAlerts.length - 5} alerta{fleetAlerts.length - 5 !== 1 ? 's' : ''} adicional{fleetAlerts.length - 5 !== 1 ? 'es' : ''}
                     </span>
                   </li>
@@ -474,31 +479,28 @@ export default async function FlotaPage() {
                 message="Sin cargas registradas"
                 sub="Las cargas de combustible aparecerán aquí."
                 icon={
-                  <svg className="w-4 h-4 text-[#a8b8cc]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <svg className="w-4 h-4 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
                   </svg>
                 }
               />
             ) : (
-              <ul className="divide-y divide-[#203650]">
+              <ul className="divide-y divide-raised">
                 {recentFuelLogs.map(log => {
                   const veh   = log.vehicles as { plate: string | null; brand: string | null; model: string | null } | null
-                  const plate = veh?.plate ?? '—'
                   const model = [veh?.brand, veh?.model].filter(Boolean).join(' ')
                   return (
                     <li key={log.id} className="px-4 py-3 flex items-start justify-between gap-3">
                       <div className="min-w-0 flex-1">
-                        <p className="text-[12px] font-bold font-mono tracking-wide" style={{ color: '#f1f5f9' }}>
-                          {plate}
-                        </p>
+                        <Plate value={veh?.plate} />
                         {model && (
-                          <p className="text-[10px] text-[#a8b8cc] leading-snug">{model}</p>
+                          <p className="text-[10px] text-muted leading-snug">{model}</p>
                         )}
-                        <p className="text-[10px] text-[#a8b8cc] mt-0.5 leading-snug">
+                        <p className="text-[10px] text-muted mt-0.5 leading-snug">
                           {log.station_name ? `${log.station_name} · ` : ''}{fmtFuelDatetime(log.fuel_datetime)}
                         </p>
                         {log.odometer_km != null && (
-                          <p className="text-[10px] text-[#a8b8cc]">{log.odometer_km.toLocaleString('es-CL')} km</p>
+                          <p className="text-[10px] text-muted">{log.odometer_km.toLocaleString('es-CL')} km</p>
                         )}
                       </div>
                       <div className="flex flex-col items-end flex-shrink-0 gap-0.5">
@@ -506,7 +508,7 @@ export default async function FlotaPage() {
                           {log.liters != null ? `${log.liters % 1 === 0 ? log.liters : log.liters.toFixed(1)} L` : '—'}
                         </span>
                         {log.total_amount != null && (
-                          <span className="text-[10px] text-[#a8b8cc]">
+                          <span className="text-[10px] text-muted">
                             ${log.total_amount.toLocaleString('es-CL')}
                           </span>
                         )}
@@ -517,7 +519,7 @@ export default async function FlotaPage() {
               </ul>
             )}
             {/* Footer: Ver historial */}
-            <div className="px-4 py-2.5 border-t border-[#203650] flex items-center justify-end">
+            <div className="px-4 py-2.5 border-t border-raised flex items-center justify-end">
               <FuelHistoryModal />
             </div>
           </SectionCard>

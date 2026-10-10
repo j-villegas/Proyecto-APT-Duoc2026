@@ -4,6 +4,7 @@ import AddDriverModal from './components/AddDriverModal'
 import DriverDetailModal from './components/DriverDetailModal'
 import ServiceHistoryModal from './components/ServiceHistoryModal'
 import DriverAlertsModal from './components/DriverAlertsModal'
+import { serviceStatusMeta } from '@/lib/service-status'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -35,7 +36,7 @@ type RecentServiceRow = {
 
 const statusMeta: Record<string, { label: string; bg: string; text: string; dot: string }> = {
   available:  { label: 'Disponible', bg: '#123b35', text: '#55d9ad', dot: '#55d9ad' },
-  in_service: { label: 'En Ruta',    bg: '#3b3020', text: '#f8cb78', dot: '#f8cb78' },
+  in_service: { label: 'En ruta',    bg: '#3b3020', text: '#f8cb78', dot: '#f8cb78' },
   rest:       { label: 'Descanso',   bg: '#183352', text: '#7dbbff', dot: '#7dbbff' },
   inactive:   { label: 'Inactivo',   bg: '#203650', text: '#a8b8cc', dot: '#a8b8cc' },
   suspended:  { label: 'Suspendido', bg: '#3d2332', text: '#fda4af', dot: '#fda4af' },
@@ -45,12 +46,6 @@ function getStatus(status: string | null) {
   return statusMeta[status ?? ''] ?? { label: status ?? '—', bg: '#203650', text: '#bac9db', dot: '#a8b8cc' }
 }
 
-const serviceStatusMeta: Record<string, { label: string; bg: string; text: string }> = {
-  scheduled:   { label: 'Programado', bg: '#183352', text: '#7dbbff' },
-  in_progress: { label: 'En ruta',    bg: '#3b3020', text: '#f8cb78' },
-  completed:   { label: 'Finalizado', bg: '#123b35', text: '#55d9ad' },
-  cancelled:   { label: 'Cancelado',  bg: '#203650', text: '#a8b8cc' },
-}
 
 function formatDate(iso: string | null | undefined): string {
   if (!iso) return '—'
@@ -70,8 +65,8 @@ function SectionCard({ title, badge, children }: {
   title: string; badge?: React.ReactNode; children: React.ReactNode
 }) {
   return (
-    <div className="bg-[#142942] border border-[#2b405b] rounded-lg overflow-hidden flex flex-col h-full">
-      <div className="flex items-center justify-between px-4 py-2.5 border-b border-[#2b405b] flex-shrink-0">
+    <div className="bg-surface border border-line rounded-lg overflow-hidden flex flex-col h-full">
+      <div className="flex items-center justify-between px-4 py-2.5 border-b border-line flex-shrink-0">
         <h3 className="text-[11px] font-bold uppercase tracking-wider" style={{ color: '#f1f5f9' }}>
           {title}
         </h3>
@@ -84,7 +79,7 @@ function SectionCard({ title, badge, children }: {
 
 function CountBadge({ n }: { n: number }) {
   return (
-    <span className="text-[10px] bg-[#10223d] border border-[#2b405b] text-[#a8b8cc] px-2 py-0.5 rounded font-semibold">
+    <span className="text-[10px] bg-sunken border border-line text-muted px-2 py-0.5 rounded font-semibold">
       {n}
     </span>
   )
@@ -93,15 +88,15 @@ function CountBadge({ n }: { n: number }) {
 function EmptyState({ icon, message, sub }: { icon?: React.ReactNode; message: string; sub?: string }) {
   return (
     <div className="flex flex-col items-center justify-center py-8 text-center px-4">
-      <div className="w-8 h-8 rounded-full bg-[#203650] flex items-center justify-center mb-2.5">
+      <div className="w-8 h-8 rounded-full bg-raised flex items-center justify-center mb-2.5">
         {icon ?? (
-          <svg className="w-4 h-4 text-[#a8b8cc]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+          <svg className="w-4 h-4 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
           </svg>
         )}
       </div>
-      <p className="text-[12px] font-medium text-[#a8b8cc]">{message}</p>
-      {sub && <p className="text-[11px] text-[#a8b8cc] mt-0.5">{sub}</p>}
+      <p className="text-[12px] font-medium text-muted">{message}</p>
+      {sub && <p className="text-[11px] text-muted mt-0.5">{sub}</p>}
     </div>
   )
 }
@@ -113,7 +108,6 @@ export default async function ConductoresPage() {
 
   const today        = new Date(); today.setHours(0, 0, 0, 0)
   const in30         = new Date(today); in30.setDate(in30.getDate() + 30)
-  const todayISO     = today.toISOString()
   const in30ISO      = in30.toISOString()
 
   const [
@@ -155,7 +149,9 @@ export default async function ConductoresPage() {
 
   const drivers        = (rawDrivers        ?? []) as DriverRow[]
   const services       = (rawServices       ?? []) as ServiceLastRow[]
-  const recentServices = (rawRecentServices ?? []) as RecentServiceRow[]
+// supabase-js sin tipos generados infiere las relaciones embebidas como arreglos;
+  // en ejecución las many-to-one llegan como objeto, de ahí el doble cast.
+  const recentServices = (rawRecentServices ?? []) as unknown as RecentServiceRow[]
 
   // Build map: driver_id → most recent scheduled_at (already sorted desc)
   const lastServiceMap = new Map<string, string>()
@@ -241,9 +237,9 @@ export default async function ConductoresPage() {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr style={{ backgroundColor: '#10223d' }} className="border-b border-[#203650]">
+                  <tr style={{ backgroundColor: '#10223d' }} className="border-b border-raised">
                     {['ID / Conductor', 'RUT', 'Categoría', 'Estado', 'Último Servicio', 'Acción'].map(col => (
-                      <th key={col} className="text-left text-[10px] font-bold uppercase tracking-wider px-4 py-2 text-[#a8b8cc] whitespace-nowrap">
+                      <th key={col} className="text-left text-[10px] font-bold uppercase tracking-wider px-4 py-2 text-muted whitespace-nowrap">
                         {col}
                       </th>
                     ))}
@@ -255,20 +251,20 @@ export default async function ConductoresPage() {
                     const lastSvcISO  = lastServiceMap.get(d.id)
                     const lastSvc     = lastSvcISO ? formatDate(lastSvcISO) : 'Sin registros'
                     return (
-                      <tr key={d.id} className="border-b border-[#203650] hover:bg-[#10223d] transition-colors">
+                      <tr key={d.id} className="border-b border-raised hover:bg-sunken transition-colors">
                         <td className="px-4 py-2.5">
                           <p className="text-[12px] font-bold leading-snug" style={{ color: '#f1f5f9' }}>
                             {d.full_name ?? '—'}
                           </p>
                           {d.driver_code && (
-                            <p className="text-[10px] text-[#a8b8cc] mt-0.5">{d.driver_code}</p>
+                            <p className="text-[10px] text-muted mt-0.5">{d.driver_code}</p>
                           )}
                         </td>
                         <td className="px-4 py-2.5 whitespace-nowrap">
-                          <span className="text-[12px] text-[#a8b8cc]">{d.rut ?? '—'}</span>
+                          <span className="text-[12px] text-muted">{d.rut ?? '—'}</span>
                         </td>
                         <td className="px-4 py-2.5 whitespace-nowrap">
-                          <span className="inline-block bg-[#10223d] border border-[#2b405b] text-[#d5e0ed] text-[11px] font-semibold px-2 py-0.5 rounded">
+                          <span className="inline-block bg-sunken border border-line text-soft text-[11px] font-semibold px-2 py-0.5 rounded">
                             {d.license_type ?? '—'}
                           </span>
                         </td>
@@ -282,7 +278,7 @@ export default async function ConductoresPage() {
                           </span>
                         </td>
                         <td className="px-4 py-2.5 whitespace-nowrap">
-                          <span className={`text-[12px] ${lastSvc === 'Sin registros' ? 'text-[#a8b8cc] italic' : 'text-[#a8b8cc]'}`}>
+                          <span className={`text-[12px] ${lastSvc === 'Sin registros' ? 'text-muted italic' : 'text-muted'}`}>
                             {lastSvc}
                           </span>
                         </td>
@@ -311,13 +307,13 @@ export default async function ConductoresPage() {
                 message="Sin alertas de conductores"
                 sub="Las licencias y alertas aparecerán aquí."
                 icon={
-                  <svg className="w-4 h-4 text-[#a8b8cc]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <svg className="w-4 h-4 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
                   </svg>
                 }
               />
             ) : (
-              <ul className="divide-y divide-[#203650] max-h-64 overflow-y-auto">
+              <ul className="divide-y divide-raised max-h-64 overflow-y-auto">
                 {visibleAlerts.map(a => {
                   const expired  = a.expired
                   const dotColor = expired ? '#fda4af' : a.days <= 7 ? '#fdba74' : '#f8cb78'
@@ -325,7 +321,7 @@ export default async function ConductoresPage() {
                     <li key={a.id} className="px-4 py-3 flex items-start gap-2.5">
                       <span className="w-2 h-2 rounded-full flex-shrink-0 mt-1" style={{ backgroundColor: dotColor }} />
                       <div className="min-w-0 flex-1">
-                        <p className="text-[12px] font-medium text-[#f1f5f9] leading-snug truncate">
+                        <p className="text-[12px] font-medium text-fg leading-snug truncate">
                           {a.name ?? 'Conductor sin nombre'}
                         </p>
                         <p className="text-[10px] mt-0.5" style={{ color: dotColor }}>
@@ -340,9 +336,9 @@ export default async function ConductoresPage() {
               </ul>
             )}
             {licenseAlerts.length > 0 && (
-              <div className="px-4 py-2.5 border-t border-[#203650] flex items-center justify-between">
+              <div className="px-4 py-2.5 border-t border-raised flex items-center justify-between">
                 {licenseAlerts.length > 5 && (
-                  <span className="text-[10px] text-[#a8b8cc]">+{licenseAlerts.length - 5} más</span>
+                  <span className="text-[10px] text-muted">+{licenseAlerts.length - 5} más</span>
                 )}
                 <div className="ml-auto">
                   <DriverAlertsModal />
@@ -361,27 +357,27 @@ export default async function ConductoresPage() {
                 message="Sin servicios registrados"
                 sub="Los servicios de conductores aparecerán aquí."
                 icon={
-                  <svg className="w-4 h-4 text-[#a8b8cc]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <svg className="w-4 h-4 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z" />
                   </svg>
                 }
               />
             ) : (
-              <ul className="divide-y divide-[#203650]">
+              <ul className="divide-y divide-raised">
                 {recentServices.map(s => {
                   const drv = s.drivers as { full_name: string | null; driver_code: string | null } | null
                   const veh = s.vehicles as { plate: string | null } | null
-                  const sm  = serviceStatusMeta[s.status ?? ''] ?? { label: s.status ?? '—', bg: '#203650', text: '#a8b8cc' }
+                  const sm  = serviceStatusMeta(s.status)
                   return (
                     <li key={s.id} className="px-4 py-3 flex items-start justify-between gap-3">
                       <div className="min-w-0 flex-1">
-                        <p className="text-[12px] font-semibold text-[#f1f5f9] leading-snug">
+                        <p className="text-[12px] font-semibold text-fg leading-snug">
                           {drv?.full_name ?? '—'}
                         </p>
                         {drv?.driver_code && (
-                          <p className="text-[10px] text-[#a8b8cc]">{drv.driver_code}</p>
+                          <p className="text-[10px] text-muted">{drv.driver_code}</p>
                         )}
-                        <p className="text-[10px] text-[#a8b8cc] mt-0.5 leading-snug">
+                        <p className="text-[10px] text-muted mt-0.5 leading-snug">
                           {s.service_code ?? `#${s.id.slice(0, 8)}`}
                           {veh?.plate ? ` · ${veh.plate}` : ''}
                           {s.scheduled_date ? ` · ${formatDate(s.scheduled_date)}` : ''}
@@ -398,7 +394,7 @@ export default async function ConductoresPage() {
                 })}
               </ul>
             )}
-            <div className="px-4 py-2.5 border-t border-[#203650] flex items-center justify-end">
+            <div className="px-4 py-2.5 border-t border-raised flex items-center justify-end">
               <ServiceHistoryModal />
             </div>
           </SectionCard>

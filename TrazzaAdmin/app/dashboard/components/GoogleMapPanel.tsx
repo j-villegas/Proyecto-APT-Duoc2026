@@ -87,7 +87,7 @@ function MapFallback({ message }: { message?: string }) {
         <rect width="100%" height="100%" fill="url(#mpgrid-big)" />
       </svg>
 
-      <div className="relative z-10 bg-[#142942] border border-[#2b405b] rounded-lg px-5 py-4 text-center shadow-sm max-w-xs">
+      <div className="relative z-10 bg-surface border border-line rounded-lg px-5 py-4 text-center shadow-sm max-w-xs">
         <div
           className="w-9 h-9 rounded-full flex items-center justify-center mx-auto mb-2"
           style={{ backgroundColor: '#3b3020' }}
@@ -110,7 +110,7 @@ function MapFallback({ message }: { message?: string }) {
 function MapSkeleton({ height }: { height: string }) {
   return (
     <div
-      className="w-full animate-pulse bg-[#2b405b] rounded-b-lg"
+      className="w-full animate-pulse bg-line rounded-b-lg"
       style={{ height }}
     />
   )
@@ -122,10 +122,10 @@ function OverlayChip({ message }: { message: string }) {
   return (
     <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 pointer-events-none">
       <div
-        className="rounded-lg px-4 py-2 text-center border border-[#2b405b] shadow-sm"
+        className="rounded-lg px-4 py-2 text-center border border-line shadow-sm"
         style={{ backgroundColor: 'rgba(20,41,66,0.94)' }}
       >
-        <p className="text-[11px] text-[#a8b8cc] whitespace-nowrap">{message}</p>
+        <p className="text-[11px] text-muted whitespace-nowrap">{message}</p>
       </div>
     </div>
   )

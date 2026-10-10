@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { friendlyError } from '@/lib/errors'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -88,10 +89,10 @@ async function generateUniqueCode(
 // ─── Shared atoms ─────────────────────────────────────────────────────────────
 
 const inputCls =
-  'w-full px-3 py-2 text-[12px] border border-[#2b405b] rounded-md bg-[#142942] text-[#f1f5f9] ' +
-  'placeholder-[#a8b8cc] focus:outline-none focus:ring-1 focus:ring-[#10b98b] focus:border-[#10b98b] transition'
+  'w-full px-3 py-2 text-[12px] border border-line rounded-md bg-surface text-fg ' +
+  'placeholder-muted focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent transition'
 
-const labelCls = 'block text-[11px] font-semibold uppercase tracking-wide text-[#a8b8cc] mb-1'
+const labelCls = 'block text-[11px] font-semibold uppercase tracking-wide text-muted mb-1'
 
 function Field({ label, error, required, children }: {
   label: string; error?: string; required?: boolean; children: React.ReactNode
@@ -186,8 +187,8 @@ export default function PassengersModal({
       passenger_id:      row.passenger_id,
       service_stop_id:   row.service_stop_id,
       attendance_status: row.attendance_status,
-      passengers:        resolveOne(row.passengers as Parameters<typeof resolveOne>[0]),
-      service_stops:     resolveOne(row.service_stops as Parameters<typeof resolveOne>[0]),
+      passengers:        resolveOne(row.passengers as unknown as PassengerRow['passengers']),
+      service_stops:     resolveOne(row.service_stops as unknown as PassengerRow['service_stops']),
       access_code:       accessMap.get(row.id) ?? null,
     }))
 
@@ -196,16 +197,13 @@ export default function PassengersModal({
     setLoading(false)
   }, [serviceId])
 
-  useEffect(() => {
-    if (open) loadData()
-  }, [open, loadData])
 
   useEffect(() => {
     if (!open) return
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape' && !showAdd) handleClose() }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   }, [open, showAdd])
 
   function handleClose() {
@@ -292,7 +290,7 @@ export default function PassengersModal({
 
         const { data: newP, error: newPErr } = await supabase
           .from('passengers').insert(insertPayload).select('id').single()
-        if (newPErr || !newP) throw new Error(`Error al crear pasajero: ${newPErr?.message ?? 'sin respuesta'}`)
+        if (newPErr || !newP) throw new Error(friendlyError(newPErr, 'No se pudo crear pasajero'))
         passengerId = newP.id
       }
 
@@ -317,11 +315,10 @@ export default function PassengersModal({
       const { data: spData, error: spErr } = await supabase
         .from('service_passengers').insert(spPayload).select('id').single()
       if (spErr || !spData) {
-        const msg = spErr?.message ?? ''
-        if (msg.includes('duplicate') || msg.includes('unique')) {
+        if (spErr?.code === '23505') {
           throw new Error('Este pasajero ya está asignado a esta ruta.')
         }
-        throw new Error(`Error al asignar pasajero: ${msg || 'sin respuesta'}`)
+        throw new Error(friendlyError(spErr, 'No se pudo asignar el pasajero'))
       }
 
       // 6. Generate unique access code
@@ -338,7 +335,7 @@ export default function PassengersModal({
           access_code:          accessCode,
           status:               'active',
         })
-      if (psaErr) throw new Error(`Error al generar código de acceso: ${psaErr.message}`)
+      if (psaErr) throw new Error(friendlyError(psaErr, 'No se pudo generar código de acceso'))
 
       // 8. Done
       setForm(EMPTY_ADD)
@@ -377,25 +374,25 @@ export default function PassengersModal({
   const trigger =
     triggerVariant === 'action' ? (
       <button
-        onClick={() => setOpen(true)}
-        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md border border-[#2b405b] text-[12px] font-medium text-[#d5e0ed] hover:bg-[#10223d] transition-colors text-left cursor-pointer"
+        onClick={() => { setOpen(true); loadData() }}
+        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md border border-line text-[12px] font-medium text-soft hover:bg-sunken transition-colors text-left cursor-pointer"
       >
-        <svg className="w-4 h-4 text-[#f1f5f9] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+        <svg className="w-4 h-4 text-fg flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
         </svg>
         <span className="flex-1">Pasajeros</span>
       </button>
     ) : (
       <button
-        onClick={() => setOpen(true)}
-        className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-md border border-[#2b405b] text-[12px] font-semibold text-[#f1f5f9] hover:bg-[#1b3552] transition-colors cursor-pointer"
+        onClick={() => { setOpen(true); loadData() }}
+        className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-md border border-line text-[12px] font-semibold text-fg hover:bg-[#1b3552] transition-colors cursor-pointer"
       >
         <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
         </svg>
         {isReadonly ? 'Ver Pasajeros' : 'Gestionar Pasajeros'}
         {capacity != null && (
-          <span className="text-[10px] text-[#a8b8cc] font-normal ml-1">
+          <span className="text-[10px] text-muted font-normal ml-1">
             {rows.length} / {capacity}
           </span>
         )}
@@ -414,20 +411,20 @@ export default function PassengersModal({
           style={{ backgroundColor: 'rgba(3,22,54,0.50)', backdropFilter: 'blur(2px)' }}
           onClick={e => { if (e.target === e.currentTarget) handleClose() }}
         >
-          <div
-            className="bg-[#142942] rounded-lg border border-[#2b405b] w-full flex flex-col"
+          <div role="dialog" aria-modal="true"
+            className="bg-surface rounded-lg border border-line w-full flex flex-col"
             style={{ maxWidth: 920, maxHeight: '92vh' }}
           >
 
             {/* ── Modal header ── */}
-            <div className="flex items-start justify-between px-6 py-4 border-b border-[#2b405b] flex-shrink-0" style={{ backgroundColor: '#10223d' }}>
+            <div className="flex items-start justify-between px-6 py-4 border-b border-line flex-shrink-0" style={{ backgroundColor: '#10223d' }}>
               <div>
                 <h2 className="text-[14px] font-bold" style={{ color: '#f1f5f9' }}>{modalTitle}</h2>
-                <p className="text-[11px] text-[#a8b8cc] mt-0.5">{modalSub}</p>
+                <p className="text-[11px] text-muted mt-0.5">{modalSub}</p>
               </div>
-              <button
+              <button aria-label="Cerrar"
                 onClick={handleClose}
-                className="w-7 h-7 flex items-center justify-center rounded-md text-[#a8b8cc] hover:text-[#f1f5f9] hover:bg-[#2b405b] transition-colors cursor-pointer mt-0.5 flex-shrink-0"
+                className="w-7 h-7 flex items-center justify-center rounded-md text-muted hover:text-fg hover:bg-line transition-colors cursor-pointer mt-0.5 flex-shrink-0"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -436,9 +433,9 @@ export default function PassengersModal({
             </div>
 
             {/* ── Toolbar ── */}
-            <div className="flex items-center gap-3 px-6 py-3 border-b border-[#2b405b] flex-shrink-0">
+            <div className="flex items-center gap-3 px-6 py-3 border-b border-line flex-shrink-0">
               <div className="relative flex-1">
-                <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#a8b8cc]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
                 </svg>
                 <input
@@ -446,10 +443,10 @@ export default function PassengersModal({
                   placeholder="Buscar pasajero..."
                   value={search}
                   onChange={e => setSearch(e.target.value)}
-                  className="w-full pl-8 pr-3 py-1.5 text-[12px] border border-[#2b405b] rounded-md bg-[#142942] placeholder-[#a8b8cc] focus:outline-none focus:ring-1 focus:ring-[#10b98b] focus:border-[#10b98b] transition"
+                  className="w-full pl-8 pr-3 py-1.5 text-[12px] border border-line rounded-md bg-surface placeholder-muted focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent transition"
                 />
               </div>
-              <span className="text-[11px] text-[#a8b8cc] whitespace-nowrap flex-shrink-0">
+              <span className="text-[11px] text-muted whitespace-nowrap flex-shrink-0">
                 {filteredRows.length} pasajero{filteredRows.length !== 1 ? 's' : ''}
                 {capacity != null && ` · Cap. ${capacity}`}
               </span>
@@ -457,7 +454,7 @@ export default function PassengersModal({
                 <button
                   onClick={() => { setShowAdd(true); setAddError(null) }}
                   disabled={showAdd}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-semibold text-[#0d1d37] hover:opacity-90 transition-opacity cursor-pointer disabled:opacity-50 flex-shrink-0"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-semibold text-canvas hover:opacity-90 transition-opacity cursor-pointer disabled:opacity-50 flex-shrink-0"
                   style={{ backgroundColor: '#10b98b' }}
                 >
                   <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -473,7 +470,7 @@ export default function PassengersModal({
 
               {/* Add form — only in editable mode */}
               {!isReadonly && showAdd && (
-                <div className="px-6 py-4 border-b border-[#2b405b]" style={{ backgroundColor: '#3b3020' }}>
+                <div className="px-6 py-4 border-b border-line" style={{ backgroundColor: '#3b3020' }}>
                   <div className="flex items-center gap-2 mb-4">
                     <span className="w-1 h-4 rounded-full" style={{ backgroundColor: '#10b98b' }} />
                     <h4 className="text-[12px] font-bold uppercase tracking-wide" style={{ color: '#f1f5f9' }}>
@@ -482,7 +479,7 @@ export default function PassengersModal({
                   </div>
 
                   {addError && (
-                    <div className="flex items-start gap-2.5 bg-[#3d2332] border border-[#794052] text-rose-200 rounded-md px-4 py-3 text-[12px] mb-4">
+                    <div className="flex items-start gap-2.5 bg-danger-bg border border-danger-line text-rose-200 rounded-md px-4 py-3 text-[12px] mb-4">
                       <svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                       </svg>
@@ -526,11 +523,11 @@ export default function PassengersModal({
 
                     <div className="flex items-center justify-end gap-3">
                       <button type="button" onClick={cancelAdd} disabled={addLoading}
-                        className="px-4 py-1.5 rounded-md text-[12px] font-semibold border border-[#2b405b] text-[#a8b8cc] hover:bg-[#2b405b] transition-colors disabled:opacity-50 cursor-pointer">
+                        className="px-4 py-1.5 rounded-md text-[12px] font-semibold border border-line text-muted hover:bg-line transition-colors disabled:opacity-50 cursor-pointer">
                         Cancelar
                       </button>
                       <button type="submit" disabled={addLoading}
-                        className="flex items-center gap-2 px-5 py-1.5 rounded-md text-[12px] font-semibold text-[#0d1d37] disabled:opacity-50 cursor-pointer"
+                        className="flex items-center gap-2 px-5 py-1.5 rounded-md text-[12px] font-semibold text-canvas disabled:opacity-50 cursor-pointer"
                         style={{ backgroundColor: '#10b98b' }}>
                         {addLoading ? (
                           <>
@@ -556,7 +553,7 @@ export default function PassengersModal({
 
               {/* Passenger list */}
               {loading ? (
-                <div className="flex items-center justify-center py-12 gap-2 text-[12px] text-[#a8b8cc]">
+                <div className="flex items-center justify-center py-12 gap-2 text-[12px] text-muted">
                   <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
@@ -565,16 +562,16 @@ export default function PassengersModal({
                 </div>
               ) : filteredRows.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 text-center px-4">
-                  <div className="w-10 h-10 rounded-full bg-[#203650] flex items-center justify-center mb-3">
-                    <svg className="w-5 h-5 text-[#a8b8cc]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <div className="w-10 h-10 rounded-full bg-raised flex items-center justify-center mb-3">
+                    <svg className="w-5 h-5 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
                     </svg>
                   </div>
-                  <p className="text-[13px] font-medium text-[#a8b8cc]">
+                  <p className="text-[13px] font-medium text-muted">
                     {search ? 'Sin resultados para la búsqueda.' : 'No hay pasajeros asignados a esta ruta.'}
                   </p>
                   {!search && (
-                    <p className="text-[11px] text-[#a8b8cc] mt-1">
+                    <p className="text-[11px] text-muted mt-1">
                       Haz clic en &quot;+ Añadir Pasajero&quot; para agregar el primero.
                     </p>
                   )}
@@ -583,9 +580,9 @@ export default function PassengersModal({
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
-                      <tr style={{ backgroundColor: '#10223d' }} className="border-b border-[#203650]">
+                      <tr style={{ backgroundColor: '#10223d' }} className="border-b border-raised">
                         {['Pasajero', 'RUT', 'Parada', 'Estado', 'Código Acceso', 'Acciones'].map(col => (
-                          <th key={col} className="text-left text-[10px] font-bold uppercase tracking-wider px-4 py-2.5 text-[#a8b8cc] whitespace-nowrap">
+                          <th key={col} className="text-left text-[10px] font-bold uppercase tracking-wider px-4 py-2.5 text-muted whitespace-nowrap">
                             {col}
                           </th>
                         ))}
@@ -597,17 +594,17 @@ export default function PassengersModal({
                         const ss = row.service_stops
                         const at = getAttendance(row.attendance_status)
                         return (
-                          <tr key={row.id} className="border-b border-[#203650] hover:bg-[#10223d] transition-colors">
+                          <tr key={row.id} className="border-b border-raised hover:bg-sunken transition-colors">
                             <td className="px-4 py-3 whitespace-nowrap">
                               <p className="text-[12px] font-semibold" style={{ color: '#f1f5f9' }}>
                                 {p?.full_name ?? '—'}
                               </p>
                             </td>
                             <td className="px-4 py-3 whitespace-nowrap">
-                              <span className="text-[12px] text-[#a8b8cc]">{p?.rut ?? '—'}</span>
+                              <span className="text-[12px] text-muted">{p?.rut ?? '—'}</span>
                             </td>
                             <td className="px-4 py-3">
-                              <span className="text-[12px] text-[#d5e0ed]">
+                              <span className="text-[12px] text-soft">
                                 {ss ? `${ss.stop_order}. ${ss.name ?? '—'}` : '—'}
                               </span>
                             </td>
@@ -628,14 +625,14 @@ export default function PassengersModal({
                                   {row.access_code}
                                 </span>
                               ) : (
-                                <span className="text-[11px] text-[#a8b8cc] italic">Sin código</span>
+                                <span className="text-[11px] text-muted italic">Sin código</span>
                               )}
                             </td>
                             <td className="px-4 py-3 whitespace-nowrap">
                               {row.access_code && (
                                 <button
                                   onClick={() => handleCopy(row.access_code!, row.id)}
-                                  className="flex items-center gap-1.5 px-2.5 py-1 rounded border border-[#2b405b] text-[11px] font-semibold text-[#a8b8cc] hover:border-[#f1f5f9] hover:text-[#f1f5f9] transition-colors cursor-pointer"
+                                  className="flex items-center gap-1.5 px-2.5 py-1 rounded border border-line text-[11px] font-semibold text-muted hover:border-fg hover:text-fg transition-colors cursor-pointer"
                                 >
                                   {copiedId === row.id ? (
                                     <>
@@ -665,14 +662,14 @@ export default function PassengersModal({
             </div>
 
             {/* ── Footer ── */}
-            <div className="flex items-center justify-between px-6 py-3 border-t border-[#2b405b] flex-shrink-0" style={{ backgroundColor: '#10223d' }}>
-              <p className="text-[11px] text-[#a8b8cc]">
+            <div className="flex items-center justify-between px-6 py-3 border-t border-line flex-shrink-0" style={{ backgroundColor: '#10223d' }}>
+              <p className="text-[11px] text-muted">
                 {rows.length} pasajero{rows.length !== 1 ? 's' : ''} en esta ruta
                 {capacity != null ? ` · Capacidad ${capacity}` : ''}
               </p>
               <button
                 onClick={handleClose}
-                className="px-4 py-1.5 rounded-md text-[12px] font-semibold border border-[#2b405b] text-[#a8b8cc] hover:bg-[#2b405b] transition-colors cursor-pointer"
+                className="px-4 py-1.5 rounded-md text-[12px] font-semibold border border-line text-muted hover:bg-line transition-colors cursor-pointer"
               >
                 Cerrar
               </button>

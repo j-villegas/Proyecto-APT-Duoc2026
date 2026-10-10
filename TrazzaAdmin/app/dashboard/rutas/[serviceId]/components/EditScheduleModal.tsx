@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { friendlyError } from '@/lib/errors'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -22,10 +23,10 @@ interface Props {
 // ─── Shared atoms ─────────────────────────────────────────────────────────────
 
 const inputCls =
-  'w-full px-3 py-2 text-[12px] border border-[#2b405b] rounded-md bg-[#142942] text-[#f1f5f9] ' +
-  'placeholder-[#a8b8cc] focus:outline-none focus:ring-1 focus:ring-[#10b98b] focus:border-[#10b98b] transition'
+  'w-full px-3 py-2 text-[12px] border border-line rounded-md bg-surface text-fg ' +
+  'placeholder-muted focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent transition'
 
-const labelCls = 'block text-[11px] font-semibold uppercase tracking-wide text-[#a8b8cc] mb-1'
+const labelCls = 'block text-[11px] font-semibold uppercase tracking-wide text-muted mb-1'
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -91,9 +92,6 @@ export default function EditScheduleModal({
     setLoadingOptions(false)
   }, [])
 
-  useEffect(() => {
-    if (open) loadOptions()
-  }, [open, loadOptions])
 
   useEffect(() => {
     if (!open) return
@@ -149,18 +147,21 @@ export default function EditScheduleModal({
         })
         .eq('id', serviceId)
         .eq('status', 'scheduled')
-      if (svcErr) throw new Error(`Error al actualizar la programación: ${svcErr.message}`)
+      if (svcErr) throw new Error(friendlyError(svcErr, 'No se pudo actualizar la programación'))
 
-      try {
-        await supabase.from('service_events').insert({
-          company_id:  companyId,
-          service_id:  serviceId,
-          event_type:  'schedule_updated',
-          description: 'Programación editada desde panel web',
-        })
-      } catch {
-        // service_events is optional — ignore failure
-      }
+      // Bitácora: no bloquea la edición si falla (el cambio ya se guardó).
+      await supabase.from('service_events').insert({
+        company_id: companyId,
+        service_id: serviceId,
+        actor_type: 'admin',
+        actor_id:   user.id,
+        event_type: 'schedule_updated',
+        payload: {
+          source: 'panel',
+          before: { driver_id: driverId, vehicle_id: vehicleId, scheduled_date: scheduledDate, scheduled_start_time: scheduledStartTime },
+          after:  { driver_id: form.driver_id, vehicle_id: form.vehicle_id, scheduled_date, scheduled_start_time },
+        },
+      })
 
       setOpen(false)
       router.refresh()
@@ -178,10 +179,10 @@ export default function EditScheduleModal({
   return (
     <>
       <button
-        onClick={() => setOpen(true)}
-        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md border border-[#2b405b] text-[12px] font-medium text-[#d5e0ed] hover:bg-[#10223d] transition-colors text-left cursor-pointer"
+        onClick={() => { setOpen(true); loadOptions() }}
+        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md border border-line text-[12px] font-medium text-soft hover:bg-sunken transition-colors text-left cursor-pointer"
       >
-        <svg className="w-4 h-4 text-[#f1f5f9] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+        <svg className="w-4 h-4 text-fg flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
         </svg>
         <span className="flex-1">Editar Programación</span>
@@ -193,20 +194,20 @@ export default function EditScheduleModal({
           style={{ backgroundColor: 'rgba(3,22,54,0.50)', backdropFilter: 'blur(2px)' }}
           onClick={e => { if (e.target === e.currentTarget && !loading) handleClose() }}
         >
-          <div
-            className="bg-[#142942] rounded-lg border border-[#2b405b] w-full flex flex-col"
+          <div role="dialog" aria-modal="true"
+            className="bg-surface rounded-lg border border-line w-full flex flex-col"
             style={{ maxWidth: 480 }}
           >
             {/* Header */}
-            <div className="flex items-start justify-between px-6 py-4 border-b border-[#2b405b] flex-shrink-0" style={{ backgroundColor: '#10223d' }}>
+            <div className="flex items-start justify-between px-6 py-4 border-b border-line flex-shrink-0" style={{ backgroundColor: '#10223d' }}>
               <div>
                 <h2 className="text-[14px] font-bold" style={{ color: '#f1f5f9' }}>Editar Programación</h2>
-                <p className="text-[11px] text-[#a8b8cc] mt-0.5">Ruta {titleCode}</p>
+                <p className="text-[11px] text-muted mt-0.5">Ruta {titleCode}</p>
               </div>
-              <button
+              <button aria-label="Cerrar"
                 onClick={handleClose}
                 disabled={loading}
-                className="w-7 h-7 flex items-center justify-center rounded-md text-[#a8b8cc] hover:text-[#f1f5f9] hover:bg-[#2b405b] transition-colors cursor-pointer mt-0.5 flex-shrink-0 disabled:opacity-50"
+                className="w-7 h-7 flex items-center justify-center rounded-md text-muted hover:text-fg hover:bg-line transition-colors cursor-pointer mt-0.5 flex-shrink-0 disabled:opacity-50"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -217,7 +218,7 @@ export default function EditScheduleModal({
             {/* Body */}
             <div className="px-6 py-5 space-y-4">
               {loadingOptions ? (
-                <div className="flex items-center justify-center py-6 text-[12px] text-[#a8b8cc] gap-2">
+                <div className="flex items-center justify-center py-6 text-[12px] text-muted gap-2">
                   <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
@@ -266,7 +267,7 @@ export default function EditScheduleModal({
               )}
 
               {submitError && (
-                <div className="flex items-start gap-2.5 bg-[#3d2332] border border-[#794052] text-rose-200 rounded-md px-4 py-3 text-[12px]">
+                <div className="flex items-start gap-2.5 bg-danger-bg border border-danger-line text-rose-200 rounded-md px-4 py-3 text-[12px]">
                   <svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                   </svg>
@@ -276,12 +277,12 @@ export default function EditScheduleModal({
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[#2b405b] flex-shrink-0" style={{ backgroundColor: '#10223d' }}>
+            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-line flex-shrink-0" style={{ backgroundColor: '#10223d' }}>
               <button
                 type="button"
                 onClick={handleClose}
                 disabled={loading}
-                className="px-4 py-2 rounded-md text-[12px] font-semibold border border-[#2b405b] text-[#a8b8cc] hover:bg-[#2b405b] transition-colors disabled:opacity-50 cursor-pointer"
+                className="px-4 py-2 rounded-md text-[12px] font-semibold border border-line text-muted hover:bg-line transition-colors disabled:opacity-50 cursor-pointer"
               >
                 Cancelar
               </button>
@@ -289,7 +290,7 @@ export default function EditScheduleModal({
                 type="button"
                 onClick={handleConfirm}
                 disabled={loading || loadingOptions}
-                className="flex items-center gap-2 px-5 py-2 rounded-md text-[12px] font-semibold text-[#0d1d37] transition-opacity disabled:opacity-50 cursor-pointer"
+                className="flex items-center gap-2 px-5 py-2 rounded-md text-[12px] font-semibold text-canvas transition-opacity disabled:opacity-50 cursor-pointer"
                 style={{ backgroundColor: '#10b98b' }}
               >
                 {loading ? (

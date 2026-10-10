@@ -1,36 +1,26 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# TRAZZA Admin
 
-## Getting Started
+Panel operacional de TRAZZA (Next.js + Supabase): flota, conductores, rutas,
+incidentes y seguimiento en vivo. Comparte la base de datos con la app móvil
+(`../TrazzaMobile`).
 
-First, run the development server:
+## Configuración
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+1. `.env.local` con `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`,
+   `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` y `DATABASE_URL` (no se sube a git).
+2. `npm install`
+3. `npm run db:migrate` aplica las migraciones pendientes (ver `migrations/README.md`).
+4. `npm run dev` → http://localhost:3000
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Calidad
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- `npm test` · `npm run test:db` · `npm run lint` · `npx tsc --noEmit` · `npm run build`
+- Estrategia y pruebas pendientes: `docs/pruebas.md`
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Convenciones
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Errores: nunca mostrar `error.message` de Supabase; usar `friendlyError` (`lib/errors.ts`).
+- Estados de servicio: `lib/service-status.ts` (mismo vocabulario y colores que la app).
+- Colores: tokens de `app/globals.css` (`bg-surface`, `text-muted`, `bg-accent`…), no hex sueltos.
+- Fechas: hora de Chile con `lib/date.ts`, nunca `new Date("YYYY-MM-DDTHH:mm")`.
+- Acciones sobre servicios: funciones SQL `admin_*` (una transacción), no escrituras sueltas.

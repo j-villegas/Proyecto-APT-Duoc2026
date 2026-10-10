@@ -111,15 +111,22 @@ export default function FuelHistoryModal() {
         .is('deleted_at', null)
         .order('plate', { ascending: true }),
     ])
-    setLogs((logsResult.data ?? []) as FuelLog[])
+// supabase-js sin tipos generados infiere las relaciones embebidas como arreglos;
+    // en ejecución las many-to-one llegan como objeto, de ahí el doble cast.
+    setLogs((logsResult.data ?? []) as unknown as FuelLog[])
     setVehicles((vehiclesResult.data ?? []) as VehicleOption[])
     setLoading(false)
   }, [])
 
-  useEffect(() => { if (open) loadData() }, [open, loadData])
 
   // Reset to page 1 whenever filters change
-  useEffect(() => { setPage(1) }, [search, vehicleFilter, dateFilter])
+  // Volver a la página 1 al cambiar un filtro (ajuste durante el render, sin efecto).
+  const filterKey = String(search) + "|" + String(vehicleFilter) + "|" + String(dateFilter)
+  const [prevFilterKey, setPrevFilterKey] = useState(filterKey)
+  if (filterKey !== prevFilterKey) {
+    setPrevFilterKey(filterKey)
+    setPage(1)
+  }
 
   // Escape to close
   useEffect(() => {
@@ -127,7 +134,7 @@ export default function FuelHistoryModal() {
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') handleClose() }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   }, [open])
 
   function handleClose() {
@@ -162,7 +169,7 @@ export default function FuelHistoryModal() {
       {/* Trigger */}
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={() => { setOpen(true); loadData() }}
         className="text-[11px] font-semibold transition-colors cursor-pointer"
         style={{ color: '#10b98b' }}
       >
@@ -175,13 +182,13 @@ export default function FuelHistoryModal() {
           style={{ backgroundColor: 'rgba(3,22,54,0.52)', backdropFilter: 'blur(2px)' }}
           onClick={e => { if (e.target === e.currentTarget) handleClose() }}
         >
-          <div
-            className="bg-[#142942] rounded-lg border border-[#2b405b] w-full flex flex-col"
+          <div role="dialog" aria-modal="true"
+            className="bg-surface rounded-lg border border-line w-full flex flex-col"
             style={{ maxWidth: 920, maxHeight: '92vh' }}
           >
             {/* ── Header ── */}
             <div
-              className="flex items-start justify-between px-6 py-4 border-b border-[#2b405b] flex-shrink-0"
+              className="flex items-start justify-between px-6 py-4 border-b border-line flex-shrink-0"
               style={{ backgroundColor: '#10223d' }}
             >
               <div className="flex items-center gap-3">
@@ -197,14 +204,14 @@ export default function FuelHistoryModal() {
                   <h2 className="text-[14px] font-bold" style={{ color: '#f1f5f9' }}>
                     Historial de Combustible
                   </h2>
-                  <p className="text-[11px] text-[#a8b8cc] mt-0.5">
+                  <p className="text-[11px] text-muted mt-0.5">
                     Consulta las cargas registradas para la flota.
                   </p>
                 </div>
               </div>
-              <button
+              <button aria-label="Cerrar"
                 onClick={handleClose}
-                className="w-7 h-7 flex items-center justify-center rounded-md text-[#a8b8cc] hover:text-[#f1f5f9] hover:bg-[#2b405b] transition-colors cursor-pointer"
+                className="w-7 h-7 flex items-center justify-center rounded-md text-muted hover:text-fg hover:bg-line transition-colors cursor-pointer"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -214,12 +221,12 @@ export default function FuelHistoryModal() {
 
             {/* ── Filters ── */}
             <div
-              className="flex flex-wrap items-center gap-3 px-6 py-3 border-b border-[#203650] flex-shrink-0"
+              className="flex flex-wrap items-center gap-3 px-6 py-3 border-b border-raised flex-shrink-0"
               style={{ backgroundColor: '#10223d' }}
             >
               {/* Search */}
               <div className="relative flex-1 min-w-[180px] max-w-xs">
-                <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#a8b8cc]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
                 <input
@@ -227,7 +234,7 @@ export default function FuelHistoryModal() {
                   value={search}
                   onChange={e => setSearch(e.target.value)}
                   placeholder="Patente, estación, comprobante..."
-                  className="w-full pl-8 pr-3 py-1.5 text-[12px] border border-[#2b405b] rounded-md bg-[#142942] text-[#f1f5f9] placeholder-[#a8b8cc] focus:outline-none focus:ring-1 focus:ring-[#f1f5f9] focus:border-[#f1f5f9] transition"
+                  className="w-full pl-8 pr-3 py-1.5 text-[12px] border border-line rounded-md bg-surface text-fg placeholder-muted focus:outline-none focus:ring-1 focus:ring-fg focus:border-fg transition"
                 />
               </div>
 
@@ -235,7 +242,7 @@ export default function FuelHistoryModal() {
               <select
                 value={vehicleFilter}
                 onChange={e => setVFilter(e.target.value)}
-                className="py-1.5 pl-2.5 pr-7 text-[12px] border border-[#2b405b] rounded-md bg-[#142942] text-[#d5e0ed] focus:outline-none focus:ring-1 focus:ring-[#f1f5f9] transition cursor-pointer"
+                className="py-1.5 pl-2.5 pr-7 text-[12px] border border-line rounded-md bg-surface text-soft focus:outline-none focus:ring-1 focus:ring-fg transition cursor-pointer"
               >
                 <option value="">Todos los vehículos</option>
                 {vehicles.map(v => (
@@ -267,23 +274,23 @@ export default function FuelHistoryModal() {
 
             {/* ── Summary bar ── */}
             {!loading && filtered.length > 0 && (
-              <div className="flex items-center gap-6 px-6 py-2.5 border-b border-[#203650] flex-shrink-0 bg-[#142942]">
+              <div className="flex items-center gap-6 px-6 py-2.5 border-b border-raised flex-shrink-0 bg-surface">
                 <div className="flex items-center gap-1.5">
-                  <span className="text-[10px] font-semibold uppercase tracking-wide text-[#a8b8cc]">Cargas</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-wide text-muted">Cargas</span>
                   <span className="text-[13px] font-bold" style={{ color: '#f1f5f9' }}>{filtered.length}</span>
                 </div>
-                <div className="w-px h-4 bg-[#2b405b]" />
+                <div className="w-px h-4 bg-line" />
                 <div className="flex items-center gap-1.5">
-                  <span className="text-[10px] font-semibold uppercase tracking-wide text-[#a8b8cc]">Total litros</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-wide text-muted">Total litros</span>
                   <span className="text-[13px] font-bold" style={{ color: '#10b98b' }}>
                     {totalLiters % 1 === 0 ? totalLiters : totalLiters.toFixed(1)} L
                   </span>
                 </div>
                 {totalAmount > 0 && (
                   <>
-                    <div className="w-px h-4 bg-[#2b405b]" />
+                    <div className="w-px h-4 bg-line" />
                     <div className="flex items-center gap-1.5">
-                      <span className="text-[10px] font-semibold uppercase tracking-wide text-[#a8b8cc]">Total monto</span>
+                      <span className="text-[10px] font-semibold uppercase tracking-wide text-muted">Total monto</span>
                       <span className="text-[13px] font-bold" style={{ color: '#f1f5f9' }}>
                         ${totalAmount.toLocaleString('es-CL')}
                       </span>
@@ -296,7 +303,7 @@ export default function FuelHistoryModal() {
             {/* ── Body ── */}
             <div className="flex-1 overflow-y-auto">
               {loading ? (
-                <div className="flex items-center justify-center gap-3 py-16 text-[#a8b8cc]">
+                <div className="flex items-center justify-center gap-3 py-16 text-muted">
                   <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
@@ -305,22 +312,22 @@ export default function FuelHistoryModal() {
                 </div>
               ) : filtered.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 text-center">
-                  <div className="w-10 h-10 rounded-full bg-[#203650] flex items-center justify-center mb-3">
-                    <svg className="w-5 h-5 text-[#a8b8cc]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <div className="w-10 h-10 rounded-full bg-raised flex items-center justify-center mb-3">
+                    <svg className="w-5 h-5 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
                     </svg>
                   </div>
-                  <p className="text-[13px] font-medium text-[#a8b8cc]">Sin cargas registradas</p>
-                  <p className="text-[11px] text-[#a8b8cc] mt-0.5">Ajusta los filtros o registra una nueva carga.</p>
+                  <p className="text-[13px] font-medium text-muted">Sin cargas registradas</p>
+                  <p className="text-[11px] text-muted mt-0.5">Ajusta los filtros o registra una nueva carga.</p>
                 </div>
               ) : (
                 <table className="w-full">
                   <thead>
-                    <tr style={{ backgroundColor: '#10223d' }} className="border-b border-[#203650]">
+                    <tr style={{ backgroundColor: '#10223d' }} className="border-b border-raised">
                       {['Fecha', 'Vehículo', 'Estación', 'Litros', 'Monto', 'KM', 'Nivel'].map(col => (
                         <th
                           key={col}
-                          className="text-left text-[10px] font-bold uppercase tracking-wider px-4 py-2.5 text-[#a8b8cc] whitespace-nowrap"
+                          className="text-left text-[10px] font-bold uppercase tracking-wider px-4 py-2.5 text-muted whitespace-nowrap"
                         >
                           {col}
                         </th>
@@ -333,16 +340,16 @@ export default function FuelHistoryModal() {
                       const plate = veh?.plate ?? '—'
                       const model = [veh?.brand, veh?.model].filter(Boolean).join(' ')
                       return (
-                        <tr key={log.id} className="border-b border-[#203650] hover:bg-[#10223d] transition-colors">
+                        <tr key={log.id} className="border-b border-raised hover:bg-sunken transition-colors">
                           <td className="px-4 py-2.5 whitespace-nowrap">
-                            <span className="text-[11px] text-[#a8b8cc]">{fmtDatetime(log.fuel_datetime)}</span>
+                            <span className="text-[11px] text-muted">{fmtDatetime(log.fuel_datetime)}</span>
                           </td>
                           <td className="px-4 py-2.5 whitespace-nowrap">
                             <p className="text-[12px] font-bold font-mono tracking-wide" style={{ color: '#f1f5f9' }}>{plate}</p>
-                            {model && <p className="text-[10px] text-[#a8b8cc]">{model}</p>}
+                            {model && <p className="text-[10px] text-muted">{model}</p>}
                           </td>
                           <td className="px-4 py-2.5">
-                            <span className="text-[12px] text-[#d5e0ed]">{log.station_name ?? '—'}</span>
+                            <span className="text-[12px] text-soft">{log.station_name ?? '—'}</span>
                           </td>
                           <td className="px-4 py-2.5 whitespace-nowrap">
                             <span className="text-[12px] font-semibold" style={{ color: '#10b98b' }}>
@@ -352,21 +359,21 @@ export default function FuelHistoryModal() {
                             </span>
                           </td>
                           <td className="px-4 py-2.5 whitespace-nowrap">
-                            <span className="text-[12px] text-[#d5e0ed] tabular-nums">
+                            <span className="text-[12px] text-soft tabular-nums">
                               {log.total_amount != null
                                 ? `$${log.total_amount.toLocaleString('es-CL')}`
                                 : '—'}
                             </span>
                           </td>
                           <td className="px-4 py-2.5 whitespace-nowrap">
-                            <span className="text-[12px] text-[#a8b8cc] tabular-nums">
+                            <span className="text-[12px] text-muted tabular-nums">
                               {log.odometer_km != null
                                 ? `${log.odometer_km.toLocaleString('es-CL')} km`
                                 : '—'}
                             </span>
                           </td>
                           <td className="px-4 py-2.5 whitespace-nowrap">
-                            <span className="text-[11px] text-[#a8b8cc]">
+                            <span className="text-[11px] text-muted">
                               {levelStr(log.fuel_level_before_eighths, log.fuel_level_after_eighths)}
                             </span>
                           </td>
@@ -381,10 +388,10 @@ export default function FuelHistoryModal() {
             {/* ── Pagination ── */}
             {!loading && totalPages > 1 && (
               <div
-                className="flex items-center justify-between px-6 py-3 border-t border-[#2b405b] flex-shrink-0"
+                className="flex items-center justify-between px-6 py-3 border-t border-line flex-shrink-0"
                 style={{ backgroundColor: '#10223d' }}
               >
-                <p className="text-[11px] text-[#a8b8cc]">
+                <p className="text-[11px] text-muted">
                   Mostrando {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} de {filtered.length}
                 </p>
                 <div className="flex items-center gap-2">
@@ -392,7 +399,7 @@ export default function FuelHistoryModal() {
                     type="button"
                     onClick={() => setPage(p => Math.max(1, p - 1))}
                     disabled={page === 1}
-                    className="px-3 py-1.5 text-[11px] font-semibold rounded border border-[#2b405b] text-[#d5e0ed] hover:bg-[#142942] transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-default"
+                    className="px-3 py-1.5 text-[11px] font-semibold rounded border border-line text-soft hover:bg-surface transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-default"
                   >
                     ← Anterior
                   </button>
@@ -406,7 +413,7 @@ export default function FuelHistoryModal() {
                     type="button"
                     onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                     disabled={page === totalPages}
-                    className="px-3 py-1.5 text-[11px] font-semibold rounded border border-[#2b405b] text-[#d5e0ed] hover:bg-[#142942] transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-default"
+                    className="px-3 py-1.5 text-[11px] font-semibold rounded border border-line text-soft hover:bg-surface transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-default"
                   >
                     Siguiente →
                   </button>
@@ -417,13 +424,13 @@ export default function FuelHistoryModal() {
             {/* ── Footer close ── */}
             {(loading || totalPages <= 1) && (
               <div
-                className="flex items-center justify-end px-6 py-3 border-t border-[#2b405b] flex-shrink-0"
+                className="flex items-center justify-end px-6 py-3 border-t border-line flex-shrink-0"
                 style={{ backgroundColor: '#10223d' }}
               >
                 <button
                   type="button"
                   onClick={handleClose}
-                  className="px-4 py-2 rounded-md text-[12px] font-semibold border border-[#2b405b] text-[#a8b8cc] hover:bg-[#2b405b] transition-colors cursor-pointer"
+                  className="px-4 py-2 rounded-md text-[12px] font-semibold border border-line text-muted hover:bg-line transition-colors cursor-pointer"
                 >
                   Cerrar
                 </button>

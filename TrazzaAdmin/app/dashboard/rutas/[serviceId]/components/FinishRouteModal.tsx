@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { friendlyError } from '@/lib/errors'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -38,8 +39,6 @@ function formatDuration(startISO: string | null): string {
 interface Props {
   serviceId: string
   serviceCode: string | null
-  vehicleId: string | null
-  driverId: string | null
   actualStartAt: string | null
   serviceStatus: string | null
 }
@@ -49,8 +48,6 @@ interface Props {
 export default function FinishRouteModal({
   serviceId,
   serviceCode,
-  vehicleId,
-  driverId,
   actualStartAt,
   serviceStatus,
 }: Props) {
@@ -89,7 +86,6 @@ export default function FinishRouteModal({
     setLoadingSummary(false)
   }, [serviceId])
 
-  useEffect(() => { if (open) loadSummary() }, [open, loadSummary])
 
   useEffect(() => {
     if (!open) return
@@ -117,60 +113,19 @@ export default function FinishRouteModal({
 
     setLoading(true)
     setSubmitError(null)
-    const supabase = createClient()
-    const now = new Date().toISOString()
 
     try {
-      const { data: { user }, error: authErr } = await supabase.auth.getUser()
-      if (authErr || !user) throw new Error('No se pudo verificar la sesión.')
-
-      const { data: profile, error: profileErr } = await supabase
-        .from('profiles').select('id, company_id').eq('id', user.id).single()
-      if (profileErr || !profile?.company_id) throw new Error('No se encontró el perfil del usuario.')
-
-      const companyId = profile.company_id
-
-      // 1. Update service → completed
-      const { error: svcErr } = await supabase
-        .from('services')
-        .update({ status: 'completed', actual_end_at: now })
-        .eq('id', serviceId)
-        .eq('status', 'in_progress')   // guard: only update if still in_progress
-      if (svcErr) throw new Error(`Error al finalizar el servicio: ${svcErr.message}`)
-
-      // 2. Update vehicle → available
-      if (vehicleId) {
-        const { error: vErr } = await supabase
-          .from('vehicles').update({ status: 'available' }).eq('id', vehicleId)
-        if (vErr) throw new Error(`Error al actualizar el vehículo: ${vErr.message}`)
-      }
-
-      // 3. Update driver → available
-      if (driverId) {
-        const { error: dErr } = await supabase
-          .from('drivers').update({ status: 'available' }).eq('id', driverId)
-        if (dErr) throw new Error(`Error al actualizar el conductor: ${dErr.message}`)
-      }
-
-      // 4. service_events — optional; silently skip on any error
-      try {
-        const evPayload: Record<string, unknown> = {
-          company_id:  companyId,
-          service_id:  serviceId,
-          event_type:  'service_completed',
-          description: 'Servicio finalizado desde panel web',
-        }
-        if (notes.trim()) evPayload.description += ` · ${notes.trim()}`
-        await supabase.from('service_events').insert(evPayload)
-      } catch {
-        // optional — ignore
-      }
+      // Servicio, vehículo, conductor y bitácora en una sola transacción.
+      const { error } = await createClient().rpc('admin_finish_service', {
+        p_service_id: serviceId,
+        p_notes:      notes.trim() || null,
+      })
+      if (error) throw new Error(friendlyError(error, 'No se pudo finalizar el servicio'))
 
       handleClose()
       router.refresh()
-
     } catch (err: unknown) {
-      setSubmitError(err instanceof Error ? err.message : 'Error inesperado. Inténtalo de nuevo.')
+      setSubmitError(err instanceof Error ? err.message : friendlyError(err))
     } finally {
       setLoading(false)
     }
@@ -190,10 +145,10 @@ export default function FinishRouteModal({
   return (
     <>
       <button
-        onClick={() => setOpen(true)}
-        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md border border-[#2b405b] text-[12px] font-medium text-[#d5e0ed] hover:bg-[#10223d] transition-colors text-left cursor-pointer"
+        onClick={() => { setOpen(true); loadSummary() }}
+        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md border border-line text-[12px] font-medium text-soft hover:bg-sunken transition-colors text-left cursor-pointer"
       >
-        <svg className="w-4 h-4 text-[#f1f5f9] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+        <svg className="w-4 h-4 text-fg flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
         </svg>
         <span className="flex-1">Finalizar Ruta</span>
@@ -205,12 +160,12 @@ export default function FinishRouteModal({
           style={{ backgroundColor: 'rgba(3,22,54,0.50)', backdropFilter: 'blur(2px)' }}
           onClick={e => { if (e.target === e.currentTarget && !loading) handleClose() }}
         >
-          <div
-            className="bg-[#142942] rounded-lg border border-[#2b405b] w-full flex flex-col"
+          <div role="dialog" aria-modal="true"
+            className="bg-surface rounded-lg border border-line w-full flex flex-col"
             style={{ maxWidth: 560, maxHeight: '92vh' }}
           >
             {/* Header */}
-            <div className="flex items-start justify-between px-6 py-4 border-b border-[#2b405b] flex-shrink-0" style={{ backgroundColor: '#10223d' }}>
+            <div className="flex items-start justify-between px-6 py-4 border-b border-line flex-shrink-0" style={{ backgroundColor: '#10223d' }}>
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#a8b8cc12' }}>
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="#f1f5f9" strokeWidth={2}>
@@ -219,15 +174,15 @@ export default function FinishRouteModal({
                 </div>
                 <div>
                   <h2 className="text-[14px] font-bold" style={{ color: '#f1f5f9' }}>Finalizar Ruta</h2>
-                  <p className="text-[11px] text-[#a8b8cc] mt-0.5">
+                  <p className="text-[11px] text-muted mt-0.5">
                     Confirme el resumen del servicio antes de cerrar la operación.
                   </p>
                 </div>
               </div>
-              <button
+              <button aria-label="Cerrar"
                 onClick={handleClose}
                 disabled={loading}
-                className="w-7 h-7 flex items-center justify-center rounded-md text-[#a8b8cc] hover:text-[#f1f5f9] hover:bg-[#2b405b] transition-colors cursor-pointer mt-0.5 disabled:opacity-40"
+                className="w-7 h-7 flex items-center justify-center rounded-md text-muted hover:text-fg hover:bg-line transition-colors cursor-pointer mt-0.5 disabled:opacity-40"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -238,7 +193,7 @@ export default function FinishRouteModal({
             <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
 
               {submitError && (
-                <div className="flex items-start gap-2.5 bg-[#3d2332] border border-[#794052] text-rose-200 rounded-md px-4 py-3 text-[12px]">
+                <div className="flex items-start gap-2.5 bg-danger-bg border border-danger-line text-rose-200 rounded-md px-4 py-3 text-[12px]">
                   <svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                   </svg>
@@ -248,7 +203,7 @@ export default function FinishRouteModal({
 
               {/* Pending warning */}
               {hasPending && (
-                <div className="flex items-start gap-2.5 bg-[#3b3020] border border-[#755c33] text-amber-200 rounded-md px-4 py-3 text-[12px]">
+                <div className="flex items-start gap-2.5 bg-warn-bg border border-warn-line text-amber-200 rounded-md px-4 py-3 text-[12px]">
                   <svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
                   </svg>
@@ -257,9 +212,9 @@ export default function FinishRouteModal({
               )}
 
               {/* Route */}
-              <div className="rounded-md border border-[#2b405b] overflow-hidden">
-                <div className="px-4 py-2 border-b border-[#203650]" style={{ backgroundColor: '#10223d' }}>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-[#a8b8cc]">Ruta</p>
+              <div className="rounded-md border border-line overflow-hidden">
+                <div className="px-4 py-2 border-b border-raised" style={{ backgroundColor: '#10223d' }}>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted">Ruta</p>
                 </div>
                 <div className="px-4 py-2.5 flex items-center justify-between">
                   <span className="text-[12px] font-bold" style={{ color: '#f1f5f9' }}>Ruta {titleCode}</span>
@@ -270,12 +225,12 @@ export default function FinishRouteModal({
               </div>
 
               {/* Passengers summary */}
-              <div className="rounded-md border border-[#2b405b] overflow-hidden">
-                <div className="px-4 py-2 border-b border-[#203650]" style={{ backgroundColor: '#10223d' }}>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-[#a8b8cc]">Pasajeros</p>
+              <div className="rounded-md border border-line overflow-hidden">
+                <div className="px-4 py-2 border-b border-raised" style={{ backgroundColor: '#10223d' }}>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted">Pasajeros</p>
                 </div>
                 {loadingSummary ? (
-                  <div className="flex items-center gap-2 px-4 py-3 text-[12px] text-[#a8b8cc]">
+                  <div className="flex items-center gap-2 px-4 py-3 text-[12px] text-muted">
                     <svg className="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
@@ -283,7 +238,7 @@ export default function FinishRouteModal({
                     Cargando...
                   </div>
                 ) : (
-                  <div className="grid grid-cols-4 divide-x divide-[#203650]">
+                  <div className="grid grid-cols-4 divide-x divide-raised">
                     {[
                       { label: 'Total',      value: summary?.total    ?? 0, color: '#f1f5f9' },
                       { label: 'Subieron',   value: summary?.boarded  ?? 0, color: '#55d9ad' },
@@ -292,7 +247,7 @@ export default function FinishRouteModal({
                     ].map(({ label, value, color }) => (
                       <div key={label} className="px-3 py-3 text-center">
                         <p className="text-[18px] font-bold leading-none" style={{ color }}>{value}</p>
-                        <p className="text-[10px] text-[#a8b8cc] mt-1 leading-tight">{label}</p>
+                        <p className="text-[10px] text-muted mt-1 leading-tight">{label}</p>
                       </div>
                     ))}
                   </div>
@@ -302,13 +257,13 @@ export default function FinishRouteModal({
               {/* Incidents + Timeline */}
               <div className="grid grid-cols-2 gap-3">
                 {/* Incidentes */}
-                <div className="rounded-md border border-[#2b405b] overflow-hidden">
-                  <div className="px-3 py-2 border-b border-[#203650]" style={{ backgroundColor: '#10223d' }}>
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-[#a8b8cc]">Incidencias</p>
+                <div className="rounded-md border border-line overflow-hidden">
+                  <div className="px-3 py-2 border-b border-raised" style={{ backgroundColor: '#10223d' }}>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-muted">Incidencias</p>
                   </div>
                   <div className="px-3 py-3 text-center">
                     {loadingSummary ? (
-                      <span className="text-[12px] text-[#a8b8cc]">—</span>
+                      <span className="text-[12px] text-muted">—</span>
                     ) : (
                       <>
                         <p
@@ -317,7 +272,7 @@ export default function FinishRouteModal({
                         >
                           {summary?.incidents ?? 0}
                         </p>
-                        <p className="text-[10px] text-[#a8b8cc] mt-1">
+                        <p className="text-[10px] text-muted mt-1">
                           {(summary?.incidents ?? 0) === 0 ? 'Sin incidencias' : 'reportadas'}
                         </p>
                       </>
@@ -326,23 +281,23 @@ export default function FinishRouteModal({
                 </div>
 
                 {/* Horario */}
-                <div className="rounded-md border border-[#2b405b] overflow-hidden">
-                  <div className="px-3 py-2 border-b border-[#203650]" style={{ backgroundColor: '#10223d' }}>
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-[#a8b8cc]">Horario</p>
+                <div className="rounded-md border border-line overflow-hidden">
+                  <div className="px-3 py-2 border-b border-raised" style={{ backgroundColor: '#10223d' }}>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-muted">Horario</p>
                   </div>
                   <div className="px-3 py-2.5 space-y-1.5">
                     <div>
-                      <p className="text-[10px] text-[#a8b8cc]">Inicio real</p>
-                      <p className="text-[11px] font-semibold text-[#d5e0ed]">
+                      <p className="text-[10px] text-muted">Inicio real</p>
+                      <p className="text-[11px] font-semibold text-soft">
                         {actualStartAt ? formatDateTime(actualStartAt) : 'Sin registro'}
                       </p>
                     </div>
                     <div>
-                      <p className="text-[10px] text-[#a8b8cc]">Fin</p>
-                      <p className="text-[11px] font-semibold text-[#d5e0ed]">{finishTimeLabel}</p>
+                      <p className="text-[10px] text-muted">Fin</p>
+                      <p className="text-[11px] font-semibold text-soft">{finishTimeLabel}</p>
                     </div>
                     <div>
-                      <p className="text-[10px] text-[#a8b8cc]">Duración</p>
+                      <p className="text-[10px] text-muted">Duración</p>
                       <p className="text-[11px] font-semibold" style={{ color: '#f1f5f9' }}>
                         {formatDuration(actualStartAt)}
                       </p>
@@ -353,7 +308,7 @@ export default function FinishRouteModal({
 
               {/* Notes */}
               <div>
-                <label className="block text-[11px] font-semibold uppercase tracking-wide text-[#a8b8cc] mb-1">
+                <label className="block text-[11px] font-semibold uppercase tracking-wide text-muted mb-1">
                   Observaciones del Cierre
                 </label>
                 <textarea
@@ -361,19 +316,19 @@ export default function FinishRouteModal({
                   placeholder="Observaciones internas del cierre de ruta..."
                   value={notes}
                   onChange={e => setNotes(e.target.value)}
-                  className="w-full px-3 py-2 text-[12px] border border-[#2b405b] rounded-md bg-[#142942] text-[#f1f5f9] placeholder-[#a8b8cc] focus:outline-none focus:ring-1 focus:ring-[#f1f5f9] focus:border-[#f1f5f9] transition resize-none"
+                  className="w-full px-3 py-2 text-[12px] border border-line rounded-md bg-surface text-fg placeholder-muted focus:outline-none focus:ring-1 focus:ring-fg focus:border-fg transition resize-none"
                 />
               </div>
 
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[#2b405b] flex-shrink-0" style={{ backgroundColor: '#10223d' }}>
+            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-line flex-shrink-0" style={{ backgroundColor: '#10223d' }}>
               <button
                 type="button"
                 onClick={handleClose}
                 disabled={loading}
-                className="px-4 py-2 rounded-md text-[12px] font-semibold border border-[#2b405b] text-[#a8b8cc] hover:bg-[#2b405b] transition-colors disabled:opacity-50 cursor-pointer"
+                className="px-4 py-2 rounded-md text-[12px] font-semibold border border-line text-muted hover:bg-line transition-colors disabled:opacity-50 cursor-pointer"
               >
                 Cancelar
               </button>

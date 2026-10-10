@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { incidentAccess } from './access'
 import { validateNew, validateUpdate, type ActionState } from './model'
+import { friendlyError } from '@/lib/errors'
 
 function refreshIncidents(serviceId?: string | null) {
   revalidatePath('/dashboard/incidentes')
@@ -20,7 +21,7 @@ export async function createIncident(_previous: ActionState, form: FormData): Pr
       ...values, company_id: profile.company_id, reported_by_profile_id: profile.id,
       reported_by_type: 'admin', status: 'open',
     })
-    if (error) return { error: 'No se pudo registrar el incidente. Comprueba la conexión y los permisos de la tabla incidents.' }
+    if (error) return { error: friendlyError(error, 'No se pudo registrar el incidente') }
     refreshIncidents()
     return { success: 'Incidente registrado.', revision: crypto.randomUUID() }
   } catch (error) {
@@ -45,7 +46,7 @@ export async function updateIncident(_previous: ActionState, form: FormData): Pr
       .update({ status: values.status, resolution_notes: values.notes || null, resolved_at: resolvedAt })
       .eq('id', values.id).eq('company_id', profile.company_id)
       .eq('updated_at', values.updatedAt).is('deleted_at', null).select('id').maybeSingle()
-    if (error) return { error: 'No se pudo guardar. Comprueba la conexión y los permisos de actualización.' }
+    if (error) return { error: friendlyError(error, 'No se pudo actualizar el incidente') }
     if (!updated) return { error: 'El incidente cambió mientras lo editabas. Recarga la página e inténtalo nuevamente.' }
     refreshIncidents(incident.service_id)
     return { success: 'Seguimiento actualizado.', revision: crypto.randomUUID() }

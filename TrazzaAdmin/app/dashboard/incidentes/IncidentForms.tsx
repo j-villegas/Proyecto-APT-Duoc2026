@@ -15,10 +15,10 @@ export function NewIncidentForm() {
   const [state, action, pending] = useActionState(createIncident, {})
   const ref = useRef<HTMLFormElement>(null)
   useEffect(() => { if (state.revision) ref.current?.reset() }, [state.revision])
-  return <details className="rounded-2xl border border-[#2b405b] bg-[#142942]">
+  return <details className="rounded-2xl border border-line bg-surface">
     <summary className="cursor-pointer px-5 py-4 font-semibold text-[#62e7bd]">+ Registrar incidente general</summary>
-    <form ref={ref} action={action} className="space-y-4 border-t border-[#2b405b] p-5" aria-busy={pending}>
-      <p className="text-sm text-[#a8b8cc]">Para vincularlo a un servicio, usa “Reportar Incidencia” desde el detalle de la ruta. Este registro será general.</p>
+    <form ref={ref} action={action} className="space-y-4 border-t border-line p-5" aria-busy={pending}>
+      <p className="text-sm text-muted">Para vincularlo a un servicio, usa “Reportar Incidencia” desde el detalle de la ruta. Este registro será general.</p>
       <fieldset disabled={pending} className="grid gap-4 sm:grid-cols-[1fr_180px]">
         <label className="space-y-2 text-sm">Título<span className="text-rose-300"> *</span>
           <input name="title" required minLength={3} maxLength={160} className={inputClass} placeholder="Ej.: problema operativo en terminal" />
@@ -49,7 +49,7 @@ export function UpdateIncidentForm({ id, status, updatedAt, notes }: { id: strin
         <textarea name="resolution_notes" defaultValue={notes ?? ''} maxLength={4000} rows={3} className={inputClass} placeholder="Obligatorias para resolver o cancelar" />
       </label>
     </fieldset>
-    <p className="text-xs text-[#a8b8cc]">Cancelar conserva el registro. Volver a abierto o en revisión reabre el incidente y limpia su fecha de resolución.</p>
+    <p className="text-xs text-muted">Cancelar conserva el registro. Volver a abierto o en revisión reabre el incidente y limpia su fecha de resolución.</p>
     <Feedback state={state} />
     <button className={buttonClass} disabled={pending}>{pending ? 'Guardando…' : 'Guardar seguimiento'}</button>
   </form>

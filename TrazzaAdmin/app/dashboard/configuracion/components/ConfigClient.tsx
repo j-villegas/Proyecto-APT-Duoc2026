@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { friendlyError } from '@/lib/errors'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -37,12 +38,12 @@ function Card({ title, subtitle, children }: {
   title: string; subtitle?: string; children: React.ReactNode
 }) {
   return (
-    <div className="bg-[#142942] border border-[#2b405b] rounded-lg overflow-hidden">
-      <div className="px-6 py-4 border-b border-[#2b405b]">
+    <div className="bg-surface border border-line rounded-lg overflow-hidden">
+      <div className="px-6 py-4 border-b border-line">
         <p className="text-[13px] font-bold uppercase tracking-wider" style={{ color: '#f1f5f9' }}>
           {title}
         </p>
-        {subtitle && <p className="text-[12px] text-[#a8b8cc] mt-0.5">{subtitle}</p>}
+        {subtitle && <p className="text-[12px] text-muted mt-0.5">{subtitle}</p>}
       </div>
       <div className="px-6 py-5">{children}</div>
     </div>
@@ -54,7 +55,7 @@ function Field({ label, required, children }: {
 }) {
   return (
     <div className="flex flex-col gap-1">
-      <label className="text-[11px] font-semibold uppercase tracking-wide text-[#a8b8cc]">
+      <label className="text-[11px] font-semibold uppercase tracking-wide text-muted">
         {label}{required && <span className="text-rose-300 ml-0.5">*</span>}
       </label>
       {children}
@@ -62,16 +63,16 @@ function Field({ label, required, children }: {
   )
 }
 
-const inputCls = 'w-full px-3 py-2 text-[13px] border border-[#2b405b] rounded-md bg-[#142942] text-[#f1f5f9] placeholder-[#a8b8cc] focus:outline-none focus:border-[#7dbbff] focus:ring-1 focus:ring-[#7dbbff] transition-colors'
+const inputCls = 'w-full px-3 py-2 text-[13px] border border-line rounded-md bg-surface text-fg placeholder-muted focus:outline-none focus:border-info-fg focus:ring-1 focus:ring-info-fg transition-colors'
 
 function Badge({ children, color = 'gray' }: {
   children: React.ReactNode; color?: 'gray' | 'orange' | 'blue' | 'green'
 }) {
   const s = {
-    gray:   'bg-[#203650] text-[#a8b8cc] border-[#2b405b]',
-    orange: 'bg-[#3b3020] text-[#10b98b] border-[#755538]',
-    blue:   'bg-[#183352] text-[#7dbbff] border-[#355979]',
-    green:  'bg-[#123b35] text-[#55d9ad] border-[#28684e]',
+    gray:   'bg-raised text-muted border-line',
+    orange: 'bg-warn-bg text-accent border-[#755538]',
+    blue:   'bg-info-bg text-info-fg border-[#355979]',
+    green:  'bg-success-bg text-accent-soft border-[#28684e]',
   }
   return (
     <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold border ${s[color]}`}>
@@ -129,11 +130,11 @@ function TabEmpresa({ company, companyId }: { company: CompanyData; companyId: s
         .eq('id', companyId)
 
       if (sbErr) {
-        setError(sbErr.message ?? 'Error al guardar en la base de datos.')
+        setError(friendlyError(sbErr, 'No se pudieron guardar los datos de la empresa'))
       } else {
         setSuccess(true)
       }
-    } catch { setError('Error inesperado al guardar.') }
+    } catch (err) { setError(friendlyError(err, 'No se pudieron guardar los datos de la empresa')) }
     finally  { setSaving(false) }
   }
 
@@ -166,10 +167,10 @@ function TabEmpresa({ company, companyId }: { company: CompanyData; companyId: s
             />
           </Field>
           <div className="flex flex-col gap-1">
-            <label className="text-[11px] font-semibold uppercase tracking-wide text-[#a8b8cc]">
+            <label className="text-[11px] font-semibold uppercase tracking-wide text-muted">
               Correo de contacto
             </label>
-            <div className="px-3 py-2 text-[13px] border border-[#2b405b] rounded-md bg-[#10223d] text-[#a8b8cc] select-all">
+            <div className="px-3 py-2 text-[13px] border border-line rounded-md bg-sunken text-muted select-all">
               {contactEmail || <span className="italic">Sin correo registrado</span>}
             </div>
           </div>
@@ -192,12 +193,12 @@ function TabEmpresa({ company, companyId }: { company: CompanyData; companyId: s
         </div>
 
         {error && (
-          <div className="mt-4 px-4 py-3 rounded-md bg-[#3d2332] border border-[#794052] text-[12px] text-[#fda4af]">
+          <div className="mt-4 px-4 py-3 rounded-md bg-danger-bg border border-danger-line text-[12px] text-danger-fg">
             {error}
           </div>
         )}
         {success && (
-          <div className="mt-4 px-4 py-3 rounded-md bg-[#123b35] border border-[#28684e] text-[12px] text-[#86efac]">
+          <div className="mt-4 px-4 py-3 rounded-md bg-success-bg border border-[#28684e] text-[12px] text-[#86efac]">
             Datos guardados correctamente. El nombre visible se reflejará en el panel al recargar.
           </div>
         )}
@@ -236,7 +237,7 @@ function TabUsuarios({ companyName, userEmail, userRole }: {
           <p className="text-[14px] font-semibold truncate" style={{ color: '#f1f5f9' }}>
             {companyName || 'VLXLOGISTIC'}
           </p>
-          <p className="text-[13px] text-[#a8b8cc] truncate">{userEmail}</p>
+          <p className="text-[13px] text-muted truncate">{userEmail}</p>
           <div className="flex gap-2 mt-2 flex-wrap">
             <Badge color="blue">{roleLabelMap[userRole] ?? userRole}</Badge>
             <Badge color="green">Activo</Badge>
@@ -255,15 +256,15 @@ function TabSeguridad({ userEmail, userRole }: { userEmail: string; userRole: st
       <Card title="Sesión Actual" subtitle="Detalles de la sesión activa en este dispositivo.">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-[#a8b8cc] mb-1">Correo</p>
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-muted mb-1">Correo</p>
             <p className="text-[13px] truncate" style={{ color: '#f1f5f9' }}>{userEmail}</p>
           </div>
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-[#a8b8cc] mb-1">Rol</p>
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-muted mb-1">Rol</p>
             <p className="text-[13px]" style={{ color: '#f1f5f9' }}>{roleLabelMap[userRole] ?? userRole}</p>
           </div>
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-[#a8b8cc] mb-1">Estado</p>
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-muted mb-1">Estado</p>
             <Badge color="green">Activo</Badge>
           </div>
         </div>
@@ -278,11 +279,11 @@ function TabSeguridad({ userEmail, userRole }: { userEmail: string; userRole: st
           ].map(item => (
             <div
               key={item.label}
-              className="flex items-center justify-between px-4 py-3 rounded-lg border border-[#2b405b] bg-[#10223d]"
+              className="flex items-center justify-between px-4 py-3 rounded-lg border border-line bg-sunken"
             >
               <div>
                 <p className="text-[13px] font-medium" style={{ color: '#f1f5f9' }}>{item.label}</p>
-                <p className="text-[11px] text-[#a8b8cc] mt-0.5">{item.desc}</p>
+                <p className="text-[11px] text-muted mt-0.5">{item.desc}</p>
               </div>
               <Badge color="orange">Próx.</Badge>
             </div>
@@ -295,7 +296,7 @@ function TabSeguridad({ userEmail, userRole }: { userEmail: string; userRole: st
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
-export default function ConfigClient({ userEmail, userName, userRole, companyId, company }: Props) {
+export default function ConfigClient({ userEmail, userRole, companyId, company }: Props) {
   const [activeTab, setActiveTab] = useState<TabId>('empresa')
 
   return (
@@ -304,21 +305,21 @@ export default function ConfigClient({ userEmail, userName, userRole, companyId,
         <h2 className="text-[13px] font-bold uppercase tracking-widest" style={{ color: '#f1f5f9' }}>
           Configuración General
         </h2>
-        <p className="text-[12px] text-[#a8b8cc] mt-0.5">
+        <p className="text-[12px] text-muted mt-0.5">
           Administra la información visible de tu empresa en el panel.
         </p>
       </div>
 
-      <div className="bg-[#142942] border border-[#2b405b] rounded-lg overflow-hidden">
-        <div className="flex border-b border-[#2b405b]">
+      <div className="bg-surface border border-line rounded-lg overflow-hidden">
+        <div className="flex border-b border-line">
           {TABS.map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`flex-shrink-0 px-5 py-3.5 text-[12px] font-semibold transition-colors relative ${
                 activeTab === tab.id
-                  ? 'text-[#f1f5f9]'
-                  : 'text-[#a8b8cc] hover:text-[#f1f5f9] hover:bg-[#10223d]'
+                  ? 'text-fg'
+                  : 'text-muted hover:text-fg hover:bg-sunken'
               }`}
             >
               {tab.label}

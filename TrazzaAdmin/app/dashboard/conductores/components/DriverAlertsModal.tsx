@@ -138,15 +138,20 @@ export default function DriverAlertsModal() {
     setLoading(false)
   }, [])
 
-  useEffect(() => { if (open) loadData() }, [open, loadData])
-  useEffect(() => { setPage(1) }, [search, typeFilter])
+  // Volver a la página 1 al cambiar un filtro (ajuste durante el render, sin efecto).
+  const filterKey = String(search) + "|" + String(typeFilter)
+  const [prevFilterKey, setPrevFilterKey] = useState(filterKey)
+  if (filterKey !== prevFilterKey) {
+    setPrevFilterKey(filterKey)
+    setPage(1)
+  }
 
   useEffect(() => {
     if (!open) return
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') handleClose() }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   }, [open])
 
   function handleClose() {
@@ -173,7 +178,7 @@ export default function DriverAlertsModal() {
       {/* Trigger */}
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={() => { setOpen(true); loadData() }}
         className="text-[11px] font-semibold transition-colors cursor-pointer"
         style={{ color: '#10b98b' }}
       >
@@ -186,12 +191,12 @@ export default function DriverAlertsModal() {
           style={{ backgroundColor: 'rgba(3,22,54,0.52)', backdropFilter: 'blur(2px)' }}
           onClick={e => { if (e.target === e.currentTarget) handleClose() }}
         >
-          <div
-            className="bg-[#142942] rounded-lg border border-[#2b405b] w-full flex flex-col"
+          <div role="dialog" aria-modal="true"
+            className="bg-surface rounded-lg border border-line w-full flex flex-col"
             style={{ maxWidth: 680, maxHeight: '88vh' }}
           >
             {/* Header */}
-            <div className="flex items-start justify-between px-6 py-4 border-b border-[#2b405b] flex-shrink-0" style={{ backgroundColor: '#10223d' }}>
+            <div className="flex items-start justify-between px-6 py-4 border-b border-line flex-shrink-0" style={{ backgroundColor: '#10223d' }}>
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-md flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#fda4af15' }}>
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="#fda4af" strokeWidth={1.8}>
@@ -200,10 +205,10 @@ export default function DriverAlertsModal() {
                 </div>
                 <div>
                   <h2 className="text-[14px] font-bold" style={{ color: '#f1f5f9' }}>Alertas de Conductores</h2>
-                  <p className="text-[11px] text-[#a8b8cc] mt-0.5">Licencias, estados y alertas operativas de conductores.</p>
+                  <p className="text-[11px] text-muted mt-0.5">Licencias, estados y alertas operativas de conductores.</p>
                 </div>
               </div>
-              <button onClick={handleClose} className="w-7 h-7 flex items-center justify-center rounded-md text-[#a8b8cc] hover:text-[#f1f5f9] hover:bg-[#2b405b] transition-colors cursor-pointer">
+              <button aria-label="Cerrar" onClick={handleClose} className="w-7 h-7 flex items-center justify-center rounded-md text-muted hover:text-fg hover:bg-line transition-colors cursor-pointer">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
@@ -211,14 +216,14 @@ export default function DriverAlertsModal() {
             </div>
 
             {/* Filters */}
-            <div className="flex flex-wrap items-center gap-3 px-6 py-3 border-b border-[#203650] flex-shrink-0" style={{ backgroundColor: '#10223d' }}>
+            <div className="flex flex-wrap items-center gap-3 px-6 py-3 border-b border-raised flex-shrink-0" style={{ backgroundColor: '#10223d' }}>
               <div className="relative flex-1 min-w-[160px]">
-                <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#a8b8cc]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
                 <input type="text" value={search} onChange={e => setSearch(e.target.value)}
                   placeholder="Nombre, RUT o código..."
-                  className="w-full pl-8 pr-3 py-1.5 text-[12px] border border-[#2b405b] rounded-md bg-[#142942] text-[#f1f5f9] placeholder-[#a8b8cc] focus:outline-none focus:ring-1 focus:ring-[#f1f5f9] focus:border-[#f1f5f9] transition"
+                  className="w-full pl-8 pr-3 py-1.5 text-[12px] border border-line rounded-md bg-surface text-fg placeholder-muted focus:outline-none focus:ring-1 focus:ring-fg focus:border-fg transition"
                 />
               </div>
               <div className="flex items-center gap-1 flex-wrap">
@@ -236,7 +241,7 @@ export default function DriverAlertsModal() {
             {/* Body */}
             <div className="flex-1 overflow-y-auto">
               {loading ? (
-                <div className="flex items-center justify-center gap-3 py-16 text-[#a8b8cc]">
+                <div className="flex items-center justify-center gap-3 py-16 text-muted">
                   <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
@@ -245,25 +250,25 @@ export default function DriverAlertsModal() {
                 </div>
               ) : filtered.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-14 text-center">
-                  <div className="w-10 h-10 rounded-full bg-[#203650] flex items-center justify-center mb-3">
-                    <svg className="w-5 h-5 text-[#a8b8cc]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <div className="w-10 h-10 rounded-full bg-raised flex items-center justify-center mb-3">
+                    <svg className="w-5 h-5 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
-                  <p className="text-[13px] font-medium text-[#a8b8cc]">Sin alertas</p>
-                  <p className="text-[11px] text-[#a8b8cc] mt-0.5">No hay alertas que coincidan con los filtros.</p>
+                  <p className="text-[13px] font-medium text-muted">Sin alertas</p>
+                  <p className="text-[11px] text-muted mt-0.5">No hay alertas que coincidan con los filtros.</p>
                 </div>
               ) : (
-                <ul className="divide-y divide-[#203650]">
+                <ul className="divide-y divide-raised">
                   {paginated.map(a => (
                     <li key={a.id} className="px-6 py-3.5 flex items-start gap-3">
                       <span className="w-2 h-2 rounded-full flex-shrink-0 mt-1.5" style={{ backgroundColor: a.dotColor }} />
                       <div className="min-w-0 flex-1">
-                        <p className="text-[12px] font-semibold text-[#f1f5f9] leading-snug">
+                        <p className="text-[12px] font-semibold text-fg leading-snug">
                           {a.name ?? 'Conductor sin nombre'}
-                          {a.driver_code && <span className="text-[#a8b8cc] font-normal ml-1.5">· {a.driver_code}</span>}
+                          {a.driver_code && <span className="text-muted font-normal ml-1.5">· {a.driver_code}</span>}
                         </p>
-                        {a.rut && <p className="text-[10px] text-[#a8b8cc] mt-0.5">{a.rut}</p>}
+                        {a.rut && <p className="text-[10px] text-muted mt-0.5">{a.rut}</p>}
                         <p className="text-[11px] mt-0.5" style={{ color: a.dotColor }}>{a.label}</p>
                       </div>
                     </li>
@@ -273,32 +278,32 @@ export default function DriverAlertsModal() {
             </div>
 
             {/* Footer / Pagination */}
-            <div className="flex items-center justify-between px-6 py-3 border-t border-[#2b405b] flex-shrink-0" style={{ backgroundColor: '#10223d' }}>
+            <div className="flex items-center justify-between px-6 py-3 border-t border-line flex-shrink-0" style={{ backgroundColor: '#10223d' }}>
               {totalPages > 1 ? (
-                <p className="text-[11px] text-[#a8b8cc]">
+                <p className="text-[11px] text-muted">
                   {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} de {filtered.length}
                 </p>
               ) : (
-                <span className="text-[11px] text-[#a8b8cc]">{filtered.length} alerta{filtered.length !== 1 ? 's' : ''}</span>
+                <span className="text-[11px] text-muted">{filtered.length} alerta{filtered.length !== 1 ? 's' : ''}</span>
               )}
               <div className="flex items-center gap-2">
                 {totalPages > 1 && (
                   <>
                     <button type="button" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
-                      className="px-3 py-1.5 text-[11px] font-semibold rounded border border-[#2b405b] text-[#d5e0ed] hover:bg-[#142942] transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-default">
+                      className="px-3 py-1.5 text-[11px] font-semibold rounded border border-line text-soft hover:bg-surface transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-default">
                       ← Anterior
                     </button>
                     <span className="px-3 py-1.5 text-[11px] font-bold rounded" style={{ backgroundColor: '#254b77', color: 'white' }}>
                       {page} / {totalPages}
                     </span>
                     <button type="button" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
-                      className="px-3 py-1.5 text-[11px] font-semibold rounded border border-[#2b405b] text-[#d5e0ed] hover:bg-[#142942] transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-default">
+                      className="px-3 py-1.5 text-[11px] font-semibold rounded border border-line text-soft hover:bg-surface transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-default">
                       Siguiente →
                     </button>
                   </>
                 )}
                 <button type="button" onClick={handleClose}
-                  className="px-4 py-1.5 rounded-md text-[12px] font-semibold border border-[#2b405b] text-[#a8b8cc] hover:bg-[#2b405b] transition-colors cursor-pointer">
+                  className="px-4 py-1.5 rounded-md text-[12px] font-semibold border border-line text-muted hover:bg-line transition-colors cursor-pointer">
                   Cerrar
                 </button>
               </div>

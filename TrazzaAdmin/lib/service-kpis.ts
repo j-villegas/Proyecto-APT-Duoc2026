@@ -14,6 +14,10 @@ export type OverdueService = {
 /**
  * Indicadores de servicios compartidos por el dashboard y Gestión de Rutas.
  * Excluye servicios eliminados (deleted_at) y evalúa los atrasos en hora de Chile.
+ *
+ * Cumplimiento = finalizados / (finalizados + no iniciados vencidos + cancelados
+ * después de iniciar). Cancelar antes de iniciar es una decisión de planificación
+ * (p. ej. el cliente anuló el viaje), no un incumplimiento, así que no cuenta.
  */
 export async function getServiceKpis(supabase: Supabase) {
   const now = nowCL()
@@ -23,9 +27,10 @@ export async function getServiceKpis(supabase: Supabase) {
       .is('deleted_at', null)
       .eq('status', status)
 
-  const [completed, cancelled, inProgress, scheduled, overdueCandidates] = await Promise.all([
+  const [completed, cancelled, abandoned, inProgress, scheduled, overdueCandidates] = await Promise.all([
     countByStatus('completed'),
     countByStatus('cancelled'),
+    countByStatus('cancelled').not('actual_start_at', 'is', null),
     countByStatus('in_progress'),
     countByStatus('scheduled'),
     supabase.from('services')
@@ -39,11 +44,14 @@ export async function getServiceKpis(supabase: Supabase) {
     .filter(s => isPastCL(s.scheduled_date, s.scheduled_start_time, now))
 
   const completedCount = completed.count ?? 0
-  const evaluableCount = completedCount + (cancelled.count ?? 0) + overdueRows.length
+  const abandonedCount = abandoned.count ?? 0
+  const evaluableCount = completedCount + overdueRows.length + abandonedCount
 
   return {
     now,
     completedCount,
+    cancelledCount: cancelled.count ?? 0,
+    abandonedCount,
     inProgressCount: inProgress.count ?? 0,
     scheduledFutureCount: Math.max(0, (scheduled.count ?? 0) - overdueRows.length),
     overdueRows,

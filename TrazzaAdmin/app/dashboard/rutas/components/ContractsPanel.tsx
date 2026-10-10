@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { friendlyError } from '@/lib/errors'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -64,7 +65,7 @@ export default function ContractsPanel({ contracts }: { contracts: ContractRow[]
         .eq('id', contractId)
         .eq('company_id', profile.company_id)
 
-      if (updErr) throw new Error(updErr.message)
+      if (updErr) throw new Error(friendlyError(updErr, 'No se pudo eliminar el contrato'))
 
       setConfirmingId(null)
       router.refresh()
@@ -76,7 +77,7 @@ export default function ContractsPanel({ contracts }: { contracts: ContractRow[]
   }
 
   return (
-    <ul className="divide-y divide-[#203650]">
+    <ul className="divide-y divide-raised">
       {contracts.map((c) => {
         const pm = priorityMeta(c.priority)
         const isConfirming = confirmingId === c.id
@@ -84,7 +85,7 @@ export default function ContractsPanel({ contracts }: { contracts: ContractRow[]
         if (isConfirming) {
           return (
             <li key={c.id} className="px-3 py-2.5">
-              <div className="rounded-md border border-[#794052] bg-[#3d2332] p-3">
+              <div className="rounded-md border border-danger-line bg-danger-bg p-3">
                 <p className="text-[12px] font-semibold text-rose-200 mb-1">
                   ¿Eliminar {c.contract_name ?? c.client_name ?? 'este contrato'}?
                 </p>
@@ -96,7 +97,7 @@ export default function ContractsPanel({ contracts }: { contracts: ContractRow[]
                   <button
                     onClick={() => { setConfirmingId(null); setError(null) }}
                     disabled={deletingId === c.id}
-                    className="flex-1 px-3 py-1.5 rounded-md text-[11px] font-semibold border border-[#2b405b] text-[#a8b8cc] hover:bg-[#142942] transition-colors disabled:opacity-50 cursor-pointer"
+                    className="flex-1 px-3 py-1.5 rounded-md text-[11px] font-semibold border border-line text-muted hover:bg-surface transition-colors disabled:opacity-50 cursor-pointer"
                   >
                     Cancelar
                   </button>
@@ -114,7 +115,7 @@ export default function ContractsPanel({ contracts }: { contracts: ContractRow[]
         }
 
         return (
-          <li key={c.id} className="group px-3 py-2.5 hover:bg-[#10223d] transition-colors">
+          <li key={c.id} className="group px-3 py-2.5 hover:bg-sunken transition-colors">
             <div className="flex items-start gap-2">
               <div
                 className="flex-1 min-w-0 pl-3 border-l-2"
@@ -127,11 +128,11 @@ export default function ContractsPanel({ contracts }: { contracts: ContractRow[]
                   {c.contract_name ?? c.client_name ?? `Contrato #${c.id.slice(0, 6)}`}
                 </p>
                 {c.client_name && c.contract_name && (
-                  <p className="text-[11px] text-[#a8b8cc] truncate mt-0.5">{c.client_name}</p>
+                  <p className="text-[11px] text-muted truncate mt-0.5">{c.client_name}</p>
                 )}
                 <div className="flex items-center justify-between mt-1 gap-2">
                   {(c.start_date || c.end_date) && (
-                    <span className="text-[10px] text-[#a8b8cc]">
+                    <span className="text-[10px] text-muted">
                       {formatDateShort(c.start_date)} → {formatDateShort(c.end_date)}
                     </span>
                   )}
@@ -148,7 +149,7 @@ export default function ContractsPanel({ contracts }: { contracts: ContractRow[]
               <button
                 onClick={() => { setConfirmingId(c.id); setError(null) }}
                 title="Eliminar contrato"
-                className="opacity-0 group-hover:opacity-100 w-6 h-6 flex items-center justify-center rounded text-[#a8b8cc] hover:text-rose-300 hover:bg-[#3d2332] transition-colors cursor-pointer flex-shrink-0"
+                className="opacity-0 group-hover:opacity-100 w-6 h-6 flex items-center justify-center rounded text-muted hover:text-rose-300 hover:bg-danger-bg transition-colors cursor-pointer flex-shrink-0"
               >
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397M4.772 5.79c.34-.059.68-.114 1.022-.166m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />

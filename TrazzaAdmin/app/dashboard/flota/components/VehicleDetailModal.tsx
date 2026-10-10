@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { deleteVehicle } from './deleteVehicle'
+import { friendlyError } from '@/lib/errors'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -168,8 +170,8 @@ function validateForm(f: FormState): FormErrors {
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
     <div className="col-span-2 flex items-center gap-2 pt-1 mb-0.5">
-      <p className="text-[10px] font-bold uppercase tracking-widest text-[#a8b8cc]">{children}</p>
-      <div className="flex-1 h-px bg-[#203650]" />
+      <p className="text-[10px] font-bold uppercase tracking-widest text-muted">{children}</p>
+      <div className="flex-1 h-px bg-raised" />
     </div>
   )
 }
@@ -186,7 +188,7 @@ function Field({
 }) {
   return (
     <div className={span === 2 ? 'col-span-2' : ''}>
-      <label className="block text-[10px] font-semibold uppercase tracking-wide text-[#a8b8cc] mb-1">
+      <label className="block text-[10px] font-semibold uppercase tracking-wide text-muted mb-1">
         {label}{required && <span className="text-red-400 ml-0.5">*</span>}
       </label>
       {children}
@@ -196,11 +198,11 @@ function Field({
 }
 
 const inputCls = (hasErr?: boolean) =>
-  `w-full px-2.5 py-1.5 text-[12px] border rounded-md bg-[#142942] text-[#f1f5f9] placeholder-[#a8b8cc]
+  `w-full px-2.5 py-1.5 text-[12px] border rounded-md bg-surface text-fg placeholder-muted
    focus:outline-none focus:ring-1 transition
    ${hasErr
-     ? 'border-[#794052] focus:ring-red-300 focus:border-[#794052]'
-     : 'border-[#2b405b] focus:ring-[#f1f5f9] focus:border-[#f1f5f9]'
+     ? 'border-danger-line focus:ring-red-300 focus:border-danger-line'
+     : 'border-line focus:ring-fg focus:border-fg'
    }`
 
 // ─── Props ────────────────────────────────────────────────────────────────────
@@ -284,7 +286,6 @@ export default function VehicleDetailModal({ vehicleId }: Props) {
     setLoadingData(false)
   }, [vehicleId])
 
-  useEffect(() => { if (open) loadVehicle() }, [open, loadVehicle])
 
   useEffect(() => {
     if (!open) return
@@ -367,7 +368,7 @@ export default function VehicleDetailModal({ vehicleId }: Props) {
         .update(payload)
         .eq('id', vehicleId)
         .eq('company_id', profile.company_id)
-      if (updErr) throw new Error(`Error al guardar: ${updErr.message}`)
+      if (updErr) throw new Error(friendlyError(updErr, 'No se pudo guardar'))
 
       setSaveSuccess(true)
       router.refresh()
@@ -384,23 +385,9 @@ export default function VehicleDetailModal({ vehicleId }: Props) {
   async function handleDeactivate() {
     setDeactivating(true)
     setSubmitError(null)
-    const supabase = createClient()
 
     try {
-      const { data: { user }, error: authErr } = await supabase.auth.getUser()
-      if (authErr || !user) throw new Error('No se pudo verificar la sesión.')
-
-      const { data: profile, error: profileErr } = await supabase
-        .from('profiles').select('company_id').eq('id', user.id).single()
-      if (profileErr || !profile?.company_id) throw new Error('No se encontró el perfil del usuario.')
-
-      const { error: updErr } = await supabase
-        .from('vehicles')
-        .update({ deleted_at: new Date().toISOString(), status: 'out_of_service' })
-        .eq('id', vehicleId)
-        .eq('company_id', profile.company_id)
-      if (updErr) throw new Error(`Error al desactivar el vehículo: ${updErr.message}`)
-
+      await deleteVehicle(vehicleId)
       handleClose()
       router.refresh()
 
@@ -470,7 +457,7 @@ export default function VehicleDetailModal({ vehicleId }: Props) {
           .from('maintenance_orders')
           .update(orderUpdate)
           .eq('id', openOrder.id)
-        if (oErr) throw new Error(`Error al cerrar la orden: ${oErr.message}`)
+        if (oErr) throw new Error(friendlyError(oErr, 'No se pudo cerrar la orden'))
       }
 
       // Update vehicle to available; update km only if ≥ current
@@ -483,7 +470,7 @@ export default function VehicleDetailModal({ vehicleId }: Props) {
         .update(vehicleUpdate)
         .eq('id', vehicleId)
         .eq('company_id', profile.company_id)
-      if (vErr) throw new Error(`Error al actualizar el vehículo: ${vErr.message}`)
+      if (vErr) throw new Error(friendlyError(vErr, 'No se pudo actualizar el vehículo'))
 
       handleClose()
       router.refresh()
@@ -497,13 +484,13 @@ export default function VehicleDetailModal({ vehicleId }: Props) {
 
   // ─── Render ────────────────────────────────────────────────────────────────
 
-  const sm = getStatusMeta(form.status || vehicle?.status)
+  const sm = getStatusMeta(form.status || vehicle?.status || null)
 
   return (
     <>
       <button
-        onClick={() => setOpen(true)}
-        className="text-[11px] font-semibold px-2.5 py-1 rounded border border-[#2b405b] text-[#f1f5f9] hover:bg-[#1b3552] transition-colors cursor-pointer whitespace-nowrap"
+        onClick={() => { setOpen(true); loadVehicle() }}
+        className="text-[11px] font-semibold px-2.5 py-1 rounded border border-line text-fg hover:bg-[#1b3552] transition-colors cursor-pointer whitespace-nowrap"
       >
         Ver detalle
       </button>
@@ -514,13 +501,13 @@ export default function VehicleDetailModal({ vehicleId }: Props) {
           style={{ backgroundColor: 'rgba(3,22,54,0.52)', backdropFilter: 'blur(2px)' }}
           onClick={e => { if (e.target === e.currentTarget && !saving && !deactivating) handleClose() }}
         >
-          <div
-            className="bg-[#142942] rounded-lg border border-[#2b405b] w-full flex flex-col"
+          <div role="dialog" aria-modal="true"
+            className="bg-surface rounded-lg border border-line w-full flex flex-col"
             style={{ maxWidth: 780, maxHeight: '94vh' }}
           >
             {/* ── Header ── */}
             <div
-              className="flex items-center justify-between px-6 py-4 border-b border-[#2b405b] flex-shrink-0"
+              className="flex items-center justify-between px-6 py-4 border-b border-line flex-shrink-0"
               style={{ backgroundColor: '#10223d' }}
             >
               <div className="flex items-center gap-3">
@@ -555,7 +542,7 @@ export default function VehicleDetailModal({ vehicleId }: Props) {
                       </span>
                     )}
                   </div>
-                  <p className="text-[11px] text-[#a8b8cc] mt-0.5">
+                  <p className="text-[11px] text-muted mt-0.5">
                     {loadingData
                       ? 'Cargando...'
                       : activeService
@@ -566,10 +553,10 @@ export default function VehicleDetailModal({ vehicleId }: Props) {
                   </p>
                 </div>
               </div>
-              <button
+              <button aria-label="Cerrar"
                 onClick={handleClose}
                 disabled={saving || deactivating}
-                className="w-7 h-7 flex items-center justify-center rounded-md text-[#a8b8cc] hover:text-[#f1f5f9] hover:bg-[#2b405b] transition-colors cursor-pointer disabled:opacity-40"
+                className="w-7 h-7 flex items-center justify-center rounded-md text-muted hover:text-fg hover:bg-line transition-colors cursor-pointer disabled:opacity-40"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -581,7 +568,7 @@ export default function VehicleDetailModal({ vehicleId }: Props) {
             <div className="flex-1 overflow-y-auto px-6 py-5">
 
               {loadingData ? (
-                <div className="flex items-center justify-center py-16 gap-3 text-[#a8b8cc]">
+                <div className="flex items-center justify-center py-16 gap-3 text-muted">
                   <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
@@ -718,10 +705,10 @@ export default function VehicleDetailModal({ vehicleId }: Props) {
                   {/* Header */}
                   <div className="flex items-center justify-between px-4 py-2.5 border-b" style={{ backgroundColor: '#3b3020', borderColor: '#755538' }}>
                     <div className="flex items-center gap-2">
-                      <svg className="w-4 h-4 text-[#fdba74] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <svg className="w-4 h-4 text-warn-fg flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 11-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 004.486-6.336l-3.276 3.277a3.004 3.004 0 01-2.25-2.25l3.276-3.276a4.5 4.5 0 00-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L2.25 3.75l1.5-1.5L7.5 4.5v1.409l4.26 4.26m-1.745 1.437l1.745-1.437m6.615 8.206L15.75 15.75M4.867 19.125h.008v.008h-.008v-.008z" />
                       </svg>
-                      <p className="text-[12px] font-bold text-[#fdba74]">Mantención en curso</p>
+                      <p className="text-[12px] font-bold text-warn-fg">Mantención en curso</p>
                     </div>
                     {!showFinish && (
                       <button
@@ -745,37 +732,40 @@ export default function VehicleDetailModal({ vehicleId }: Props) {
                       <div className="space-y-1">
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0">
-                            <p className="text-[12px] font-semibold text-[#f1f5f9] leading-snug">
+                            <p className="text-[12px] font-semibold text-fg leading-snug">
                               {openOrder.title ?? MAINTENANCE_TYPE_LABEL[openOrder.maintenance_type ?? ''] ?? 'Orden sin título'}
                             </p>
                             <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                               {openOrder.maintenance_type && (
-                                <span className="text-[10px] text-[#a8b8cc]">
+                                <span className="text-[10px] text-muted">
                                   {MAINTENANCE_TYPE_LABEL[openOrder.maintenance_type] ?? openOrder.maintenance_type}
                                 </span>
                               )}
                               {openOrder.priority && (
                                 <span
                                   className="text-[10px] font-semibold px-1.5 py-0.5 rounded"
-                                  style={PRIORITY_COLOR[openOrder.priority] ?? { text: '#a8b8cc', bg: '#203650' }}
+                                  style={{
+                                    color: (PRIORITY_COLOR[openOrder.priority] ?? { text: '#a8b8cc' }).text,
+                                    backgroundColor: (PRIORITY_COLOR[openOrder.priority] ?? { bg: '#203650' }).bg,
+                                  }}
                                 >
                                   {PRIORITY_LABEL[openOrder.priority] ?? openOrder.priority}
                                 </span>
                               )}
                             </div>
                           </div>
-                          <p className="text-[10px] text-[#a8b8cc] flex-shrink-0">
+                          <p className="text-[10px] text-muted flex-shrink-0">
                             {fmtDatetime(openOrder.started_at ?? openOrder.created_at)}
                           </p>
                         </div>
                         {openOrder.description && (
-                          <p className="text-[11px] text-[#a8b8cc] leading-snug line-clamp-2 mt-1">
+                          <p className="text-[11px] text-muted leading-snug line-clamp-2 mt-1">
                             {openOrder.description.replace(/\n/g, ' ').slice(0, 120)}
                           </p>
                         )}
                       </div>
                     ) : (
-                      <p className="text-[11px] text-[#a8b8cc]">
+                      <p className="text-[11px] text-muted">
                         No se encontró una orden abierta para este vehículo. Se marcará como disponible directamente.
                       </p>
                     )}
@@ -784,7 +774,7 @@ export default function VehicleDetailModal({ vehicleId }: Props) {
                   {/* Finish form (shown when showFinish = true) */}
                   {showFinish && (
                     <div className="px-4 py-4 border-t space-y-3" style={{ borderColor: '#755538', backgroundColor: '#142942' }}>
-                      <p className="text-[11px] font-semibold text-[#d5e0ed]">
+                      <p className="text-[11px] font-semibold text-soft">
                         {openOrder
                           ? 'Confirma que el vehículo salió de taller y queda disponible para nuevos servicios.'
                           : '¿Deseas marcar el vehículo como disponible?'}
@@ -793,31 +783,31 @@ export default function VehicleDetailModal({ vehicleId }: Props) {
                       <div className="grid grid-cols-2 gap-3">
                         {/* KM actual */}
                         <div>
-                          <label className="block text-[10px] font-semibold uppercase tracking-wide text-[#a8b8cc] mb-1">
+                          <label className="block text-[10px] font-semibold uppercase tracking-wide text-muted mb-1">
                             KM Actual <span className="text-red-400">*</span>
                           </label>
                           <input
                             type="number" min={0}
-                            className={`w-full px-2.5 py-1.5 text-[12px] border rounded-md bg-[#142942] text-[#f1f5f9] focus:outline-none focus:ring-1 transition ${finishErrors.odometer_km ? 'border-[#794052] focus:ring-red-300' : 'border-[#2b405b] focus:ring-[#f1f5f9] focus:border-[#f1f5f9]'}`}
+                            className={`w-full px-2.5 py-1.5 text-[12px] border rounded-md bg-surface text-fg focus:outline-none focus:ring-1 transition ${finishErrors.odometer_km ? 'border-danger-line focus:ring-red-300' : 'border-line focus:ring-fg focus:border-fg'}`}
                             value={finishForm.odometer_km}
                             onChange={e => { setFinishForm(f => ({ ...f, odometer_km: e.target.value })); setFinishErrors(fe => ({ ...fe, odometer_km: undefined })) }}
                             placeholder={vehicle?.current_odometer_km != null ? String(vehicle.current_odometer_km) : '0'}
                           />
                           {finishErrors.odometer_km && <p className="text-[10px] text-rose-300 mt-0.5">{finishErrors.odometer_km}</p>}
                           {vehicle?.current_odometer_km != null && !finishErrors.odometer_km && (
-                            <p className="text-[10px] text-[#a8b8cc] mt-0.5">Último: {vehicle.current_odometer_km.toLocaleString('es-CL')} km</p>
+                            <p className="text-[10px] text-muted mt-0.5">Último: {vehicle.current_odometer_km.toLocaleString('es-CL')} km</p>
                           )}
                         </div>
 
                         {/* Costo final */}
                         {openOrder && (
                           <div>
-                            <label className="block text-[10px] font-semibold uppercase tracking-wide text-[#a8b8cc] mb-1">
+                            <label className="block text-[10px] font-semibold uppercase tracking-wide text-muted mb-1">
                               Costo Final ($)
                             </label>
                             <input
                               type="number" min={0}
-                              className={`w-full px-2.5 py-1.5 text-[12px] border rounded-md bg-[#142942] text-[#f1f5f9] focus:outline-none focus:ring-1 transition ${finishErrors.final_cost ? 'border-[#794052] focus:ring-red-300' : 'border-[#2b405b] focus:ring-[#f1f5f9] focus:border-[#f1f5f9]'}`}
+                              className={`w-full px-2.5 py-1.5 text-[12px] border rounded-md bg-surface text-fg focus:outline-none focus:ring-1 transition ${finishErrors.final_cost ? 'border-danger-line focus:ring-red-300' : 'border-line focus:ring-fg focus:border-fg'}`}
                               value={finishForm.final_cost}
                               onChange={e => { setFinishForm(f => ({ ...f, final_cost: e.target.value })); setFinishErrors(fe => ({ ...fe, final_cost: undefined })) }}
                               placeholder="0"
@@ -830,12 +820,12 @@ export default function VehicleDetailModal({ vehicleId }: Props) {
                       {/* Observación final */}
                       {openOrder && (
                         <div>
-                          <label className="block text-[10px] font-semibold uppercase tracking-wide text-[#a8b8cc] mb-1">
+                          <label className="block text-[10px] font-semibold uppercase tracking-wide text-muted mb-1">
                             Observación Final
                           </label>
                           <textarea
                             rows={2}
-                            className="w-full px-2.5 py-1.5 text-[12px] border border-[#2b405b] rounded-md bg-[#142942] text-[#f1f5f9] placeholder-[#a8b8cc] focus:outline-none focus:ring-1 focus:ring-[#f1f5f9] focus:border-[#f1f5f9] transition resize-none"
+                            className="w-full px-2.5 py-1.5 text-[12px] border border-line rounded-md bg-surface text-fg placeholder-muted focus:outline-none focus:ring-1 focus:ring-fg focus:border-fg transition resize-none"
                             value={finishForm.finish_notes}
                             onChange={e => setFinishForm(f => ({ ...f, finish_notes: e.target.value }))}
                             placeholder="Observaciones del cierre de taller..."
@@ -848,7 +838,7 @@ export default function VehicleDetailModal({ vehicleId }: Props) {
                           type="button"
                           onClick={() => { setShowFinish(false); setFinishErrors({}) }}
                           disabled={finishing}
-                          className="px-3 py-1.5 text-[11px] font-semibold rounded border border-[#2b405b] text-[#a8b8cc] hover:bg-[#203650] transition-colors cursor-pointer disabled:opacity-50"
+                          className="px-3 py-1.5 text-[11px] font-semibold rounded border border-line text-muted hover:bg-raised transition-colors cursor-pointer disabled:opacity-50"
                         >
                           Cancelar
                         </button>
@@ -884,7 +874,7 @@ export default function VehicleDetailModal({ vehicleId }: Props) {
 
               {/* Global error */}
               {submitError && (
-                <div className="flex items-start gap-2.5 bg-[#3d2332] border border-[#794052] text-rose-200 rounded-md px-4 py-3 text-[12px] mt-4">
+                <div className="flex items-start gap-2.5 bg-danger-bg border border-danger-line text-rose-200 rounded-md px-4 py-3 text-[12px] mt-4">
                   <svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                   </svg>
@@ -893,7 +883,7 @@ export default function VehicleDetailModal({ vehicleId }: Props) {
               )}
 
               {saveSuccess && !submitError && (
-                <div className="flex items-center gap-2 bg-[#123b35] border border-[#28684e] text-emerald-200 rounded-md px-4 py-2.5 text-[12px] mt-4">
+                <div className="flex items-center gap-2 bg-success-bg border border-[#28684e] text-emerald-200 rounded-md px-4 py-2.5 text-[12px] mt-4">
                   <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                   </svg>
@@ -903,17 +893,17 @@ export default function VehicleDetailModal({ vehicleId }: Props) {
 
               {/* Deactivate confirmation inline panel */}
               {showDeactivate && !loadingData && (
-                <div className="mt-4 rounded-md border border-[#794052] bg-[#3d2332] p-4">
-                  <p className="text-[12px] font-semibold text-rose-200 mb-1">¿Confirmar desactivación?</p>
+                <div className="mt-4 rounded-md border border-danger-line bg-danger-bg p-4">
+                  <p className="text-[12px] font-semibold text-rose-200 mb-1">¿Eliminar este vehículo?</p>
                   <p className="text-[12px] text-rose-300 mb-3">
-                    Esta acción desactivará el vehículo del inventario. No se eliminará el historial.
+                    Dejará de aparecer en el inventario y no se podrá asignar a nuevas rutas. Su historial se conserva.
                   </p>
                   <div className="flex gap-2">
                     <button
                       type="button"
                       onClick={() => setShowDeactivate(false)}
                       disabled={deactivating}
-                      className="px-3 py-1.5 text-[11px] font-semibold rounded border border-[#2b405b] text-[#a8b8cc] hover:bg-[#142942] transition-colors cursor-pointer disabled:opacity-50"
+                      className="px-3 py-1.5 text-[11px] font-semibold rounded border border-line text-muted hover:bg-surface transition-colors cursor-pointer disabled:opacity-50"
                     >
                       Cancelar
                     </button>
@@ -929,10 +919,10 @@ export default function VehicleDetailModal({ vehicleId }: Props) {
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                           </svg>
-                          Desactivando...
+                          Eliminando...
                         </>
                       ) : (
-                        'Sí, desactivar vehículo'
+                        'Sí, eliminar vehículo'
                       )}
                     </button>
                   </div>
@@ -942,7 +932,7 @@ export default function VehicleDetailModal({ vehicleId }: Props) {
 
             {/* ── Footer ── */}
             <div
-              className="flex items-center justify-between px-6 py-4 border-t border-[#2b405b] flex-shrink-0"
+              className="flex items-center justify-between px-6 py-4 border-t border-line flex-shrink-0"
               style={{ backgroundColor: '#10223d' }}
             >
               {/* Danger left */}
@@ -950,12 +940,12 @@ export default function VehicleDetailModal({ vehicleId }: Props) {
                 type="button"
                 onClick={() => { setShowDeactivate(v => !v); setSubmitError(null); setSaveSuccess(false) }}
                 disabled={saving || deactivating || loadingData}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-md text-[11px] font-semibold border border-[#794052] text-rose-300 hover:bg-[#3d2332] transition-colors cursor-pointer disabled:opacity-40"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-md text-[11px] font-semibold border border-danger-line text-rose-300 hover:bg-danger-bg transition-colors cursor-pointer disabled:opacity-40"
               >
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
                 </svg>
-                {showDeactivate ? 'Cancelar desactivación' : 'Desactivar Vehículo'}
+                {showDeactivate ? 'Cancelar eliminación' : 'Eliminar Vehículo'}
               </button>
 
               {/* Right actions */}
@@ -964,7 +954,7 @@ export default function VehicleDetailModal({ vehicleId }: Props) {
                   type="button"
                   onClick={handleClose}
                   disabled={saving || deactivating}
-                  className="px-4 py-2 rounded-md text-[12px] font-semibold border border-[#2b405b] text-[#a8b8cc] hover:bg-[#2b405b] transition-colors disabled:opacity-50 cursor-pointer"
+                  className="px-4 py-2 rounded-md text-[12px] font-semibold border border-line text-muted hover:bg-line transition-colors disabled:opacity-50 cursor-pointer"
                 >
                   Cerrar
                 </button>
@@ -972,7 +962,7 @@ export default function VehicleDetailModal({ vehicleId }: Props) {
                   type="button"
                   onClick={handleSave}
                   disabled={saving || deactivating || loadingData}
-                  className="flex items-center gap-2 px-5 py-2 rounded-md text-[12px] font-semibold text-[#0d1d37] transition-opacity disabled:opacity-50 cursor-pointer"
+                  className="flex items-center gap-2 px-5 py-2 rounded-md text-[12px] font-semibold text-canvas transition-opacity disabled:opacity-50 cursor-pointer"
                   style={{ backgroundColor: '#10b98b' }}
                 >
                   {saving ? (
