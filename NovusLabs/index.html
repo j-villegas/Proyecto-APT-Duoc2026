@@ -127,6 +127,13 @@ section{position:relative}
 .proj-body{padding:clamp(22px,3vw,32px);display:flex;flex-direction:column;gap:14px;min-width:0}
 .proj-head{display:flex;justify-content:space-between;gap:12px;align-items:baseline;flex-wrap:wrap}
 .proj h3{font-size:var(--step-2);font-stretch:118%;font-weight:800;letter-spacing:-.02em;line-height:1.05}
+.proj.wide.reverse .shot{order:2;border-right:0;border-left:1px solid var(--line)}
+.vid{position:relative;background:#000}
+.proj.wide .shot{display:flex;flex-direction:column}
+.proj.wide .vid{flex:1;min-height:0}
+.proj.wide .vid video{height:100%;aspect-ratio:auto;min-height:260px}
+.vid video{display:block;width:100%;aspect-ratio:16/10;object-fit:cover;max-width:100%}
+.badge3d{position:absolute;left:12px;bottom:12px;font-family:var(--f-mono);font-size:.68rem;padding:4px 8px;border-radius:3px;background:rgba(8,9,12,.75);color:#9be15d;border:1px solid rgba(155,225,93,.35)}
 .proj.wide h3{font-size:clamp(2.2rem,5vw,3.6rem);font-stretch:125%;font-weight:900}
 .proj p{margin:0;color:var(--muted);max-width:60ch}
 .proj ul{margin:0;padding:0;list-style:none;display:grid;gap:6px;font-size:.9rem}
@@ -137,7 +144,7 @@ section{position:relative}
 .visit{font-family:var(--f-mono);font-size:.75rem;text-decoration:none;color:var(--fg);border-bottom:1px solid var(--select);padding-bottom:2px}
 .visit:hover{color:#fff}
 .status{font-family:var(--f-mono);font-size:.68rem;color:var(--muted)}
-@media (max-width:900px){.work{grid-template-columns:1fr}.proj.wide{grid-template-columns:1fr}.proj.wide .shot{border-right:0;border-bottom:1px solid var(--line)}}
+@media (max-width:900px){.work{grid-template-columns:1fr}.proj.wide{grid-template-columns:1fr}.proj.wide .vid video{aspect-ratio:16/10;height:auto}.proj.wide .shot,.proj.wide.reverse .shot{order:0;border-right:0;border-left:0;border-bottom:1px solid var(--line)}}
 
 /* maqueta CotizaPet */
 .cp{padding:clamp(16px,2.5vw,28px);display:grid;gap:12px;background:#f5f3ee;color:#1d1b16;font-family:var(--f-body);height:100%;align-content:start}
@@ -307,7 +314,7 @@ body.wire .shot img{opacity:.25;filter:grayscale(1)}
         <div><strong>9</strong><span>proyectos publicados</span></div>
         <div><strong>20+</strong><span>tiendas que revisa CotizaPet</span></div>
         <div><strong>69</strong><span>áreas en el mapa de Bionáutica</span></div>
-        <div><strong>3D</strong><span>escena en tiempo real en Coto FPV</span></div>
+        <div><strong>3D</strong><span>sitio en tiempo real: Coto FPV</span></div>
       </div>
 
       <div class="work">
@@ -343,25 +350,21 @@ body.wire .shot img{opacity:.25;filter:grayscale(1)}
           </div>
         </article>
 
-        <article class="proj" data-agent="coto">
-          <figure class="shot"><div class="shot-bar"><i></i><i></i><i></i><span>coto-fpv.vercel.app</span></div><img src="assets/shots/coto.jpg" alt="Coto FPV: dron FPV en 3D frente a una toma de persecución de una moto en carretera"></figure>
+        <article class="proj wide reverse" data-agent="coto">
+          <figure class="shot"><div class="shot-bar"><i></i><i></i><i></i><span>coto-fpv.vercel.app</span></div>
+            <div class="vid"><video src="assets/coto-fpv.mp4" poster="assets/shots/coto.jpg" autoplay muted loop playsinline preload="metadata" aria-label="Recorrido grabado del sitio Coto FPV: el dron 3D se arma y vuela por la página mientras se hace scroll"></video><span class="badge3d">● 3D en tiempo real</span></div>
+          </figure>
           <div class="proj-body">
-            <div class="proj-head"><span class="label">Experiencia 3D</span></div>
+            <div class="proj-head"><span class="label">Sitio 3D · WebGL</span><span class="status live">en vivo</span></div>
             <h3>Coto FPV</h3>
-            <p>Sitio para un piloto de drones FPV. El dron se arma en 3D y vuela por la página a medida que bajas, con una interfaz tipo visor de vuelo.</p>
-            <div class="stack"><span class="tag">Next.js</span><span class="tag">React Three Fiber</span><span class="tag">GSAP</span><span class="tag">Lenis</span></div>
+            <p>Sitio en 3D para un piloto de drones FPV. Un dron modelado en 3D se arma frente a ti y vuela por la página a medida que bajas, con una interfaz de visor de vuelo y tomas reales de persecución.</p>
+            <ul>
+              <li>Escena 3D renderizada en el navegador, sin plugins</li>
+              <li>Animación controlada por el scroll, cuadro a cuadro</li>
+              <li>Pantalla de carga y HUD de telemetría propios</li>
+            </ul>
+            <div class="stack"><span class="tag">Next.js</span><span class="tag">Three.js</span><span class="tag">React Three Fiber</span><span class="tag">GSAP</span><span class="tag">Lenis</span></div>
             <div class="proj-foot"><a class="visit" href="https://coto-fpv.vercel.app" target="_blank" rel="noopener">coto-fpv.vercel.app ↗</a></div>
-          </div>
-        </article>
-
-        <article class="proj" data-agent="bionautica">
-          <figure class="shot"><div class="shot-bar"><i></i><i></i><i></i><span>bionautica.vercel.app</span></div><img src="assets/shots/bio.jpg" alt="Bionáutica: portada del mapa interactivo de las ciencias del mar"></figure>
-          <div class="proj-body">
-            <div class="proj-head"><span class="label">Mapa interactivo · Educación</span></div>
-            <h3>Bionáutica</h3>
-            <p>El mapa de las ciencias del mar: 5 zonas y 69 áreas temáticas con videos y noticias. El equipo publica contenido desde su propio panel.</p>
-            <div class="stack"><span class="tag">Astro</span><span class="tag">Sveltia CMS</span><span class="tag">Vercel</span></div>
-            <div class="proj-foot"><a class="visit" href="https://bionautica.vercel.app" target="_blank" rel="noopener">bionautica.vercel.app ↗</a></div>
           </div>
         </article>
 
@@ -427,6 +430,17 @@ body.wire .shot img{opacity:.25;filter:grayscale(1)}
             <p>Portafolio de una fotógrafa y cineasta desde Isla de Pascua: cine, fotografía y periodismo. Ella misma sube sus proyectos desde un CMS.</p>
             <div class="stack"><span class="tag">Astro</span><span class="tag">Keystatic</span><span class="tag">Tailwind</span></div>
             <div class="proj-foot"><a class="visit" href="https://maria-jose-villegas.vercel.app" target="_blank" rel="noopener">maria-jose-villegas.vercel.app ↗</a></div>
+          </div>
+        </article>
+
+        <article class="proj wide" data-agent="bionautica">
+          <figure class="shot"><div class="shot-bar"><i></i><i></i><i></i><span>bionautica.vercel.app</span></div><img src="assets/shots/bio.jpg" alt="Bionáutica: portada del mapa interactivo de las ciencias del mar"></figure>
+          <div class="proj-body">
+            <div class="proj-head"><span class="label">Mapa interactivo · Educación</span></div>
+            <h3>Bionáutica</h3>
+            <p>El mapa de las ciencias del mar: 5 zonas y 69 áreas temáticas con videos y noticias. El equipo publica contenido desde su propio panel.</p>
+            <div class="stack"><span class="tag">Astro</span><span class="tag">Sveltia CMS</span><span class="tag">Vercel</span></div>
+            <div class="proj-foot"><a class="visit" href="https://bionautica.vercel.app" target="_blank" rel="noopener">bionautica.vercel.app ↗</a></div>
           </div>
         </article>
       </div>
@@ -596,6 +610,7 @@ var dots = document.getElementById('hud-dots');
     bWire.setAttribute('aria-pressed', String(on));
   });
 
+  if(reduce){ document.querySelectorAll('video[autoplay]').forEach(function(v){ v.removeAttribute('autoplay'); try{v.pause();}catch(e){} }); }
   if(reduce){ setPaused(true); } else { startAll(); }
 })();
 </script>
