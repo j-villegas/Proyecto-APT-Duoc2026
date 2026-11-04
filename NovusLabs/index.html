@@ -523,7 +523,7 @@ body.wire .hero h1 .ghost{-webkit-text-stroke:1px var(--signal)}
 
 <div class="hud" role="toolbar" aria-label="Controles de los agentes">
   <span class="dots" id="hud-dots"></span>
-  <span><b id="hud-count">6</b> agentes</span>
+  <span><b id="hud-count">10</b> agentes</span>
   <span class="bar" aria-hidden="true"><i id="hud-bar"></i></span>
   <span class="lyr"><b id="hud-layers">0</b> / <span id="hud-total">0</span> capas</span>
   <button type="button" id="btn-wire" aria-pressed="false">Capas</button>
@@ -536,14 +536,10 @@ body.wire .hero h1 .ghost{-webkit-text-stroke:1px var(--signal)}
   var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
   var layer = document.getElementById('agents');
   var targets = Array.prototype.slice.call(document.querySelectorAll('[data-agent]'));
-  var TEAM = [
-    {name:'franz', c:'#ff7a1a'},
-    {name:'jose', c:'#3f6bff'},
-    {name:'juan', c:'#10b98b'},
-    {name:'qa-bot', c:'#c084fc'},
-    {name:'deploy', c:'#fdba74'},
-    {name:'db-migrate', c:'#7dd3fc'}
-  ];
+  var BLUE = '#3f6bff';
+  var CLONES = innerWidth < 640 ? 3 : 9;
+  var TEAM = [{name:'jose', c:BLUE}];
+  for(var k=0;k<CLONES;k++) TEAM.push({name:'', c:BLUE});
   var ACTIONS = ['align','edit text','review','resize','ship','test','refactor','comment'];
   var speed = 1, paused = false, touched = 0;
   document.getElementById('hud-total').textContent = String(targets.length * 7);
@@ -553,14 +549,13 @@ body.wire .hero h1 .ghost{-webkit-text-stroke:1px var(--signal)}
     return '<svg width="16" height="18" viewBox="0 0 16 18"><path d="M1 1l13 7.2-5.6 1.4L6 16z" fill="'+c+'" stroke="#08090c" stroke-width="1.2" stroke-linejoin="round"/></svg>';
   }
 
-  if(innerWidth < 640) TEAM = TEAM.slice(0,3);
   document.getElementById("hud-count").textContent = String(TEAM.length);
 var dots = document.getElementById('hud-dots');
-  TEAM.forEach(function(t){ var i=document.createElement('i'); i.style.background=t.c; dots.appendChild(i); });
+  TEAM.slice(0,5).forEach(function(t){ var i=document.createElement('i'); i.style.background=t.c; dots.appendChild(i); });
   var agents = TEAM.map(function(t, idx){
     var el = document.createElement('div');
     el.className = 'agent';
-    el.innerHTML = cursorSVG(t.c) + '<span style="background:'+t.c+'">'+t.name+'</span>';
+    el.innerHTML = cursorSVG(t.c) + (t.name ? '<span style="background:'+t.c+'">'+t.name+'</span>' : '');
     var sel = document.createElement('div');
     sel.className = 'sel';
     sel.style.setProperty('--c', t.c);
@@ -568,7 +563,7 @@ var dots = document.getElementById('hud-dots');
     layer.appendChild(sel); layer.appendChild(el);
     var x = Math.random()*innerWidth, y = Math.random()*innerHeight;
     el.style.transform = 'translate('+x+'px,'+y+'px)';
-    return {t:t, el:el, sel:sel, target:null, timer:null, delay: idx*450};
+    return {t:t, el:el, sel:sel, target:null, timer:null, delay: idx*300};
   });
 
   function visibleTargets(){
@@ -603,7 +598,7 @@ var dots = document.getElementById('hud-dots');
     a.el.style.transform = 'translate('+x+'px,'+y+'px)';
     a.timer = setTimeout(function(){
       placeSel(a);
-      a.sel.querySelector('em').textContent = a.t.name + ' · ' + ACTIONS[Math.floor(Math.random()*ACTIONS.length)];
+      a.sel.querySelector('em').textContent = (a.t.name ? a.t.name + ' · ' : '') + ACTIONS[Math.floor(Math.random()*ACTIONS.length)];
       a.sel.classList.add('show');
       var g = n.hasAttribute('data-glitch') ? n : n.querySelector('[data-glitch]');
       if(g){ g.classList.remove('glitch'); void g.offsetWidth; g.classList.add('glitch'); }
