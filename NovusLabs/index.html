@@ -5,28 +5,27 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>NovusLabs</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<meta name="description" content="NovusLabs: estudio de ingeniería de software. Arquitectura, producto web, apps móviles y datos en tiempo real. Creadores de TRAZZA.">
+<meta name="description" content="NovusLabs: estudio de software en Chile. Plataformas, sitios de marca y experiencias interactivas: CotizaPet, Bionáutica, SolStudio, Coto FPV y más.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap">
 <style>
 /* Layout: lienzo oscuro de estudio con capas de plano (blueprint). Cursores "agente" recorren la página y seleccionan piezas como en un editor. */
 :root{
-  --ink:#08090c;          /* lienzo */
-  --panel:#101219;        /* superficies */
+  --ink:#08090c;
+  --panel:#101219;
   --panel-2:#161925;
-  --line:#232838;         /* reglas y bordes */
+  --line:#232838;
   --fg:#eceef4;
   --muted:#8b91a6;
-  --signal:#ff7a1a;       /* etiquetas tipo editor */
-  --select:#3f6bff;       /* cajas de selección */
+  --signal:#ff7a1a;
+  --select:#3f6bff;
   --select-soft:rgba(63,107,255,.14);
-  --trazza:#10b98b;       /* acento del producto TRAZZA */
-  --warn:#fdba74;
+  --live:#2fd38f;
   --f-display:"Archivo","Arial Narrow",system-ui,sans-serif;
   --f-body:"Instrument Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
   --f-mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
-  --step--1:.8125rem; --step-0:1rem; --step-1:1.25rem; --step-2:1.75rem; --step-3:clamp(2rem,4.5vw,3.25rem); --step-4:clamp(2.5rem,6vw,5.5rem);
+  --step-0:1rem; --step-1:1.25rem; --step-2:1.75rem; --step-3:clamp(2rem,4.5vw,3.25rem); --step-4:clamp(2.5rem,6vw,5.5rem);
   --gutter:max(16px,env(safe-area-inset-left,0px));
   --gutter-r:max(16px,env(safe-area-inset-right,0px));
   --wrap:1240px;
@@ -40,12 +39,10 @@ img{max-width:100%;display:block}
 a{color:inherit}
 :focus-visible{outline:2px solid var(--select);outline-offset:3px}
 .wrap{max-width:var(--wrap);margin-inline:auto;padding-left:var(--gutter);padding-right:var(--gutter-r)}
-.mono{font-family:var(--f-mono)}
 .label{font-family:var(--f-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--signal)}
 .label.dim{color:var(--muted)}
 h1,h2,h3{font-family:var(--f-display);font-stretch:118%;font-weight:800;line-height:.98;letter-spacing:-.02em;margin:0;text-wrap:balance}
 
-/* grilla de plano de fondo */
 .grid-bg{position:fixed;inset:0;z-index:-1;pointer-events:none;
   background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
   background-size:120px 120px;opacity:.28;mask-image:radial-gradient(ellipse at 50% 20%,#000 30%,transparent 80%)}
@@ -55,7 +52,6 @@ h1,h2,h3{font-family:var(--f-display);font-stretch:118%;font-weight:800;line-hei
 .nav .wrap{display:flex;align-items:center;gap:28px;height:60px}
 .brand{display:flex;align-items:center;gap:10px;text-decoration:none;font-family:var(--f-display);font-weight:800;font-stretch:110%;font-size:1.05rem;letter-spacing:-.01em}
 .brand-mark{width:22px;height:22px;display:grid;place-items:center;background:var(--fg);color:var(--ink);border-radius:3px;font-size:.8rem;font-weight:900}
-.brand small{font-family:var(--f-body);font-weight:500;font-stretch:100%;color:var(--muted);font-size:.85rem;margin-left:-4px}
 .nav-links{display:flex;gap:22px;font-size:.88rem;color:var(--muted)}
 .nav-links a{text-decoration:none}
 .nav-links a:hover{color:var(--fg)}
@@ -67,8 +63,9 @@ h1,h2,h3{font-family:var(--f-display);font-stretch:118%;font-weight:800;line-hei
 .hero{padding-block:clamp(56px,9vw,120px) clamp(48px,7vw,96px);position:relative}
 .hero-grid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:clamp(32px,5vw,72px);align-items:end}
 .hero h1{font-size:var(--step-4);font-stretch:118%;font-weight:900;margin-top:18px}
-.hero h1 .ghost{display:block;color:transparent;-webkit-text-stroke:1px color-mix(in srgb,var(--fg) 55%,transparent);font-weight:800}
-.hero-lede{max-width:46ch;color:var(--muted);font-size:var(--step-1);line-height:1.5;margin:28px 0 0}
+.ghost{color:transparent;-webkit-text-stroke:1px color-mix(in srgb,var(--fg) 55%,transparent)}
+.hero h1 .ghost{display:block;font-weight:800}
+.hero-lede{max-width:48ch;color:var(--muted);font-size:var(--step-1);line-height:1.5;margin:28px 0 0}
 .hero-actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:32px}
 .btn{display:inline-flex;align-items:center;gap:10px;font-family:var(--f-mono);font-size:.8rem;letter-spacing:.02em;text-decoration:none;padding:12px 16px;border-radius:4px;border:1px solid var(--line);background:var(--panel);color:var(--fg)}
 .btn.primary{background:var(--fg);color:var(--ink);border-color:var(--fg)}
@@ -84,8 +81,8 @@ h1,h2,h3{font-family:var(--f-display);font-stretch:118%;font-weight:800;line-hei
 .layers li .st{margin-left:auto;font-size:.68rem}
 .layers li.on{background:var(--select-soft);color:var(--fg)}
 .layers li.on .st{color:var(--select)}
-.st.live{color:var(--trazza)}
-.st.live::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--trazza);margin-right:6px;vertical-align:1px;animation:pulse 1.6s infinite}
+.live{color:var(--live)}
+.live::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--live);margin-right:6px;vertical-align:1px;animation:pulse 1.6s infinite}
 @keyframes pulse{50%{opacity:.25}}
 @media (max-width:900px){.hero-grid{grid-template-columns:1fr}}
 
@@ -108,101 +105,74 @@ section{position:relative}
 @media (max-width:980px){.practice{grid-template-columns:repeat(2,minmax(0,1fr))}.practice article:nth-child(2){border-right:0}.practice article:nth-child(-n+2){border-bottom:1px solid var(--line)}}
 @media (max-width:560px){.practice{grid-template-columns:1fr}.practice article{border-right:0;border-bottom:1px solid var(--line)}.practice article:last-child{border-bottom:0}}
 
-/* ---------- proyectos ---------- */
-.flagship{border:1px solid var(--line);border-radius:8px;background:var(--panel);overflow:hidden}
-.flagship-top{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:24px;padding:clamp(24px,4vw,44px);border-bottom:1px solid var(--line);align-items:end}
-.flagship-top h3{font-size:clamp(3rem,10vw,8rem);font-stretch:125%;font-weight:900;letter-spacing:-.04em;line-height:.85}
-.flagship-top h3 span{color:var(--trazza)}
-.flagship-top p{color:var(--muted);max-width:56ch;margin:18px 0 0;font-size:var(--step-1);line-height:1.45}
-.flagship-meta{display:grid;gap:8px;font-family:var(--f-mono);font-size:.75rem;color:var(--muted);text-align:right}
-.flagship-meta b{color:var(--fg);font-weight:500}
-@media (max-width:760px){.flagship-top{grid-template-columns:1fr}.flagship-meta{text-align:left}}
-
-.stats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));border-bottom:1px solid var(--line)}
+/* cifras */
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:1px solid var(--line);border-radius:6px;margin-bottom:24px}
 .stats div{padding:20px 22px;border-right:1px solid var(--line);min-width:0}
 .stats div:last-child{border-right:0}
 .stats strong{display:block;font-family:var(--f-display);font-stretch:125%;font-weight:800;font-size:var(--step-2);font-variant-numeric:tabular-nums;line-height:1}
 .stats span{font-size:.8rem;color:var(--muted)}
-@media (max-width:820px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.stats div{border-bottom:1px solid var(--line)}.stats div:nth-child(2n){border-right:0}.stats div:last-child{grid-column:1/-1;border-bottom:0}}
+@media (max-width:820px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.stats div:nth-child(2n){border-right:0}.stats div:nth-child(-n+2){border-bottom:1px solid var(--line)}}
 
-.products{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(0,1fr)}
-.product{padding:clamp(24px,3.5vw,40px);display:flex;flex-direction:column;gap:20px;min-width:0}
-.product + .product{border-left:1px solid var(--line)}
-.product-head{display:flex;justify-content:space-between;gap:16px;align-items:baseline;flex-wrap:wrap}
-.product h4{margin:0;font-family:var(--f-display);font-stretch:118%;font-weight:800;font-size:var(--step-2);letter-spacing:-.02em}
-.product p{margin:0;color:var(--muted);max-width:60ch}
-.product ul{margin:0;padding:0;list-style:none;display:grid;gap:6px;font-size:.9rem}
-.product li{display:flex;gap:10px;color:var(--muted)}
-.product li::before{content:"→";font-family:var(--f-mono);color:var(--trazza)}
+/* ---------- proyectos ---------- */
+.work{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}
+.proj{border:1px solid var(--line);border-radius:8px;background:var(--panel);overflow:hidden;display:flex;flex-direction:column;min-width:0}
+.proj.wide{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)}
+.shot{position:relative;margin:0;border-bottom:1px solid var(--line);background:var(--panel-2);overflow:hidden}
+.proj.wide .shot{border-bottom:0;border-right:1px solid var(--line)}
+.shot-bar{display:flex;align-items:center;gap:6px;padding:8px 10px;border-bottom:1px solid var(--line);background:var(--panel-2);font-family:var(--f-mono);font-size:.65rem;color:var(--muted)}
+.shot-bar i{width:8px;height:8px;border-radius:50%;background:var(--line)}
+.shot-bar span{margin-left:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.shot img{width:100%;aspect-ratio:16/10;object-fit:cover;object-position:top center;max-width:100%;transition:transform .6s cubic-bezier(.2,.7,.2,1)}
+.proj:hover .shot img{transform:scale(1.025)}
+.proj-body{padding:clamp(22px,3vw,32px);display:flex;flex-direction:column;gap:14px;min-width:0}
+.proj-head{display:flex;justify-content:space-between;gap:12px;align-items:baseline;flex-wrap:wrap}
+.proj h3{font-size:var(--step-2);font-stretch:118%;font-weight:800;letter-spacing:-.02em;line-height:1.05}
+.proj.wide h3{font-size:clamp(2.2rem,5vw,3.6rem);font-stretch:125%;font-weight:900}
+.proj p{margin:0;color:var(--muted);max-width:60ch}
+.proj ul{margin:0;padding:0;list-style:none;display:grid;gap:6px;font-size:.9rem}
+.proj li{display:flex;gap:10px;color:var(--muted)}
+.proj li::before{content:"→";font-family:var(--f-mono);color:var(--signal)}
 .stack{display:flex;flex-wrap:wrap;gap:6px}
-@media (max-width:980px){.products{grid-template-columns:1fr}.product + .product{border-left:0;border-top:1px solid var(--line)}}
+.proj-foot{margin-top:auto;padding-top:6px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.visit{font-family:var(--f-mono);font-size:.75rem;text-decoration:none;color:var(--fg);border-bottom:1px solid var(--select);padding-bottom:2px}
+.visit:hover{color:#fff}
+.status{font-family:var(--f-mono);font-size:.68rem;color:var(--muted)}
+@media (max-width:900px){.work{grid-template-columns:1fr}.proj.wide{grid-template-columns:1fr}.proj.wide .shot{border-right:0;border-bottom:1px solid var(--line)}}
 
-/* mock del panel web */
-.browser{border:1px solid var(--line);border-radius:6px;background:#0d1d37;overflow:hidden;font-family:var(--f-mono);font-size:.62rem;color:#a8b8cc}
-.browser-bar{display:flex;align-items:center;gap:6px;padding:8px 10px;background:#0a1730;border-bottom:1px solid #2b405b}
-.browser-bar i{width:8px;height:8px;border-radius:50%;background:#2b405b}
-.browser-bar span{margin-left:10px;padding:2px 10px;border-radius:3px;background:#10223d;color:#a8b8cc}
-.admin{display:grid;grid-template-columns:112px minmax(0,1fr);min-height:300px}
-.admin-side{border-right:1px solid #2b405b;padding:12px 8px;display:grid;gap:4px;align-content:start}
-.admin-side b{color:#f1f5f9;font-family:var(--f-display);font-size:.8rem;font-stretch:115%;padding:0 6px 10px}
-.admin-side span{padding:5px 6px;border-radius:3px}
-.admin-side span.on{background:#123b35;color:#55d9ad}
-.admin-main{padding:12px;display:grid;gap:10px;grid-template-rows:auto 1fr;min-width:0}
-.kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
-.kpi{background:#142942;border:1px solid #2b405b;border-radius:4px;padding:8px}
-.kpi b{display:block;color:#f1f5f9;font-family:var(--f-display);font-stretch:120%;font-size:1.15rem;font-variant-numeric:tabular-nums}
-.map{position:relative;border:1px solid #2b405b;border-radius:4px;overflow:hidden;background:#10223d;min-height:170px}
-.map svg{position:absolute;inset:0;width:100%;height:100%}
-.map-note{position:absolute;left:8px;bottom:8px;background:#142942;border:1px solid #2b405b;border-radius:3px;padding:4px 7px;color:#f1f5f9}
-@media (max-width:520px){.admin{grid-template-columns:1fr}.admin-side{display:none}}
-
-/* mock móvil */
-.phone-row{display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
-.phone{width:min(210px,100%);aspect-ratio:9/18.5;max-width:100%;border:1px solid #2b405b;border-radius:28px;background:#0b1d3a;padding:10px;position:relative;font-family:var(--f-mono);font-size:.6rem;color:rgba(255,255,255,.64)}
-.phone-screen{height:100%;border-radius:20px;overflow:hidden;background:#0c2340;display:grid;grid-template-rows:auto 1fr auto}
-.phone-top{padding:12px 12px 8px;display:flex;justify-content:space-between;color:#fff}
-.phone-map{position:relative;background:#112233}
-.phone-map svg{position:absolute;inset:0;width:100%;height:100%}
-.phone-card{margin:8px;padding:10px;border-radius:10px;background:#162d4a;display:grid;gap:6px}
-.phone-card b{color:#fff;font-family:var(--f-body);font-size:.78rem;font-weight:600}
-.chip{display:inline-block;padding:2px 7px;border-radius:999px;font-size:.58rem;background:rgba(16,185,129,.16);color:#10b981;justify-self:start}
-.phone-btn{text-align:center;padding:7px;border-radius:7px;background:#10b981;color:#06261b;font-weight:700}
-.phone-tabs{display:flex;justify-content:space-around;padding:8px 6px 10px;border-top:1px solid rgba(255,255,255,.08);font-size:.55rem}
-.phone-tabs .on{color:#10b981}
-
-/* proyectos de documentación */
-.more{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;margin-top:20px}
-.doc-card{border:1px solid var(--line);border-radius:8px;background:var(--panel);overflow:hidden;display:flex;flex-direction:column;min-width:0}
-.doc-card figure{margin:0;background:#f6f7f9;border-bottom:1px solid var(--line);aspect-ratio:16/8.5;overflow:hidden;max-width:100%}
-.doc-card figure img{width:100%;height:100%;object-fit:cover;object-position:top left}
-.doc-body{padding:24px;display:grid;gap:12px}
-.doc-body h4{margin:0;font-family:var(--f-display);font-stretch:115%;font-size:var(--step-1);font-weight:800}
-.doc-body p{margin:0;color:var(--muted);font-size:.94rem}
-@media (max-width:820px){.more{grid-template-columns:1fr}}
+/* maqueta CotizaPet */
+.cp{padding:clamp(16px,2.5vw,28px);display:grid;gap:12px;background:#f5f3ee;color:#1d1b16;font-family:var(--f-body);height:100%;align-content:start}
+.cp-top{display:flex;align-items:center;gap:10px}
+.cp-logo{font-family:var(--f-display);font-weight:900;font-stretch:115%;font-size:1.05rem;letter-spacing:-.02em}
+.cp-logo span{color:#e8590c}
+.cp-search{flex:1;min-width:0;background:#fff;border:1px solid #ddd8cc;border-radius:999px;padding:7px 14px;font-size:.78rem;color:#6b665a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cp-prod{display:grid;grid-template-columns:72px minmax(0,1fr);gap:14px;background:#fff;border:1px solid #e6e1d6;border-radius:10px;padding:12px;align-items:center}
+.cp-pack{height:72px;border-radius:6px;background:linear-gradient(160deg,#ffb36b,#e8590c);display:grid;place-items:center;color:#fff;font-family:var(--f-display);font-weight:900;font-size:.7rem;text-align:center;line-height:1.1}
+.cp-prod b{display:block;font-size:.9rem;line-height:1.25}
+.cp-prod small{color:#6b665a;font-size:.72rem}
+.cp-rows{display:grid;gap:6px}
+.cp-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:12px;align-items:center;background:#fff;border:1px solid #e6e1d6;border-radius:8px;padding:9px 12px;font-size:.78rem}
+.cp-row strong{font-variant-numeric:tabular-nums}
+.cp-row.best{border-color:#2f9e44;background:#ebfbee}
+.cp-row em{font-style:normal;font-size:.66rem;padding:2px 6px;border-radius:999px;background:#2f9e44;color:#fff}
+.cp-row .muted{color:#8a8473;font-size:.7rem}
+.cp-alert{display:flex;justify-content:space-between;align-items:center;gap:10px;background:#1d1b16;color:#f5f3ee;border-radius:8px;padding:9px 12px;font-size:.74rem}
+.cp-alert span:last-child{color:#ffb36b;font-family:var(--f-mono);font-size:.68rem}
+.cp-chart{height:46px;background:#fff;border:1px solid #e6e1d6;border-radius:8px;position:relative;overflow:hidden}
+.cp-chart svg{position:absolute;inset:0;width:100%;height:100%}
 
 /* ---------- proceso ---------- */
-.process{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:0;border-top:1px solid var(--line)}
+.process{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));border-top:1px solid var(--line);padding:0;margin:0}
 .process li{list-style:none;padding:24px 20px 0 0;display:grid;gap:10px;align-content:start;position:relative;min-width:0}
 .process li::before{content:"";position:absolute;top:-5px;left:0;width:9px;height:9px;background:var(--ink);border:1px solid var(--signal);transform:rotate(45deg)}
 .process .n{font-family:var(--f-mono);font-size:.72rem;color:var(--signal)}
 .process h3{font-size:var(--step-1);font-stretch:112%;font-weight:700;line-height:1.15}
 .process p{margin:0;color:var(--muted);font-size:.9rem}
-.process{padding:0;margin:0}
 @media (max-width:900px){.process{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:32px}}
 @media (max-width:520px){.process{grid-template-columns:1fr}}
-
-/* ---------- equipo ---------- */
-.team{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
-.member{border:1px solid var(--line);border-radius:8px;padding:24px;display:grid;gap:18px;background:var(--panel);min-width:0}
-.avatar{width:64px;height:64px;border-radius:6px;display:grid;place-items:center;font-family:var(--f-display);font-stretch:125%;font-weight:900;font-size:1.4rem;color:var(--ink)}
-.member h3{font-size:var(--step-1);font-stretch:110%;font-weight:700;line-height:1.1}
-.member p{margin:4px 0 0;color:var(--muted);font-size:.9rem}
-@media (max-width:820px){.team{grid-template-columns:1fr}}
 
 /* ---------- contacto ---------- */
 .cta{padding-block:clamp(72px,11vw,150px);border-top:1px solid var(--line)}
 .cta h2{font-size:var(--step-4);font-stretch:125%;font-weight:900}
-.cta h2 .ghost{color:transparent;-webkit-text-stroke:1px color-mix(in srgb,var(--fg) 55%,transparent)}
 .cta-row{display:flex;flex-wrap:wrap;gap:24px 48px;justify-content:space-between;align-items:end;margin-top:40px}
 .cta-row p{color:var(--muted);max-width:48ch;margin:0;font-size:var(--step-1);line-height:1.45}
 footer{border-top:1px solid var(--line);padding-block:24px 96px;font-family:var(--f-mono);font-size:.72rem;color:var(--muted)}
@@ -212,13 +182,13 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:12px 32px;justify-content:space-bet
 #agents{position:fixed;inset:0;pointer-events:none;z-index:40;overflow:hidden}
 .agent{position:absolute;left:0;top:0;transition:transform 1.25s cubic-bezier(.65,.05,.25,1);will-change:transform}
 .agent svg{display:block;filter:drop-shadow(0 2px 4px rgba(0,0,0,.5))}
-.agent span{position:absolute;left:14px;top:16px;white-space:nowrap;font-family:var(--f-mono);font-size:.62rem;padding:2px 6px;border-radius:3px;color:#08090c;font-weight:700}
+.agent span{position:absolute;left:14px;top:16px;white-space:nowrap;font-family:var(--f-mono);font-size:.62rem;padding:2px 6px;border-radius:3px;color:#fff;font-weight:700}
 .sel{position:absolute;border:1px solid var(--c,var(--select));background:color-mix(in srgb,var(--c,var(--select)) 6%,transparent);opacity:0;transition:opacity .25s}
 .sel.show{opacity:1}
 .sel::before,.sel::after,.sel i::before,.sel i::after{content:"";position:absolute;width:6px;height:6px;background:var(--ink);border:1px solid var(--c,var(--select))}
 .sel::before{left:-4px;top:-4px}.sel::after{right:-4px;top:-4px}
 .sel i::before{left:-4px;bottom:-4px}.sel i::after{right:-4px;bottom:-4px}
-.sel em{position:absolute;left:-1px;top:-19px;font-style:normal;font-family:var(--f-mono);font-size:.6rem;padding:1px 5px;background:var(--c,var(--select));color:#08090c;font-weight:700;white-space:nowrap}
+.sel em{position:absolute;left:-1px;top:-19px;font-style:normal;font-family:var(--f-mono);font-size:.6rem;padding:1px 5px;background:var(--c,var(--select));color:#fff;font-weight:700;white-space:nowrap}
 .glitch{animation:glitch .5s steps(2) 1}
 @keyframes glitch{
   0%{text-shadow:2px 0 var(--signal),-2px 0 var(--select);transform:translateX(0)}
@@ -226,7 +196,6 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:12px 32px;justify-content:space-bet
   50%{text-shadow:1px 0 var(--signal),-1px 0 var(--select);transform:translateX(-2px)}
   100%{text-shadow:none;transform:none}}
 
-/* barra de control (HUD) */
 .hud{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:55;display:flex;align-items:center;gap:12px;padding:8px 10px 8px 14px;border:1px solid var(--line);border-radius:8px;background:color-mix(in srgb,var(--panel) 92%,transparent);backdrop-filter:blur(8px);font-family:var(--f-mono);font-size:.7rem;color:var(--muted);white-space:nowrap;max-width:calc(100% - 32px)}
 .hud .dots{display:flex}
 .hud .dots i{width:10px;height:10px;border-radius:50%;margin-left:-3px;border:1px solid var(--panel)}
@@ -238,16 +207,15 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:12px 32px;justify-content:space-bet
 .hud button[aria-pressed="true"]{border-color:var(--select);color:#fff;background:var(--select-soft)}
 @media (max-width:560px){.hud .bar,.hud .lyr{display:none}}
 
-/* modo capas: wireframe del sitio */
-body.wire .sec-head,body.wire .practice article,body.wire .product,body.wire .member,body.wire .doc-card,body.wire .layers,body.wire .flagship-top,body.wire .stats div,body.wire .hero h1,body.wire .hero-lede,body.wire .process li{outline:1px dashed color-mix(in srgb,var(--select) 70%,transparent);outline-offset:4px}
+body.wire .sec-head,body.wire .practice article,body.wire .proj,body.wire .proj-body,body.wire .layers,body.wire .stats div,body.wire .hero h1,body.wire .hero-lede,body.wire .process li{outline:1px dashed color-mix(in srgb,var(--select) 70%,transparent);outline-offset:4px}
 body.wire .grid-bg{opacity:.6;background-size:40px 40px}
 body.wire h1,body.wire h2,body.wire h3{color:transparent;-webkit-text-stroke:1px var(--select)}
-body.wire .hero h1 .ghost{-webkit-text-stroke:1px var(--signal)}
+body.wire .shot img{opacity:.25;filter:grayscale(1)}
 
 @media (prefers-reduced-motion:reduce){
   html{scroll-behavior:auto}
-  .agent{transition:none}
-  .glitch,.st.live::before{animation:none}
+  .agent,.shot img{transition:none}
+  .glitch,.live::before{animation:none}
 }
 </style>
 </head>
@@ -261,7 +229,6 @@ body.wire .hero h1 .ghost{-webkit-text-stroke:1px var(--signal)}
       <a href="#practica">Práctica</a>
       <a href="#trabajo">Trabajo</a>
       <a href="#proceso">Proceso</a>
-      <a href="#equipo">Equipo</a>
     </nav>
     <a class="nav-cta" href="#contacto">Hablemos ↗</a>
   </div>
@@ -271,23 +238,24 @@ body.wire .hero h1 .ghost{-webkit-text-stroke:1px var(--signal)}
   <section class="hero">
     <div class="wrap hero-grid">
       <div>
-        <div class="label" data-agent="hero-label">Estudio de ingeniería de software · Santiago, Chile</div>
-        <h1 data-agent="h1" data-glitch>Software que opera <span class="ghost">en tiempo real.</span></h1>
-        <p class="hero-lede" data-agent="lede">Diseñamos y construimos plataformas web, apps móviles y la arquitectura de datos que las sostiene. Cada sistema se entrega con sus procesos, diagramas y pruebas documentados.</p>
+        <div class="label" data-agent="hero-label">Estudio de software · Chile</div>
+        <h1 data-agent="h1" data-glitch>Productos web hechos <span class="ghost">a la medida.</span></h1>
+        <p class="hero-lede" data-agent="lede">Desde un comparador de precios que revisa más de 20 tiendas cada día hasta una experiencia 3D para un piloto de drones. Diseñamos, programamos y publicamos plataformas y sitios para marcas, profesionales y pymes.</p>
         <div class="hero-actions">
           <a class="btn primary" href="#trabajo">Ver proyectos →</a>
-          <a class="btn" href="#proceso">Cómo trabajamos</a>
+          <a class="btn" href="#contacto">Cotizar un proyecto</a>
         </div>
       </div>
-      <aside class="layers" aria-label="Capas del proyecto TRAZZA" data-agent="layers">
-        <header><span>capas / trazza</span><span>v1.0</span></header>
+      <aside class="layers" aria-label="Proyectos publicados" data-agent="layers">
+        <header><span>capas / proyectos</span><span>09</span></header>
         <ul>
-          <li><i class="sw" style="background:var(--trazza)"></i><b>Seguimiento GPS</b><span class="st live">en vivo</span></li>
-          <li class="on"><i class="sw" style="background:var(--select)"></i><b>Panel administrativo</b><span class="st">Next.js</span></li>
-          <li><i class="sw" style="background:var(--signal)"></i><b>App conductor</b><span class="st">Expo</span></li>
-          <li><i class="sw" style="background:#c084fc"></i><b>App pasajero</b><span class="st">Expo</span></li>
-          <li><i class="sw" style="background:var(--warn)"></i><b>Base de datos</b><span class="st">Postgres</span></li>
-          <li><i class="sw" style="background:var(--muted)"></i><b>Procesos BPMN</b><span class="st">4 flujos</span></li>
+          <li class="on"><i class="sw" style="background:#e8590c"></i><b>CotizaPet</b><span class="st">Laravel + Python</span></li>
+          <li><i class="sw" style="background:#4dabf7"></i><b>Bionáutica</b><span class="st">Astro + CMS</span></li>
+          <li><i class="sw" style="background:#9be15d"></i><b>Coto FPV</b><span class="st">Three.js</span></li>
+          <li><i class="sw" style="background:#d6c3a5"></i><b>SolStudio</b><span class="st">React + Webpay</span></li>
+          <li><i class="sw" style="background:#f3f0e8"></i><b>Agéndate</b><span class="st">Next.js</span></li>
+          <li><i class="sw" style="background:#2fd38f"></i><b>Prime Performance</b><span class="st live">en vivo</span></li>
+          <li><i class="sw" style="background:#e03131"></i><b>Las Condes 7350</b><span class="st">Demo</span></li>
         </ul>
       </aside>
     </div>
@@ -297,32 +265,32 @@ body.wire .hero h1 .ghost{-webkit-text-stroke:1px var(--signal)}
     <div class="wrap">
       <div class="sec-head">
         <div><div class="label">Práctica</div><h2 data-glitch>Lo que construimos</h2></div>
-        <p>Cuatro disciplinas que se cruzan en cada proyecto. Trabajamos desde el proceso de negocio hasta la pantalla que usa la persona en terreno.</p>
+        <p>Cuatro tipos de trabajo, un mismo estándar: rápido de cargar, fácil de editar y pensado para el negocio que hay detrás.</p>
       </div>
       <div class="practice">
         <article data-agent="p1">
-          <div class="label dim">Arquitectura</div>
-          <h3>Arquitectura de software</h3>
-          <p>Dominios claros, contratos de datos explícitos y reglas en la base de datos. Sistemas diseñados para cambiar sin romperse.</p>
-          <div class="tags"><span class="tag">C4</span><span class="tag">UML</span><span class="tag">BPMN</span></div>
+          <div class="label dim">Plataformas</div>
+          <h3>Plataformas y SaaS</h3>
+          <p>Productos con usuarios, pagos y datos propios. Reservas, comparadores de precios y paneles de administración.</p>
+          <div class="tags"><span class="tag">Laravel</span><span class="tag">Next.js</span><span class="tag">Supabase</span></div>
         </article>
         <article data-agent="p2">
-          <div class="label dim">Producto web</div>
-          <h3>Paneles operacionales</h3>
-          <p>Interfaces para equipos que gestionan flota, rutas e incidentes todo el día. Rápidas de leer y difíciles de usar mal.</p>
-          <div class="tags"><span class="tag">Next.js</span><span class="tag">React 19</span><span class="tag">Tailwind</span></div>
+          <div class="label dim">Marca</div>
+          <h3>Sitios de marca</h3>
+          <p>Sitios para profesionales y marcas personales que convierten visitas en consultas por WhatsApp.</p>
+          <div class="tags"><span class="tag">Astro</span><span class="tag">Tailwind</span><span class="tag">GSAP</span></div>
         </article>
         <article data-agent="p3">
-          <div class="label dim">Móvil</div>
-          <h3>Apps para terreno</h3>
-          <p>Apps nativas con mapas, GPS en segundo plano y flujos por rol. Pensadas para usarse con una mano y mala señal.</p>
-          <div class="tags"><span class="tag">Expo</span><span class="tag">React Native</span><span class="tag">Maps</span></div>
+          <div class="label dim">Interactivo</div>
+          <h3>Experiencias interactivas</h3>
+          <p>Escenas 3D, recorridos de obra y mapas que se exploran con el scroll en lugar de leerse.</p>
+          <div class="tags"><span class="tag">Three.js</span><span class="tag">R3F</span><span class="tag">Lenis</span></div>
         </article>
         <article data-agent="p4">
-          <div class="label dim">Datos</div>
-          <h3>Datos y tiempo real</h3>
-          <p>Esquemas versionados con migraciones, seguridad por fila y eventos en vivo que llegan al panel y al celular a la vez.</p>
-          <div class="tags"><span class="tag">PostgreSQL</span><span class="tag">Supabase</span><span class="tag">Realtime</span></div>
+          <div class="label dim">Automatización</div>
+          <h3>Datos y contenido</h3>
+          <p>Scrapers programados, alertas por correo y CMS para que el cliente publique sin llamarnos.</p>
+          <div class="tags"><span class="tag">Python</span><span class="tag">GitHub Actions</span><span class="tag">CMS</span></div>
         </article>
       </div>
     </div>
@@ -332,127 +300,133 @@ body.wire .hero h1 .ghost{-webkit-text-stroke:1px var(--signal)}
     <div class="wrap">
       <div class="sec-head">
         <div><div class="label">Trabajo seleccionado</div><h2 data-glitch>La prueba está en lo que corre.</h2></div>
-        <p>Productos completos, de la base de datos a la app en el bolsillo del conductor. Cada uno incluye código, migraciones, pruebas y documentación.</p>
+        <p>Proyectos publicados y en uso. Cada captura es el sitio real.</p>
       </div>
 
-      <article class="flagship" aria-labelledby="trazza-title">
-        <div class="flagship-top" data-agent="trazza">
-          <div>
-            <div class="label">Plataforma de transporte de personal</div>
-            <h3 id="trazza-title" style="margin-top:14px">TRAZZA<span>.</span></h3>
-            <p>Seguimiento en tiempo real para pymes de transporte de personal. El cliente contrata, el administrador planifica, el conductor ejecuta y el pasajero ve dónde viene su bus.</p>
-          </div>
-          <div class="flagship-meta">
-            <div>Tipo <b>Proyecto de título · Capstone</b></div>
-            <div>Plataformas <b>Web · iOS · Android</b></div>
-            <div>Backend <b>Supabase / PostgreSQL</b></div>
-            <div>Estado <b style="color:var(--trazza)">En desarrollo activo</b></div>
-          </div>
-        </div>
+      <div class="stats" data-agent="stats">
+        <div><strong>9</strong><span>proyectos publicados</span></div>
+        <div><strong>20+</strong><span>tiendas que revisa CotizaPet</span></div>
+        <div><strong>69</strong><span>áreas en el mapa de Bionáutica</span></div>
+        <div><strong>3D</strong><span>escena en tiempo real en Coto FPV</span></div>
+      </div>
 
-        <div class="stats">
-          <div><strong>23</strong><span>tablas en el modelo de datos</span></div>
-          <div><strong>29</strong><span>migraciones versionadas</span></div>
-          <div><strong>6</strong><span>módulos del panel</span></div>
-          <div><strong>3</strong><span>roles: admin, conductor, pasajero</span></div>
-          <div><strong>11</strong><span>diagramas de proceso y arquitectura</span></div>
-        </div>
-
-        <div class="products">
-          <div class="product" data-agent="admin">
-            <div class="product-head"><h4>TRAZZA Admin</h4><span class="label dim">Panel web</span></div>
-            <div class="browser" aria-hidden="true">
-              <div class="browser-bar"><i></i><i></i><i></i><span>trazza / dashboard</span></div>
-              <div class="admin">
-                <div class="admin-side">
-                  <b>TRAZZA</b>
-                  <span class="on">Dashboard</span><span>Rutas</span><span>Flota</span><span>Conductores</span><span>Incidentes</span><span>Configuración</span>
-                </div>
-                <div class="admin-main">
-                  <div class="kpis">
-                    <div class="kpi">En curso<b>12</b></div>
-                    <div class="kpi">Vehículos<b>18</b></div>
-                    <div class="kpi">Incidentes<b style="color:#fdba74">2</b></div>
-                  </div>
-                  <div class="map">
-                    <svg viewBox="0 0 400 200" preserveAspectRatio="none">
-                      <g stroke="#1b3352" stroke-width="1" fill="none">
-                        <path d="M0 40H400M0 90H400M0 150H400M60 0V200M150 0V200M260 0V200M340 0V200"/>
-                        <path d="M0 180L120 110 200 120 400 20" stroke-width="5" stroke="#16304e"/>
-                      </g>
-                      <path id="route-a" d="M30 170 C 90 160, 110 100, 160 95 S 250 60, 290 70 S 360 40, 380 30" stroke="#10b98b" stroke-width="2.5" fill="none" stroke-dasharray="5 4"/>
-                      <path d="M40 30 C 120 50, 180 140, 250 150 S 340 170, 370 160" stroke="#7dbbff" stroke-width="2" fill="none" opacity=".7"/>
-                      <circle cx="30" cy="170" r="4" fill="#0d1d37" stroke="#10b98b" stroke-width="2"/>
-                      <circle cx="380" cy="30" r="4" fill="#0d1d37" stroke="#10b98b" stroke-width="2"/>
-                      <circle r="6" fill="#10b98b" class="mover"><animateMotion dur="9s" repeatCount="indefinite" rotate="auto"><mpath href="#route-a"/></animateMotion></circle>
-                    </svg>
-                    <span class="map-note">Bus 07 · Ruta Planta Norte · en ruta</span>
-                  </div>
-                </div>
+      <div class="work">
+        <article class="proj wide" data-agent="cotizapet">
+          <div class="shot" aria-hidden="true">
+            <div class="shot-bar"><i></i><i></i><i></i><span>cotizapet.vercel.app</span></div>
+            <div class="cp">
+              <div class="cp-top"><span class="cp-logo">Cotiza<span>pet</span></span><span class="cp-search">Alimento gato adulto 7,5 kg</span></div>
+              <div class="cp-prod">
+                <div class="cp-pack">GATO<br>ADULTO<br>7,5 KG</div>
+                <div><b>Alimento gato adulto pollo y arroz 7,5 kg</b><small>Comparado en 6 tiendas · actualizado hoy 09:00</small></div>
               </div>
-            </div>
-            <p>Panel operacional para el administrador: contratos y pasajeros, rutas y horarios, flota, conductores, mantenciones, combustible e incidentes, con un mapa de la flota en vivo.</p>
-            <ul>
-              <li>Acciones sobre servicios como funciones SQL transaccionales</li>
-              <li>Multiempresa con seguridad por fila en cada tabla</li>
-              <li>Pruebas de base de datos sobre Postgres embebido</li>
-            </ul>
-            <div class="stack"><span class="tag">Next.js 16</span><span class="tag">React 19</span><span class="tag">TypeScript</span><span class="tag">Tailwind 4</span><span class="tag">Google Maps</span><span class="tag">Vitest</span></div>
-          </div>
-
-          <div class="product" data-agent="mobile">
-            <div class="product-head"><h4>TRAZZA Mobile</h4><span class="label dim">iOS · Android</span></div>
-            <div class="phone-row" aria-hidden="true">
-              <div class="phone">
-                <div class="phone-screen">
-                  <div class="phone-top"><span>Conductor</span><span>9:41</span></div>
-                  <div class="phone-map">
-                    <svg viewBox="0 0 100 120" preserveAspectRatio="none">
-                      <path d="M0 30H100M0 75H100M30 0V120M72 0V120" stroke="#1a3048" stroke-width=".8"/>
-                      <path id="route-b" d="M12 108 C 25 90, 30 70, 48 62 S 70 40, 88 14" stroke="#10b981" stroke-width="2" fill="none"/>
-                      <circle r="3.2" fill="#fff" stroke="#10b981" stroke-width="1.6"><animateMotion dur="7s" repeatCount="indefinite"><mpath href="#route-b"/></animateMotion></circle>
-                    </svg>
-                  </div>
-                  <div>
-                    <div class="phone-card">
-                      <span class="chip">● en ruta</span>
-                      <b>Planta Norte → Centro</b>
-                      <span>Parada 3 de 7 · 14 pasajeros</span>
-                      <span class="phone-btn">Marcar asistencia</span>
-                    </div>
-                    <div class="phone-tabs"><span>Inicio</span><span>Rutas</span><span class="on">En ruta</span><span>Perfil</span></div>
-                  </div>
-                </div>
+              <div class="cp-rows">
+                <div class="cp-row best"><span>Tienda A <span class="muted">· despacho RM</span></span><em>mejor precio</em><strong>$31.990</strong></div>
+                <div class="cp-row"><span>Tienda B</span><span class="muted">+ $2.000</span><strong>$33.990</strong></div>
+                <div class="cp-row"><span>Tienda C</span><span class="muted">+ $4.500</span><strong>$36.490</strong></div>
               </div>
+              <div class="cp-chart"><svg viewBox="0 0 300 46" preserveAspectRatio="none"><path d="M0 30 L40 28 L80 32 L120 22 L160 24 L200 14 L240 18 L300 10" fill="none" stroke="#e8590c" stroke-width="2"/><circle cx="300" cy="10" r="3" fill="#e8590c"/></svg></div>
+              <div class="cp-alert"><span>Avísame si baja de $30.000</span><span>alerta activa</span></div>
             </div>
-            <p>Una sola app con dos flujos. El conductor prepara el servicio, transmite su GPS y reporta incidentes con foto. El pasajero sigue su viaje en el mapa y revisa su historial.</p>
-            <ul>
-              <li>Ubicación en vivo vía Supabase Realtime</li>
-              <li>Navegación según el rol del perfil autenticado</li>
-              <li>Recuperación de contraseña con enlace profundo</li>
-            </ul>
-            <div class="stack"><span class="tag">Expo SDK 57</span><span class="tag">React Native</span><span class="tag">expo-location</span><span class="tag">Jest</span></div>
           </div>
-        </div>
-      </article>
-
-      <div class="more">
-        <article class="doc-card" data-agent="arq">
-          <figure><img src="assets/arq-contenedores.svg" alt="Diagrama de contenedores de TRAZZA: panel web, app móvil y Supabase" loading="lazy"></figure>
-          <div class="doc-body">
-            <div class="label dim">Arquitectura · C4</div>
-            <h4>Arquitectura y despliegue</h4>
-            <p>Vistas de contexto, contenedores, despliegue y lógica. Muestran cómo el panel y la app comparten una sola base de datos y qué corre en cada lugar.</p>
-            <div class="stack"><span class="tag">Contexto</span><span class="tag">Contenedores</span><span class="tag">Despliegue</span><span class="tag">Lógica</span></div>
+          <div class="proj-body">
+            <div class="proj-head"><span class="label">Plataforma · Comparador</span><span class="status live">en vivo</span></div>
+            <h3>CotizaPet</h3>
+            <p>Comparador de precios para mascotas en Chile. Junta alimento, farmacia e higiene de más de 20 tiendas online y avisa por correo cuando un producto baja de precio.</p>
+            <ul>
+              <li>Scrapers diarios para Shopify, WooCommerce, PrestaShop y Cencosud</li>
+              <li>Mismo producto reconocido entre tiendas por marca y código de barras</li>
+              <li>Historial de precios y alertas por correo</li>
+            </ul>
+            <div class="stack"><span class="tag">Laravel</span><span class="tag">Inertia + React</span><span class="tag">Python</span><span class="tag">PostgreSQL</span><span class="tag">GitHub Actions</span></div>
+            <div class="proj-foot"><a class="visit" href="https://cotizapet.vercel.app" target="_blank" rel="noopener">cotizapet.vercel.app ↗</a></div>
           </div>
         </article>
-        <article class="doc-card" data-agent="bpmn">
-          <figure><img src="assets/ciclo-de-vida.svg" alt="Diagrama UML del ciclo de vida de un servicio: programado, en curso, completado o cancelado" loading="lazy"></figure>
-          <div class="doc-body">
-            <div class="label dim">Procesos · BPMN y UML</div>
-            <h4>Procesos de negocio modelados</h4>
-            <p>Contratación, planificación y ejecución, incidentes, mantenimiento y combustible. El ciclo de vida de cada servicio es el mismo en el código y en el diagrama.</p>
-            <div class="stack"><span class="tag mono">scheduled</span><span class="tag mono">in_progress</span><span class="tag mono">completed</span><span class="tag mono">cancelled</span></div>
+
+        <article class="proj" data-agent="coto">
+          <figure class="shot"><div class="shot-bar"><i></i><i></i><i></i><span>coto-fpv.vercel.app</span></div><img src="assets/shots/coto.jpg" alt="Coto FPV: dron FPV en 3D frente a una toma de persecución de una moto en carretera"></figure>
+          <div class="proj-body">
+            <div class="proj-head"><span class="label">Experiencia 3D</span></div>
+            <h3>Coto FPV</h3>
+            <p>Sitio para un piloto de drones FPV. El dron se arma en 3D y vuela por la página a medida que bajas, con una interfaz tipo visor de vuelo.</p>
+            <div class="stack"><span class="tag">Next.js</span><span class="tag">React Three Fiber</span><span class="tag">GSAP</span><span class="tag">Lenis</span></div>
+            <div class="proj-foot"><a class="visit" href="https://coto-fpv.vercel.app" target="_blank" rel="noopener">coto-fpv.vercel.app ↗</a></div>
+          </div>
+        </article>
+
+        <article class="proj" data-agent="bionautica">
+          <figure class="shot"><div class="shot-bar"><i></i><i></i><i></i><span>bionautica.vercel.app</span></div><img src="assets/shots/bio.jpg" alt="Bionáutica: portada del mapa interactivo de las ciencias del mar"></figure>
+          <div class="proj-body">
+            <div class="proj-head"><span class="label">Mapa interactivo · Educación</span></div>
+            <h3>Bionáutica</h3>
+            <p>El mapa de las ciencias del mar: 5 zonas y 69 áreas temáticas con videos y noticias. El equipo publica contenido desde su propio panel.</p>
+            <div class="stack"><span class="tag">Astro</span><span class="tag">Sveltia CMS</span><span class="tag">Vercel</span></div>
+            <div class="proj-foot"><a class="visit" href="https://bionautica.vercel.app" target="_blank" rel="noopener">bionautica.vercel.app ↗</a></div>
+          </div>
+        </article>
+
+        <article class="proj" data-agent="kilya">
+          <figure class="shot"><div class="shot-bar"><i></i><i></i><i></i><span>teamkilya.vercel.app</span></div><img src="assets/shots/kilya.jpg" alt="Prime Performance: portada con la atleta Kilya Marchant entrenando en anillas"></figure>
+          <div class="proj-body">
+            <div class="proj-head"><span class="label">Marca personal · Deporte</span></div>
+            <h3>Prime Performance</h3>
+            <p>Sitio de coaching de Kilya Marchant, campeona nacional de CrossFit. Planes de entrenamiento, programación para box y evaluación deportiva.</p>
+            <div class="stack"><span class="tag">HTML</span><span class="tag">Tailwind</span><span class="tag">GSAP</span><span class="tag">Lenis</span></div>
+            <div class="proj-foot"><a class="visit" href="https://teamkilya.vercel.app" target="_blank" rel="noopener">teamkilya.vercel.app ↗</a></div>
+          </div>
+        </article>
+
+        <article class="proj" data-agent="lc">
+          <figure class="shot"><div class="shot-bar"><i></i><i></i><i></i><span>lascondes7350-demo.vercel.app</span></div><img src="assets/shots/lc.jpg" alt="Las Condes 7350: portada con precio desde UF y piscina en el rooftop"></figure>
+          <div class="proj-body">
+            <div class="proj-head"><span class="label">Inmobiliaria · Demo</span></div>
+            <h3>Las Condes 7350</h3>
+            <p>Sitio de venta para un edificio en Las Condes. Abre con un recorrido de las etapas de obra recreadas digitalmente y calcula el dividendo de cada departamento.</p>
+            <div class="stack"><span class="tag">HTML</span><span class="tag">Video</span><span class="tag">JS</span></div>
+            <div class="proj-foot"><a class="visit" href="https://lascondes7350-demo.vercel.app" target="_blank" rel="noopener">lascondes7350-demo.vercel.app ↗</a></div>
+          </div>
+        </article>
+
+        <article class="proj" data-agent="sol">
+          <figure class="shot"><div class="shot-bar"><i></i><i></i><i></i><span>sol-studio-eight.vercel.app</span></div><img src="assets/shots/sol.jpg" alt="SolStudio: portada del salón de belleza con botón para agendar cita"></figure>
+          <div class="proj-body">
+            <div class="proj-head"><span class="label">Reservas · Belleza</span></div>
+            <h3>SolStudio</h3>
+            <p>Reservas online para un salón de belleza. La clienta elige servicio, estilista y hora, y paga el abono con Webpay. El salón administra todo desde su panel.</p>
+            <div class="stack"><span class="tag">React</span><span class="tag">Vite</span><span class="tag">Supabase</span><span class="tag">Webpay</span></div>
+            <div class="proj-foot"><a class="visit" href="https://sol-studio-eight.vercel.app" target="_blank" rel="noopener">sol-studio-eight.vercel.app ↗</a></div>
+          </div>
+        </article>
+
+        <article class="proj" data-agent="agendate">
+          <figure class="shot"><div class="shot-bar"><i></i><i></i><i></i><span>agendate · página de reservas</span></div><img src="assets/shots/agendate.jpg" alt="Agéndate: página de reservas de un salón con servicios y precios"></figure>
+          <div class="proj-body">
+            <div class="proj-head"><span class="label">SaaS · Agenda</span><span class="status">en desarrollo</span></div>
+            <h3>Agéndate</h3>
+            <p>Agenda online para salones y estudios de belleza. Cada salón tiene su página de reservas y un panel para la dueña. Dos clientas nunca pueden tomar la misma hora.</p>
+            <div class="stack"><span class="tag">Next.js 15</span><span class="tag">Supabase</span><span class="tag">PostgreSQL</span></div>
+          </div>
+        </article>
+
+        <article class="proj" data-agent="chf">
+          <figure class="shot"><div class="shot-bar"><i></i><i></i><i></i><span>estudio-juridico-conce.vercel.app</span></div><img src="assets/shots/ejc.jpg" alt="CHF Abogados: portada con el título Defensa legal con experiencia y compromiso"></figure>
+          <div class="proj-body">
+            <div class="proj-head"><span class="label">Servicios profesionales</span></div>
+            <h3>CHF Abogados</h3>
+            <p>Sitio para un estudio jurídico. Áreas de práctica, equipo y botones directos a llamada y WhatsApp para agendar una consulta.</p>
+            <div class="stack"><span class="tag">Astro</span><span class="tag">CSS</span></div>
+            <div class="proj-foot"><a class="visit" href="https://estudio-juridico-conce.vercel.app" target="_blank" rel="noopener">estudio-juridico-conce.vercel.app ↗</a></div>
+          </div>
+        </article>
+
+        <article class="proj" data-agent="mjv">
+          <figure class="shot"><div class="shot-bar"><i></i><i></i><i></i><span>maria-jose-villegas.vercel.app</span></div><img src="assets/shots/mjv.jpg" alt="María José Villegas: portada con bosque en niebla y el título Narrativa en movimiento"></figure>
+          <div class="proj-body">
+            <div class="proj-head"><span class="label">Portafolio · Audiovisual</span></div>
+            <h3>María José Villegas</h3>
+            <p>Portafolio de una fotógrafa y cineasta desde Isla de Pascua: cine, fotografía y periodismo. Ella misma sube sus proyectos desde un CMS.</p>
+            <div class="stack"><span class="tag">Astro</span><span class="tag">Keystatic</span><span class="tag">Tailwind</span></div>
+            <div class="proj-foot"><a class="visit" href="https://maria-jose-villegas.vercel.app" target="_blank" rel="noopener">maria-jose-villegas.vercel.app ↗</a></div>
           </div>
         </article>
       </div>
@@ -462,50 +436,27 @@ body.wire .hero h1 .ghost{-webkit-text-stroke:1px var(--signal)}
   <section class="sec" id="proceso">
     <div class="wrap">
       <div class="sec-head">
-        <div><div class="label">Proceso</div><h2 data-glitch>Del proceso al despliegue</h2></div>
-        <p>El mismo orden en cada proyecto. Lo que se acuerda en el diagrama es lo que se prueba en el código.</p>
+        <div><div class="label">Proceso</div><h2 data-glitch>De la idea al sitio publicado</h2></div>
+        <p>El mismo orden en cada proyecto, para que sepas en qué etapa estamos y qué viene después.</p>
       </div>
       <ol class="process">
-        <li data-agent="s1"><span class="n">01 / Definir</span><h3>Entender la operación</h3><p>Levantamos el proceso real con el cliente: quién contrata, quién planifica, quién ejecuta.</p></li>
-        <li data-agent="s2"><span class="n">02 / Modelar</span><h3>Diagramas y datos</h3><p>BPMN, casos de uso y modelo entidad-relación antes de escribir la primera pantalla.</p></li>
-        <li data-agent="s3"><span class="n">03 / Construir</span><h3>Iteraciones cortas</h3><p>Migraciones versionadas, panel y app avanzando juntos sobre el mismo esquema.</p></li>
-        <li data-agent="s4"><span class="n">04 / Probar</span><h3>Plan de pruebas</h3><p>Pruebas unitarias, de base de datos y de flujo por rol, con un plan escrito.</p></li>
-        <li data-agent="s5"><span class="n">05 / Entregar</span><h3>Despliegue y traspaso</h3><p>Documentación de arquitectura y operación para que el sistema siga vivo después.</p></li>
+        <li data-agent="s1"><span class="n">01 / Entender</span><h3>Conversación inicial</h3><p>Qué vendes, a quién y qué tiene que pasar cuando alguien entra al sitio.</p></li>
+        <li data-agent="s2"><span class="n">02 / Diseñar</span><h3>Dirección visual</h3><p>Propuesta de estilo y estructura antes de escribir código.</p></li>
+        <li data-agent="s3"><span class="n">03 / Construir</span><h3>Desarrollo</h3><p>Avances publicados en una URL de prueba que puedes revisar cuando quieras.</p></li>
+        <li data-agent="s4"><span class="n">04 / Publicar</span><h3>Lanzamiento</h3><p>Dominio, velocidad, SEO básico y pruebas en celular antes de salir.</p></li>
+        <li data-agent="s5"><span class="n">05 / Cuidar</span><h3>Soporte</h3><p>Panel para editar contenido y ajustes cuando el negocio cambia.</p></li>
       </ol>
-    </div>
-  </section>
-
-  <section class="sec" id="equipo">
-    <div class="wrap">
-      <div class="sec-head">
-        <div><div class="label">Equipo</div><h2 data-glitch>Quiénes somos</h2></div>
-        <p>Ingenieros en informática que diseñan, programan y documentan de punta a punta.</p>
-      </div>
-      <div class="team">
-        <article class="member" data-agent="m1">
-          <div class="avatar" style="background:var(--signal)">FF</div>
-          <div><h3>Franz Figueroa</h3><p>Co-fundador · Ingeniería de software</p></div>
-        </article>
-        <article class="member" data-agent="m2">
-          <div class="avatar" style="background:var(--select);color:#fff">JV</div>
-          <div><h3>José Villegas</h3><p>Co-fundador · Ingeniería de software</p></div>
-        </article>
-        <article class="member" data-agent="m3">
-          <div class="avatar" style="background:var(--trazza)">JM</div>
-          <div><h3>Juan Marchant</h3><p>Co-fundador · Ingeniería de software</p></div>
-        </article>
-      </div>
     </div>
   </section>
 
   <section class="cta" id="contacto">
     <div class="wrap">
       <div class="label">Contacto</div>
-      <h2 data-glitch data-agent="cta" style="margin-top:18px">¿Tu operación <span class="ghost">necesita verse?</span></h2>
+      <h2 data-glitch data-agent="cta" style="margin-top:18px">¿Tienes un proyecto <span class="ghost">en mente?</span></h2>
       <div class="cta-row">
-        <p>Cuéntanos qué proceso quieres digitalizar. Respondemos con una propuesta de alcance, arquitectura y plazos.</p>
+        <p>Cuéntanos qué necesitas. Respondemos con una propuesta de alcance, diseño y plazos.</p>
         <div class="hero-actions" style="margin-top:0">
-          <a class="btn primary" href="https://github.com/j-villegas/Proyecto-APT-Duoc2026" target="_blank" rel="noopener">Ver el código en GitHub ↗</a>
+          <a class="btn primary" href="#trabajo">Ver proyectos →</a>
         </div>
       </div>
     </div>
@@ -515,7 +466,7 @@ body.wire .hero h1 .ghost{-webkit-text-stroke:1px var(--signal)}
 <footer>
   <div class="wrap">
     <span>© 2026 NovusLabs</span>
-    <span>Construido por Franz Figueroa, José Villegas y Juan Marchant</span>
+    <span>Estudio de software · Chile</span>
   </div>
 </footer>
 
