@@ -78,6 +78,7 @@ p{margin:0}
 @keyframes mm-up{to{opacity:1;transform:none}}
 
 /* ---------- hero ---------- */
+.hero::before{content:"";position:absolute;inset:0;z-index:-1;background-image:radial-gradient(circle,rgba(255,255,255,.22) 1px,transparent 1px);background-size:14px 14px;mask-image:radial-gradient(ellipse at 85% 15%,#000 10%,transparent 60%);-webkit-mask-image:radial-gradient(ellipse at 85% 15%,#000 10%,transparent 60%)}
 .hero{position:relative;min-height:min(100svh,920px);display:flex;align-items:flex-end;overflow:hidden;isolation:isolate}
 .hero-media{position:absolute;inset:0;z-index:-2}
 .hero-media video{width:100%;height:100%;object-fit:cover;filter:grayscale(1) contrast(1.15) brightness(.85)}
@@ -272,11 +273,6 @@ body.wire .frame img,body.wire .frame video{opacity:.2}
 
 <main id="top">
   <section class="hero">
-    <div class="hero-media" aria-hidden="true">
-      <video src="assets/coto-fpv.mp4" poster="assets/shots/coto.jpg" autoplay muted loop playsinline preload="metadata"></video>
-    </div>
-    <div class="hero-shade" aria-hidden="true"></div>
-    <div class="hero-cap"><span class="eyebrow">En pantalla</span><strong>Coto FPV · sitio 3D</strong></div>
     <div class="wrap">
       <div class="eyebrow in" data-agent="hero-label"><b>NovusLabs</b> · Estudio de software · Chile</div>
       <h1 class="display in" data-agent="h1">Productos web <span class="outline">hechos a la medida</span></h1>
