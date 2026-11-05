@@ -64,18 +64,62 @@ p{margin:0}
 .nav-links a i{font-style:normal;color:var(--text);margin-right:6px}
 .nav-links a:hover{color:var(--text)}
 .nav .btn{padding:11px 16px;font-size:11px}
-.menu-btn{display:none;margin-left:auto;background:none;border:1px solid var(--line-strong);color:var(--text);border-radius:999px;padding:10px 16px;font:700 11px/1 var(--sans);letter-spacing:.16em;text-transform:uppercase;cursor:pointer}
-@media (max-width:820px){.nav-links,.nav .btn{display:none}.menu-btn{display:inline-flex}}
+.menu-btn{display:inline-flex;align-items:center;gap:10px;background:none;border:1px solid var(--line-strong);color:var(--text);border-radius:999px;padding:10px 16px;font:700 11px/1 var(--sans);letter-spacing:.16em;text-transform:uppercase;cursor:pointer}
+.menu-btn i{display:grid;gap:4px}.menu-btn i::before,.menu-btn i::after{content:"";display:block;width:16px;height:1.5px;background:currentColor;transition:transform .3s var(--ease)}
+.menu-btn[aria-expanded="true"] i::before{transform:translateY(2.75px) rotate(45deg)}.menu-btn[aria-expanded="true"] i::after{transform:translateY(-2.75px) rotate(-45deg)}
+@media (max-width:820px){.nav-links,.nav .btn{display:none}.menu-btn{margin-left:auto}}
 
-/* menú móvil numerado */
-.mm{position:fixed;inset:0;z-index:65;display:flex;flex-direction:column;padding:calc(104px + env(safe-area-inset-top,0px)) max(24px,env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) max(24px,env(safe-area-inset-left,0px));background:rgba(10,10,10,.985);visibility:hidden;opacity:0;transition:opacity .35s ease,visibility 0s linear .35s}
+/* menú índice a pantalla completa */
+.mm{position:fixed;inset:0;z-index:58;overflow-y:auto;background:rgba(10,10,10,.985);visibility:hidden;opacity:0;transition:opacity .35s ease,visibility 0s linear .35s}
 .mm.open{visibility:visible;opacity:1;transition-delay:0s}
-.mm-nav a{display:flex;align-items:baseline;gap:14px;padding:18px 0;border-bottom:1px solid var(--line);font:800 clamp(1.6rem,7.6vw,2rem)/1 var(--sans);text-transform:uppercase;text-decoration:none;opacity:0;transform:translateY(14px)}
-.mm-nav a i{font:800 11px var(--sans);font-style:normal;letter-spacing:.16em;color:var(--muted)}
-.mm.open .mm-nav a{animation:mm-up .55s var(--ease) forwards}
-.mm.open .mm-nav a:nth-child(2){animation-delay:.06s}.mm.open .mm-nav a:nth-child(3){animation-delay:.12s}.mm.open .mm-nav a:nth-child(4){animation-delay:.18s}
-.mm .btn{margin-top:auto;justify-content:center}
+.mm-in{max-width:var(--max);min-height:100%;margin:0 auto;padding:calc(104px + env(safe-area-inset-top,0px)) max(var(--pad),env(safe-area-inset-right,0px)) calc(32px + env(safe-area-inset-bottom,0px)) max(var(--pad),env(safe-area-inset-left,0px));display:grid;grid-template-columns:minmax(0,1fr) 260px;gap:40px 64px;align-content:start}
+.mm-list{list-style:none;margin:16px 0 0;padding:0;border-top:1px solid var(--line);position:relative}
+.mm-list a{display:grid;grid-template-columns:48px minmax(0,1fr) auto;gap:16px;align-items:baseline;padding:13px 0;border-bottom:1px solid var(--line);text-decoration:none;opacity:0;transform:translateY(14px)}
+.mm-list i{font:800 11px/1 var(--sans);font-style:normal;letter-spacing:.16em;color:var(--muted);font-variant-numeric:tabular-nums}
+.mm-list .nm{font:800 clamp(26px,4.2vw,58px)/1 var(--sans);text-transform:uppercase;letter-spacing:-.02em;transition:color .3s,transform .5s var(--ease)}
+.mm-list small{font:700 11px/1.3 var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--muted);text-align:right}
+.mm-list:hover .nm{color:#4a4a4a}
+.mm-list a:hover .nm,.mm-list a:focus-visible .nm{color:var(--text);transform:translateX(12px)}
+.mm-list .pk{position:absolute;right:3%;top:50%;width:min(300px,24vw);border-radius:12px;overflow:hidden;border:1px solid var(--line-strong);opacity:0;transform:translateY(-50%) rotate(-3deg) scale(.92);pointer-events:none;transition:opacity .3s,transform .5s var(--ease);z-index:2}
+.mm-list .pk img{aspect-ratio:16/10;object-fit:cover;object-position:top}
+.mm-list li{position:relative}
+.mm-list a:hover + .pk{opacity:1;transform:translateY(-50%) rotate(-3deg) scale(1)}
+.mm-side{display:flex;flex-direction:column;gap:12px;padding-top:44px}
+.mm-side a.sec-link{display:flex;gap:12px;align-items:baseline;padding:12px 0;border-bottom:1px solid var(--line);font:800 15px/1 var(--sans);letter-spacing:.08em;text-transform:uppercase;text-decoration:none;opacity:0;transform:translateY(14px)}
+.mm-side a.sec-link i{font:800 11px var(--sans);font-style:normal;letter-spacing:.16em;color:var(--muted)}
+.mm-side .btn{margin-top:20px;justify-content:center}
+.mm.open .mm-list a,.mm.open .mm-side a.sec-link{animation:mm-up .55s var(--ease) forwards;animation-delay:calc(var(--i,0) * 50ms)}
 @keyframes mm-up{to{opacity:1;transform:none}}
+@media (max-width:860px){.mm-in{grid-template-columns:1fr}.mm-list .pk{display:none}.mm-list a{grid-template-columns:36px minmax(0,1fr)}.mm-list small{grid-column:2;text-align:left}.mm-side{padding-top:0}}
+
+/* ---------- hero G: abanico, muro e índice ---------- */
+.g{position:relative;height:400vh}
+.g-stage{position:sticky;top:0;height:100svh;overflow:hidden}
+.g-stage::before{content:"";position:absolute;inset:0;background-image:radial-gradient(circle,rgba(255,255,255,.18) 1px,transparent 1px);background-size:14px 14px;mask-image:radial-gradient(ellipse at 85% 15%,#000 10%,transparent 60%);-webkit-mask-image:radial-gradient(ellipse at 85% 15%,#000 10%,transparent 60%)}
+.tile{position:absolute;left:0;top:0;width:var(--tw);border-radius:12px;overflow:hidden;border:1px solid var(--line-strong);background:var(--surface);box-shadow:0 30px 60px rgba(0,0,0,.45);transform-origin:50% 50%;will-change:transform,opacity}
+.tile .bar{display:flex;gap:6px;align-items:center;padding:7px 10px;border-bottom:1px solid var(--line);font:700 10px/1 var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.tile .bar i{width:7px;height:7px;border-radius:50%;background:var(--line-strong)}
+.tile .bar span{margin-left:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile img{aspect-ratio:16/10;width:100%;object-fit:cover;object-position:top}
+.g-title{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);z-index:5}
+.g-title .inner{max-width:var(--max);margin:0 auto;padding-left:max(var(--pad),env(safe-area-inset-left,0px));padding-right:max(var(--pad),env(safe-area-inset-right,0px));display:grid;gap:26px}
+.g-title h1{font-size:clamp(44px,6.2vw,100px);max-width:9.5ch}
+.g-title h1 span{display:block;font-size:.62em;margin-top:.08em}
+.g-title .lede{max-width:40ch}
+.g-shade{position:absolute;inset:0;z-index:3;pointer-events:none;background:linear-gradient(to top,rgba(10,10,10,.95),rgba(10,10,10,.55) 50%,rgba(10,10,10,.7));opacity:0}
+.g-index{position:absolute;inset:0;z-index:6;display:flex;align-items:center;pointer-events:none}
+.g-index.on{pointer-events:auto}
+.g-index .inner{width:100%;max-width:var(--max);margin:0 auto;padding-left:max(var(--pad),env(safe-area-inset-left,0px));padding-right:max(var(--pad),env(safe-area-inset-right,0px));opacity:0}
+.idx{list-style:none;margin:16px 0 0;padding:0;border-top:1px solid var(--line)}
+.idx li{opacity:0;transform:translateY(24px)}
+.idx a{display:grid;grid-template-columns:56px minmax(0,1fr) auto;gap:16px;align-items:baseline;padding:12px 0;border-bottom:1px solid var(--line);text-decoration:none}
+.idx .n{font:800 12px/1 var(--sans);letter-spacing:.16em;color:var(--muted);font-variant-numeric:tabular-nums}
+.idx .name{font:800 clamp(26px,4.4vw,60px)/1 var(--sans);text-transform:uppercase;letter-spacing:-.02em;transition:color .3s,transform .5s var(--ease)}
+.idx .cat{font:700 11px/1.3 var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--muted);text-align:right}
+.idx:hover .name{color:#4a4a4a}
+.idx a:hover .name,.idx a:focus-visible .name{color:var(--text);transform:translateX(12px)}
+.g-cue{position:absolute;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:6;display:flex;flex-direction:column;align-items:center;gap:10px}
+@media (max-width:760px){.idx a{grid-template-columns:36px minmax(0,1fr)}.idx .cat{grid-column:2;text-align:left}}
 
 /* ---------- hero ---------- */
 .hero::before{content:"";position:absolute;inset:0;z-index:-1;background-image:radial-gradient(circle,rgba(255,255,255,.22) 1px,transparent 1px);background-size:14px 14px;mask-image:radial-gradient(ellipse at 85% 15%,#000 10%,transparent 60%);-webkit-mask-image:radial-gradient(ellipse at 85% 15%,#000 10%,transparent 60%)}
@@ -131,7 +175,7 @@ p{margin:0}
 
 /* proyectos */
 .work{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(48px,6vw,80px) clamp(24px,3vw,40px)}
-.proj{display:flex;flex-direction:column;gap:22px;min-width:0}
+.proj{scroll-margin-top:96px;display:flex;flex-direction:column;gap:22px;min-width:0}
 .proj.wide{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:clamp(24px,4vw,56px);align-items:center}
 .proj.wide.reverse .frame{order:2}
 .frame{position:relative;margin:0;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--surface)}
@@ -236,7 +280,7 @@ body.wire .frame img,body.wire .frame video{opacity:.2}
 @media (prefers-reduced-motion:reduce){
   html{scroll-behavior:auto}
   .js .reveal{opacity:1;transform:none;transition:none}
-  .hero .in,.cue svg,.live::before,.mm.open .mm-nav a{animation:none;opacity:1;transform:none}
+  .hero .in,.cue svg,.live::before,.mm.open .mm-list a,.mm.open .mm-side a.sec-link{animation:none;opacity:1;transform:none}
   .agent,.frame img,.frame video{transition:none}
 }
 </style>
@@ -253,40 +297,70 @@ body.wire .frame img,body.wire .frame video{opacity:.2}
 
 <header class="nav" id="nav">
   <div class="wrap">
-    <a class="brand" href="#top" aria-label="NovusLabs, inicio">Novus<span>Labs</span></a>
+    <a class="brand" href="#inicio" aria-label="NovusLabs, inicio">Novus<span>Labs</span></a>
     <nav class="nav-links" aria-label="Secciones">
       <a href="#practica"><i>01</i>Práctica</a>
       <a href="#trabajo"><i>02</i>Trabajo</a>
       <a href="#proceso"><i>03</i>Proceso</a>
     </nav>
     <a class="btn" href="#contacto">Cotizar</a>
-    <button class="menu-btn" id="menu-btn" type="button" aria-expanded="false" aria-controls="mm">Menú</button>
+    <button class="menu-btn" id="menu-btn" type="button" aria-expanded="false" aria-controls="mm"><i aria-hidden="true"></i><span>Índice</span></button>
   </div>
 </header>
 
 <div class="mm" id="mm" aria-hidden="true">
-  <nav class="mm-nav" aria-label="Menú">
-    <a href="#practica"><i>01</i>Práctica</a>
-    <a href="#trabajo"><i>02</i>Trabajo</a>
-    <a href="#proceso"><i>03</i>Proceso</a>
-    <a href="#contacto"><i>04</i>Contacto</a>
-  </nav>
-  <a class="btn solid" href="#contacto">Cotizar un proyecto</a>
+  <div class="mm-in">
+    <nav aria-label="Índice de proyectos">
+      <div class="eyebrow"><b>Índice</b> · 07 proyectos</div>
+      <ol class="mm-list">
+      <li><a href="#p-cotizapet" style="--i:0"><i>01</i><span class="nm">CotizaPet</span><small>Comparador</small></a></li>
+      <li><a href="#p-coto" style="--i:1"><i>02</i><span class="nm">Coto FPV</span><small>Sitio 3D</small></a><div class="pk" aria-hidden="true"><img src="assets/shots/coto.jpg" alt=""></div></li>
+      <li><a href="#p-kilya" style="--i:2"><i>03</i><span class="nm">Prime Performance</span><small>Marca personal</small></a><div class="pk" aria-hidden="true"><img src="assets/shots/kilya.jpg" alt=""></div></li>
+      <li><a href="#p-lc" style="--i:3"><i>04</i><span class="nm">Las Condes 7350</span><small>Inmobiliaria</small></a><div class="pk" aria-hidden="true"><img src="assets/shots/lc.jpg" alt=""></div></li>
+      <li><a href="#p-chf" style="--i:4"><i>05</i><span class="nm">CHF Abogados</span><small>Servicios</small></a><div class="pk" aria-hidden="true"><img src="assets/shots/ejc.jpg" alt=""></div></li>
+      <li><a href="#p-solstudio" style="--i:5"><i>06</i><span class="nm">SolStudio</span><small>Agenda online</small></a></li>
+      <li><a href="#p-bionautica" style="--i:6"><i>07</i><span class="nm">Bionáutica</span><small>Mapa interactivo</small></a><div class="pk" aria-hidden="true"><img src="assets/shots/bio.jpg" alt=""></div></li>
+      </ol>
+    </nav>
+    <nav class="mm-side" aria-label="Secciones">
+      <div class="eyebrow">Secciones</div>
+      <a class="sec-link" href="#practica" style="--i:3"><i>01</i>Práctica</a>
+      <a class="sec-link" href="#trabajo" style="--i:4"><i>02</i>Trabajo</a>
+      <a class="sec-link" href="#proceso" style="--i:5"><i>03</i>Proceso</a>
+      <a class="sec-link" href="#contacto" style="--i:6"><i>04</i>Contacto</a>
+      <a class="btn solid" href="#contacto">Cotizar un proyecto</a>
+    </nav>
+  </div>
 </div>
 
 <main id="top">
-  <section class="hero">
-    <div class="wrap">
-      <div class="eyebrow in" data-agent="hero-label"><b>NovusLabs</b> · Estudio de software · Chile</div>
-      <h1 class="display in" data-agent="h1">Productos web <span class="outline">hechos a la medida</span></h1>
-      <div class="hero-row in">
-        <p class="lede" data-agent="lede">Desde un comparador de precios que revisa más de 20 tiendas cada día hasta un sitio en 3D para un piloto de drones. Diseñamos, programamos y publicamos para marcas, profesionales y pymes.</p>
-        <div class="hero-actions">
-          <a class="btn solid" href="#trabajo">Ver proyectos</a>
-          <a class="btn" href="#contacto">Cotizar</a>
+  <section class="g" id="inicio" aria-label="Inicio">
+    <div class="g-stage" id="g-stage">
+      <div id="g-tiles" aria-hidden="true"></div>
+      <div class="g-shade" id="g-shade" aria-hidden="true"></div>
+      <div class="g-title" id="g-title">
+        <div class="inner">
+          <div class="eyebrow" data-agent="hero-label"><b>NovusLabs</b> · Estudio de software · Chile</div>
+          <h1 class="display" data-agent="h1">Productos web <span class="outline">hechos a la medida</span></h1>
+          <p class="lede" data-agent="lede">Siete proyectos publicados, desde un comparador de precios que revisa más de 20 tiendas cada día hasta un sitio en 3D para un piloto de drones.</p>
+          <div class="hero-actions"><a class="btn solid" href="#trabajo">Ver proyectos</a><a class="btn" href="#contacto">Cotizar</a></div>
         </div>
-        <div class="cue" aria-hidden="true"><svg viewBox="0 0 18 10"><path d="M1 1l8 8 8-8"/></svg><svg viewBox="0 0 18 10"><path d="M1 1l8 8 8-8"/></svg><svg viewBox="0 0 18 10"><path d="M1 1l8 8 8-8"/></svg></div>
       </div>
+      <div class="g-index" id="g-index">
+        <div class="inner">
+          <div class="eyebrow"><b>Índice</b> · 07 proyectos</div>
+          <ol class="idx" id="idx" data-agent="idx">
+          <li><a href="#p-cotizapet"><span class="n">01</span><span class="name">CotizaPet</span><span class="cat">Comparador</span></a></li>
+          <li><a href="#p-coto"><span class="n">02</span><span class="name">Coto FPV</span><span class="cat">Sitio 3D</span></a></li>
+          <li><a href="#p-kilya"><span class="n">03</span><span class="name">Prime Performance</span><span class="cat">Marca personal</span></a></li>
+          <li><a href="#p-lc"><span class="n">04</span><span class="name">Las Condes 7350</span><span class="cat">Inmobiliaria</span></a></li>
+          <li><a href="#p-chf"><span class="n">05</span><span class="name">CHF Abogados</span><span class="cat">Servicios</span></a></li>
+          <li><a href="#p-solstudio"><span class="n">06</span><span class="name">SolStudio</span><span class="cat">Agenda online</span></a></li>
+          <li><a href="#p-bionautica"><span class="n">07</span><span class="name">Bionáutica</span><span class="cat">Mapa interactivo</span></a></li>
+          </ol>
+        </div>
+      </div>
+      <div class="g-cue cue" id="g-cue" aria-hidden="true"><svg viewBox="0 0 18 10"><path d="M1 1l8 8 8-8"/></svg><svg viewBox="0 0 18 10"><path d="M1 1l8 8 8-8"/></svg><svg viewBox="0 0 18 10"><path d="M1 1l8 8 8-8"/></svg></div>
     </div>
   </section>
 
@@ -325,7 +399,7 @@ body.wire .frame img,body.wire .frame video{opacity:.2}
       </div>
 
       <div class="work">
-        <article class="proj wide reveal" data-agent="cotizapet">
+        <article class="proj wide reveal" id="p-cotizapet" data-agent="cotizapet">
           <figure class="frame" aria-hidden="true">
             <div class="cp">
               <div class="cp-top"><span class="cp-logo">Cotiza<span>pet</span></span><span class="cp-search">Alimento gato adulto 7,5 kg</span></div>
@@ -353,7 +427,7 @@ body.wire .frame img,body.wire .frame video{opacity:.2}
           </div>
         </article>
 
-        <article class="proj wide reverse reveal" data-agent="coto">
+        <article class="proj wide reverse reveal" id="p-coto" data-agent="coto">
           <figure class="frame">
             <video src="assets/coto-fpv.mp4" poster="assets/shots/coto.jpg" autoplay muted loop playsinline preload="metadata" aria-label="Recorrido grabado del sitio Coto FPV: el dron 3D se arma y vuela por la página mientras se hace scroll"></video>
             <figcaption>3D en tiempo real</figcaption>
@@ -372,7 +446,7 @@ body.wire .frame img,body.wire .frame video{opacity:.2}
           </div>
         </article>
 
-        <article class="proj reveal" data-agent="kilya">
+        <article class="proj reveal" id="p-kilya" data-agent="kilya">
           <figure class="frame"><img src="assets/shots/kilya.jpg" alt="Prime Performance: portada con la atleta Kilya Marchant entrenando en anillas"></figure>
           <div class="proj-body">
             <div class="eyebrow">Marca personal · Deporte</div>
@@ -383,7 +457,7 @@ body.wire .frame img,body.wire .frame video{opacity:.2}
           </div>
         </article>
 
-        <article class="proj reveal" data-agent="lc">
+        <article class="proj reveal" id="p-lc" data-agent="lc">
           <figure class="frame"><img src="assets/shots/lc.jpg" alt="Las Condes 7350: portada con precio desde UF y piscina en el rooftop"><figcaption>Imágenes referenciales</figcaption></figure>
           <div class="proj-body">
             <div class="eyebrow">Inmobiliaria · Demo</div>
@@ -394,7 +468,7 @@ body.wire .frame img,body.wire .frame video{opacity:.2}
           </div>
         </article>
 
-        <article class="proj reveal" data-agent="solstudio">
+        <article class="proj reveal" id="p-solstudio" data-agent="solstudio">
           <figure class="frame slot"><div><span class="eyebrow">Captura pendiente</span><strong>solstudio.cl</strong></div></figure>
           <div class="proj-body">
             <div class="eyebrow">Agenda online · Belleza</div>
@@ -405,7 +479,7 @@ body.wire .frame img,body.wire .frame video{opacity:.2}
           </div>
         </article>
 
-        <article class="proj reveal" data-agent="chf">
+        <article class="proj reveal" id="p-chf" data-agent="chf">
           <figure class="frame"><img src="assets/shots/ejc.jpg" alt="CHF Abogados: portada con el título Defensa legal con experiencia y compromiso"></figure>
           <div class="proj-body">
             <div class="eyebrow">Servicios profesionales</div>
@@ -416,7 +490,7 @@ body.wire .frame img,body.wire .frame video{opacity:.2}
           </div>
         </article>
 
-        <article class="proj wide reveal" data-agent="bionautica">
+        <article class="proj wide reveal" id="p-bionautica" data-agent="bionautica">
           <figure class="frame"><img src="assets/shots/bio.jpg" alt="Bionáutica: portada del mapa interactivo de las ciencias del mar"></figure>
           <div class="proj-body">
             <div class="eyebrow">Mapa interactivo · Educación</div>
@@ -488,10 +562,76 @@ body.wire .frame img,body.wire .frame video{opacity:.2}
 
   /* menú móvil */
   var mm = document.getElementById('mm'), mb = document.getElementById('menu-btn');
-  function setMenu(o){ mm.classList.toggle('open', o); mm.setAttribute('aria-hidden', String(!o)); mb.setAttribute('aria-expanded', String(o)); mb.textContent = o ? 'Cerrar' : 'Menú'; document.body.style.overflow = o ? 'hidden' : ''; }
+  var mbl = mb.querySelector('span');
+  function setMenu(o){ mm.classList.toggle('open', o); mm.setAttribute('aria-hidden', String(!o)); mb.setAttribute('aria-expanded', String(o)); mbl.textContent = o ? 'Cerrar' : 'Índice'; document.body.style.overflow = o ? 'hidden' : ''; nav.classList.toggle('solid', o || scrollY > 40); }
   mb.addEventListener('click', function(){ setMenu(!mm.classList.contains('open')); });
   mm.querySelectorAll('a').forEach(function(a){ a.addEventListener('click', function(){ setMenu(false); }); });
   addEventListener('keydown', function(e){ if(e.key === 'Escape') setMenu(false); });
+
+
+  /* ---------- hero G: abanico → muro → índice ---------- */
+  (function(){
+    var gSec = document.getElementById('inicio'), gStage = document.getElementById('g-stage'), gTiles = document.getElementById('g-tiles');
+    var gTitle = document.getElementById('g-title'), gShade = document.getElementById('g-shade'), gIndex = document.getElementById('g-index');
+    var gInner = gIndex.querySelector('.inner'), gCue = document.getElementById('g-cue');
+    var rows = Array.prototype.slice.call(document.querySelectorAll('#idx li'));
+    var SH = [['coto','Coto FPV'],['kilya','Prime Performance'],['lc','Las Condes 7350'],['ejc','CHF Abogados'],['bio','Bionáutica']];
+    var ORDER = [2,1,0,3,4,0,1,2,3,4,1,0,2,4,3];
+    var tiles = [], poses = [];
+    function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
+    function ease(t){ return t<.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2,3)/2; }
+    function seg(p,a,b){ return clamp((p-a)/(b-a),0,1); }
+    function lerp(a,b,t){ return a + (b-a)*t; }
+    function build(){
+      gTiles.innerHTML = ''; tiles = []; poses = [];
+      var W = gStage.clientWidth, H = gStage.clientHeight, mobile = W < 760;
+      var tw = mobile ? W*.5 : Math.min(480, W*.3), th = tw*.625 + 26;
+      gStage.style.setProperty('--tw', tw+'px');
+      var cols = mobile ? 3 : 4, rowsN = mobile ? 5 : 3, n = cols*rowsN;
+      var wallW = mobile ? W*.5 : W*.3, wallScale = wallW / tw, gap = 18;
+      var cx = mobile ? W*.55 : W*.75, cy = mobile ? H*.82 : H*.52;
+      var fan = [{x:-tw*.22,y:tw*.06,r:-8},{x:0,y:-tw*.08,r:-1},{x:tw*.22,y:tw*.1,r:6}];
+      var ang = -6 * Math.PI/180;
+      for(var i=0;i<n;i++){
+        var sh = SH[ORDER[i % ORDER.length]], d = document.createElement('div');
+        d.className = 'tile';
+        d.innerHTML = '<div class="bar"><i></i><i></i><i></i><span>'+sh[1]+'</span></div><img src="assets/shots/'+sh[0]+'.jpg" alt="">';
+        gTiles.appendChild(d); tiles.push(d);
+        var f = fan[Math.min(i,2)];
+        var A = {x: cx + f.x - tw/2, y: cy + f.y - th/2, r: f.r, s: i < 3 ? 1 : .9, o: i < 3 ? 1 : 0};
+        var c = i % cols, r = Math.floor(i / cols);
+        var gx = (c - (cols-1)/2) * (wallW + gap), gy = (r - (rowsN-1)/2) * (th*wallScale + gap);
+        var B = {x: W/2 + gx*Math.cos(ang) - gy*Math.sin(ang) - tw/2, y: H/2 + gx*Math.sin(ang) + gy*Math.cos(ang) - th/2, r: -6, s: wallScale, o: 1};
+        poses.push({a:A, b:B});
+        d.style.zIndex = i < 3 ? (i+1) : 0;
+      }
+      update();
+    }
+    function update(){
+      var r = gSec.getBoundingClientRect(), total = gSec.offsetHeight - innerHeight;
+      var p = clamp(-r.top / total, 0, 1);
+      var t = ease(seg(p,.15,.5)), fade = seg(p,.55,.72);
+      tiles.forEach(function(d,i){
+        var A = poses[i].a, B = poses[i].b, k = clamp(t*1.15 - (i/tiles.length)*.15, 0, 1);
+        d.style.transform = 'translate('+lerp(A.x,B.x,k)+'px,'+lerp(A.y,B.y,k)+'px) rotate('+lerp(A.r,B.r,k)+'deg) scale('+lerp(A.s,B.s,k)+')';
+        d.style.opacity = lerp(A.o,B.o,k) * (1 - fade*.82);
+        d.style.filter = fade > 0 ? 'grayscale('+fade+')' : '';
+      });
+      var tt = seg(p,.08,.3);
+      gTitle.style.opacity = 1 - tt; gTitle.style.transform = 'translateY(calc(-50% - '+(tt*60)+'px))';
+      gTitle.style.pointerEvents = tt > .5 ? 'none' : '';
+      gCue.style.opacity = 1 - seg(p,0,.08);
+      gShade.style.opacity = seg(p,.35,.6);
+      var ip = seg(p,.6,.9);
+      gIndex.classList.toggle('on', ip > .3);
+      gInner.style.opacity = clamp(ip*2.5, 0, 1);
+      rows.forEach(function(li,i){ var k = clamp(ip*1.6 - i*.09, 0, 1); li.style.opacity = k; li.style.transform = 'translateY('+((1-k)*24)+'px)'; });
+    }
+    var raf = 0;
+    addEventListener('scroll', function(){ if(raf) return; raf = requestAnimationFrame(function(){ raf = 0; update(); }); }, {passive:true});
+    addEventListener('resize', function(){ clearTimeout(build._t); build._t = setTimeout(build, 150); });
+    build();
+  })();
 
   /* revelado en scroll */
   var rev = document.querySelectorAll('.reveal');
