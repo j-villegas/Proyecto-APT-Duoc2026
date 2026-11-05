@@ -137,6 +137,9 @@ p{margin:0}
 .frame{position:relative;margin:0;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--surface)}
 .frame img,.frame video{width:100%;aspect-ratio:16/10;object-fit:cover;object-position:top center;max-width:100%;transition:transform .8s var(--ease)}
 .proj:hover .frame img,.proj:hover .frame video{transform:scale(1.025)}
+.frame.slot{aspect-ratio:16/10;display:grid;place-items:center;border-style:dashed;border-color:var(--line-strong);background:repeating-linear-gradient(135deg,transparent 0 12px,rgba(255,255,255,.025) 12px 13px)}
+.frame.slot div{text-align:center;display:grid;gap:8px}
+.frame.slot strong{font:800 clamp(20px,2.4vw,30px)/1 var(--sans);text-transform:uppercase;letter-spacing:-.01em}
 .frame figcaption{position:absolute;left:14px;bottom:14px;font:700 10px/1 var(--sans);letter-spacing:.16em;text-transform:uppercase;padding:7px 10px;border-radius:999px;background:rgba(10,10,10,.72);border:1px solid var(--line-strong);backdrop-filter:blur(6px);color:var(--text)}
 .proj-body{display:flex;flex-direction:column;gap:14px;min-width:0}
 .proj h3{font:800 clamp(28px,3.2vw,44px)/.92 var(--sans);text-transform:uppercase;letter-spacing:-.02em;margin:0}
@@ -310,7 +313,7 @@ body.wire .frame img,body.wire .frame video{opacity:.2}
       </div>
 
       <div class="hero-num reveal" data-agent="stats">
-        <div class="big">08</div>
+        <div class="big">07</div>
         <div>
           <div class="eyebrow" style="margin-bottom:16px">Proyectos publicados</div>
           <div class="facts">
@@ -346,7 +349,7 @@ body.wire .frame img,body.wire .frame video{opacity:.2}
               <li>Historial de precios y alertas por correo</li>
             </ul>
             <dl class="meta"><div><dt>Stack</dt><dd>Laravel, React, Python, PostgreSQL</dd></div><div><dt>Estado</dt><dd class="live">En vivo</dd></div></dl>
-            <a class="visit" href="https://cotizapet.vercel.app" target="_blank" rel="noopener">cotizapet.vercel.app ↗</a>
+            <a class="visit" href="https://cotizapet.cl" target="_blank" rel="noopener">cotizapet.cl ↗</a>
           </div>
         </article>
 
@@ -392,7 +395,7 @@ body.wire .frame img,body.wire .frame video{opacity:.2}
         </article>
 
         <article class="proj reveal" data-agent="solstudio">
-          <figure class="frame"><img src="assets/shots/agendate.jpg" alt="SolStudio: página de reservas del salón con servicios, precios y botones para agendar o cotizar"></figure>
+          <figure class="frame slot"><div><span class="eyebrow">Captura pendiente</span><strong>solstudio.cl</strong></div></figure>
           <div class="proj-body">
             <div class="eyebrow">Agenda online · Belleza</div>
             <h3>SolStudio</h3>
@@ -409,18 +412,7 @@ body.wire .frame img,body.wire .frame video{opacity:.2}
             <h3>CHF Abogados</h3>
             <p>Sitio para un estudio jurídico. Áreas de práctica, equipo y botones directos a llamada y WhatsApp para agendar una consulta.</p>
             <dl class="meta"><div><dt>Stack</dt><dd>Astro</dd></div></dl>
-            <a class="visit" href="https://estudio-juridico-conce.vercel.app" target="_blank" rel="noopener">estudio-juridico-conce.vercel.app ↗</a>
-          </div>
-        </article>
-
-        <article class="proj reveal" data-agent="mjv">
-          <figure class="frame"><img src="assets/shots/mjv.jpg" alt="María José Villegas: portada con bosque en niebla y el título Narrativa en movimiento"></figure>
-          <div class="proj-body">
-            <div class="eyebrow">Portafolio · Audiovisual</div>
-            <h3>María José Villegas</h3>
-            <p>Portafolio de una fotógrafa y cineasta desde Isla de Pascua: cine, fotografía y periodismo. Ella misma sube sus proyectos desde un CMS.</p>
-            <dl class="meta"><div><dt>Stack</dt><dd>Astro, Keystatic</dd></div></dl>
-            <a class="visit" href="https://maria-jose-villegas.vercel.app" target="_blank" rel="noopener">maria-jose-villegas.vercel.app ↗</a>
+            <a class="visit" href="https://chfabogados.cl" target="_blank" rel="noopener">chfabogados.cl ↗</a>
           </div>
         </article>
 
@@ -431,7 +423,7 @@ body.wire .frame img,body.wire .frame video{opacity:.2}
             <h3>Bionáutica</h3>
             <p>El mapa de las ciencias del mar: 5 zonas y 69 áreas temáticas con videos y noticias. El equipo publica contenido desde su propio panel.</p>
             <dl class="meta"><div><dt>Stack</dt><dd>Astro, Sveltia CMS</dd></div><div><dt>Estado</dt><dd class="live">En vivo</dd></div></dl>
-            <a class="visit" href="https://bionautica.vercel.app" target="_blank" rel="noopener">bionautica.vercel.app ↗</a>
+            <a class="visit" href="https://bionautica.cl" target="_blank" rel="noopener">bionautica.cl ↗</a>
           </div>
         </article>
       </div>
