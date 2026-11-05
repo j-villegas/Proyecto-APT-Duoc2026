@@ -597,12 +597,13 @@ body.wire .frame img,body.wire .frame video{opacity:.2}
         d.className = 'tile';
         d.innerHTML = '<div class="bar"><i></i><i></i><i></i><span>'+sh[1]+'</span></div><img src="assets/shots/'+sh[0]+'.jpg" alt="">';
         gTiles.appendChild(d); tiles.push(d);
-        var f = fan[Math.min(i,2)];
-        var A = {x: cx + f.x - tw/2, y: cy + f.y - th/2, r: f.r, s: i < 3 ? 1 : .9, o: i < 3 ? 1 : 0};
         var c = i % cols, r = Math.floor(i / cols);
         var gx = (c - (cols-1)/2) * (wallW + gap), gy = (r - (rowsN-1)/2) * (th*wallScale + gap);
-        var B = {x: W/2 + gx*Math.cos(ang) - gy*Math.sin(ang) - tw/2, y: H/2 + gx*Math.sin(ang) + gy*Math.cos(ang) - th/2, r: -6, s: wallScale, o: 1};
-        poses.push({a:A, b:B});
+        var B = {x: W/2 + gx*Math.cos(ang) - gy*Math.sin(ang) - tw/2, y: H/2 + gx*Math.sin(ang) + gy*Math.cos(ang) - th/2, r: -6, s: wallScale};
+        var A, del;
+        if(i < 3){ var f = fan[i]; A = {x: cx + f.x - tw/2, y: cy + f.y - th/2, r: f.r, s: 1}; del = 0; }
+        else { A = {x: B.x, y: B.y + H*1.15 + r*60, r: -6, s: wallScale}; del = .12 + (c / cols)*.18 + (r / rowsN)*.12; }
+        poses.push({a:A, b:B, del:del});
         d.style.zIndex = i < 3 ? (i+1) : 0;
       }
       update();
@@ -610,11 +611,11 @@ body.wire .frame img,body.wire .frame video{opacity:.2}
     function update(){
       var r = gSec.getBoundingClientRect(), total = gSec.offsetHeight - innerHeight;
       var p = clamp(-r.top / total, 0, 1);
-      var t = ease(seg(p,.15,.5)), fade = seg(p,.55,.72);
+      var t = seg(p,.12,.52), fade = seg(p,.55,.72);
       tiles.forEach(function(d,i){
-        var A = poses[i].a, B = poses[i].b, k = clamp(t*1.15 - (i/tiles.length)*.15, 0, 1);
+        var A = poses[i].a, B = poses[i].b, k = ease(clamp((t - poses[i].del) / .58, 0, 1));
         d.style.transform = 'translate('+lerp(A.x,B.x,k)+'px,'+lerp(A.y,B.y,k)+'px) rotate('+lerp(A.r,B.r,k)+'deg) scale('+lerp(A.s,B.s,k)+')';
-        d.style.opacity = lerp(A.o,B.o,k) * (1 - fade*.82);
+        d.style.opacity = 1 - fade*.82;
         d.style.filter = fade > 0 ? 'grayscale('+fade+')' : '';
       });
       var tt = seg(p,.08,.3);
@@ -677,16 +678,20 @@ body.wire .frame img,body.wire .frame video{opacity:.2}
     return {t:t, el:el, sel:sel, target:null, timer:null, x:x, y:y, delay: idx*140};
   });
 
-  function visibleTargets(){
-    var vh = innerHeight;
-    return targets.filter(function(n){
-      var r = n.getBoundingClientRect();
-      return r.width > 0 && r.bottom > 70 && r.top < vh - 80;
-    });
+  function seen(n){
+    var r = n.getBoundingClientRect();
+    if(!(r.width > 0 && r.bottom > 70 && r.top < innerHeight - 80)) return false;
+    for(var e = n; e && e !== document.body; e = e.parentElement){
+      var cs = getComputedStyle(e);
+      if(+cs.opacity < .6 || cs.visibility === 'hidden') return false;
+    }
+    return true;
   }
+  function visibleTargets(){ return targets.filter(seen); }
 
   function placeSel(a){
     if(!a.sel || !a.target) return;
+    if(!seen(a.target)){ a.sel.classList.remove('show'); return; }
     var r = a.target.getBoundingClientRect(), s = a.sel.style;
     s.left = (r.left-4)+'px'; s.top = (r.top-4)+'px'; s.width = (r.width+8)+'px'; s.height = (r.height+8)+'px';
   }
