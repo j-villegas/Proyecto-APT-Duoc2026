@@ -6,13 +6,8 @@ import * as Location from "expo-location";
 import { Button } from "./Button";
 import { useAuth } from "../context/AuthContext";
 import { useDriverLocationBroadcast } from "../hooks/useDriverLocationBroadcast";
-import {
-  getServiceById,
-  getServiceStops,
-  updateServiceStatus,
-  updateStopStatus,
-} from "../services/services";
-import type { Service, ServiceStop } from "../types/database";
+import { useServiceLive } from "../hooks/useServiceLive";
+import { updateServiceStatus, updateStopStatus } from "../services/services";
 import { colors, radius, spacing, typography } from "../constants/theme";
 import { darkMapStyle } from "../constants/mapStyle";
 import { mapProvider, supportsCustomMapStyle } from "../constants/mapProvider";
@@ -29,23 +24,10 @@ interface Props {
 
 export function DriverActiveRouteView({ serviceId, onReportIncident, onExit }: Props) {
   const { profile } = useAuth();
-  const [service, setService] = useState<Service | null>(null);
-  const [stops, setStops] = useState<ServiceStop[]>([]);
+  // En vivo: si el panel finaliza o cancela la ruta, el conductor lo ve y el GPS se apaga.
+  const { service, stops, reload } = useServiceLive(serviceId);
   const [myLocation, setMyLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [busy, setBusy] = useState(false);
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const svc = await getServiceById(serviceId);
-        setService(svc);
-        const stopList = await getServiceStops(serviceId);
-        setStops(stopList);
-      } catch (err) {
-        console.warn("No se pudo cargar la ruta activa:", err);
-      }
-    })();
-  }, [serviceId]);
 
   useEffect(() => {
     (async () => {
@@ -68,7 +50,7 @@ export function DriverActiveRouteView({ serviceId, onReportIncident, onExit }: P
   const finishService = async () => {
     if (!service) return;
     await updateServiceStatus(service.id, "finalizado");
-    setService({ ...service, status: "finalizado" });
+    await reload();
   };
 
   const handleArrive = async () => {
@@ -76,11 +58,9 @@ export function DriverActiveRouteView({ serviceId, onReportIncident, onExit }: P
     setBusy(true);
     try {
       await updateStopStatus(nextStop.id, "completada");
-      setStops((prev) =>
-        prev.map((s) => (s.id === nextStop.id ? { ...s, status: "completada" } : s))
-      );
       const remaining = stops.filter((s) => s.id !== nextStop.id && s.status !== "completada");
       if (remaining.length === 0) await finishService();
+      else await reload();
     } catch (err) {
       Alert.alert("No se pudo registrar la parada", friendlyError(err));
     } finally {

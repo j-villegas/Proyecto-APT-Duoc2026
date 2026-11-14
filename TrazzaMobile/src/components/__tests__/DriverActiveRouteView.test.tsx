@@ -2,6 +2,7 @@ import React from "react";
 import { fireEvent, render, screen } from "@testing-library/react-native";
 import { DriverActiveRouteView } from "../DriverActiveRouteView";
 import { getServiceById, getServiceStops, updateServiceStatus } from "../../services/services";
+import { useDriverLocationBroadcast } from "../../hooks/useDriverLocationBroadcast";
 import type { Service, ServiceStop } from "../../types/database";
 
 jest.mock("../../services/services", () => ({
@@ -10,7 +11,12 @@ jest.mock("../../services/services", () => ({
   updateServiceStatus: jest.fn().mockResolvedValue(undefined),
   updateStopStatus: jest.fn().mockResolvedValue(undefined),
 }));
-jest.mock("../../hooks/useDriverLocationBroadcast", () => ({ useDriverLocationBroadcast: () => ({ error: null }) }));
+jest.mock("../../hooks/useDriverLocationBroadcast", () => ({
+  useDriverLocationBroadcast: jest.fn(() => ({ error: null })),
+}));
+// Realtime no conecta en las pruebas: los datos vienen de los mocks de services.
+jest.mock("../../lib/realtime", () => ({ authenticateRealtime: () => new Promise(() => {}) }));
+jest.mock("../../lib/supabase", () => ({ supabase: { removeChannel: jest.fn() } }));
 jest.mock("../../context/AuthContext", () => ({ useAuth: () => ({ profile: { id: "u1" } }) }));
 jest.mock("expo-location", () => ({
   requestForegroundPermissionsAsync: jest.fn().mockResolvedValue({ status: "denied" }),
@@ -46,7 +52,19 @@ it("con todas las paradas completas ofrece finalizar la ruta", async () => {
   jest.mocked(getServiceStops).mockResolvedValue([stop("completada")]);
   await render(<DriverActiveRouteView serviceId="s1" onReportIncident={jest.fn()} />);
 
-  await fireEvent.press(await screen.findByText("Finalizar ruta"));
+  const finish = await screen.findByText("Finalizar ruta");
+  jest.mocked(getServiceById).mockResolvedValue(service("finalizado"));
+  await fireEvent.press(finish);
   expect(updateServiceStatus).toHaveBeenCalledWith("s1", "finalizado");
   expect(await screen.findByText("Ruta finalizada")).toBeTruthy();
+});
+
+it("transmite el GPS solo mientras la ruta está en curso", async () => {
+  jest.mocked(getServiceById).mockResolvedValue(service("cancelado"));
+  jest.mocked(getServiceStops).mockResolvedValue([stop("pendiente")]);
+  await render(<DriverActiveRouteView serviceId="s1" onReportIncident={jest.fn()} />);
+
+  expect(await screen.findByText("Ruta cancelada")).toBeTruthy();
+  expect(screen.queryByText("Llegué a la parada")).toBeNull();
+  expect(jest.mocked(useDriverLocationBroadcast)).toHaveBeenLastCalledWith({ serviceId: "s1", enabled: false });
 });
