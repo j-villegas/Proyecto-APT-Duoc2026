@@ -4,7 +4,7 @@ App móvil de TRAZZA — *rutas, flota y conductores en línea* — construida c
 
 ## Stack
 
-- **Mobile:** Expo (SDK 57) + React Native + TypeScript
+- **Mobile:** Expo (SDK 58) + React Native + TypeScript
 - **Backend:** Supabase (Auth, Postgres, Realtime, Storage)
 - **Mapas y GPS:** `react-native-maps` (Google Maps) + `expo-location`
 - **Navegación:** React Navigation (Bottom Tabs + Native Stack)
@@ -32,7 +32,13 @@ Usa `jest-expo` + React Native Testing Library con un cliente de Supabase en mem
 
 ## Ejecutar la app
 
-`react-native-maps` requiere configuración nativa (API key de Google Maps), por lo que **no funciona en Expo Go**. Usa un dev build:
+**iPhone:** funciona en **Expo Go** (debe ser la versión para el SDK 58, la actual de la App Store). En Expo Go el mapa usa Apple Maps en vez de Google Maps (ver `src/constants/mapProvider.ts`):
+
+```bash
+npx expo start --tunnel   # escanea el QR con la cámara del iPhone
+```
+
+**Android / Google Maps:** `react-native-maps` con Google Maps requiere configuración nativa (API key), por lo que ahí se usa un dev build:
 
 ```bash
 npx expo run:android
