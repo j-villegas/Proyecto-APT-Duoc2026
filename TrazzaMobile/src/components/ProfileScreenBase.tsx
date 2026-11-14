@@ -9,10 +9,18 @@ import { colors, radius, spacing, typography } from "../constants/theme";
 interface MenuItem {
   icon: keyof typeof Ionicons.glyphMap;
   label: string;
-  onPress?: () => void;
+  /** Obligatorio: no se muestran opciones que no hacen nada. */
+  onPress: () => void;
 }
 
-export function ProfileScreenBase({ items, roleLabel }: { items: MenuItem[]; roleLabel: string }) {
+interface Props {
+  roleLabel: string;
+  items?: MenuItem[];
+  /** Tarjetas propias del rol, entre el perfil y el menú. */
+  children?: React.ReactNode;
+}
+
+export function ProfileScreenBase({ items = [], roleLabel, children }: Props) {
   const { profile, session, signOut } = useAuth();
 
   return (
@@ -30,15 +38,20 @@ export function ProfileScreenBase({ items, roleLabel }: { items: MenuItem[]; rol
             {session?.user.email ? (
               <Text style={styles.role}>{session.user.email}</Text>
             ) : null}
+            {profile?.phone ? <Text style={styles.role}>{profile.phone}</Text> : null}
           </View>
         </Card>
 
+        {children}
+
+        {items.length > 0 ? (
         <Card padded={false} style={styles.menuCard}>
           {items.map((item, index) => (
             <TouchableOpacity
               key={item.label}
               style={[styles.menuItem, index < items.length - 1 && styles.menuItemBorder]}
               onPress={item.onPress}
+              accessibilityRole="button"
             >
               <Ionicons name={item.icon} size={20} color={colors.textMuted} />
               <Text style={styles.menuLabel}>{item.label}</Text>
@@ -46,6 +59,7 @@ export function ProfileScreenBase({ items, roleLabel }: { items: MenuItem[]; rol
             </TouchableOpacity>
           ))}
         </Card>
+        ) : null}
 
         <TouchableOpacity style={styles.logout} onPress={signOut}>
           <Ionicons name="log-out-outline" size={18} color={colors.danger} />

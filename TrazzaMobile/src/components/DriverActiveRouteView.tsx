@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import MapView, { Marker } from "../lib/maps";
 import * as Location from "expo-location";
@@ -17,17 +17,22 @@ import { colors, radius, spacing, typography } from "../constants/theme";
 import { darkMapStyle } from "../constants/mapStyle";
 import { mapProvider, supportsCustomMapStyle } from "../constants/mapProvider";
 import { formatTime } from "../utils/format";
+import { isClosed } from "../utils/serviceStatus";
+import { friendlyError } from "../lib/errors";
 
 interface Props {
   serviceId: string;
   onReportIncident: (serviceId: string) => void;
+  /** Salida al terminar la ruta (p. ej. volver a las pestañas). */
+  onExit?: () => void;
 }
 
-export function DriverActiveRouteView({ serviceId, onReportIncident }: Props) {
+export function DriverActiveRouteView({ serviceId, onReportIncident, onExit }: Props) {
   const { profile } = useAuth();
   const [service, setService] = useState<Service | null>(null);
   const [stops, setStops] = useState<ServiceStop[]>([]);
   const [myLocation, setMyLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -52,24 +57,46 @@ export function DriverActiveRouteView({ serviceId, onReportIncident }: Props) {
     })();
   }, []);
 
-  useDriverLocationBroadcast({
+  const { error: gpsError } = useDriverLocationBroadcast({
     serviceId,
     enabled: !!profile && service?.status === "en_ruta",
   });
 
   const nextStop = stops.find((s) => s.status !== "completada");
+  const closed = !!service && isClosed(service.status);
+
+  const finishService = async () => {
+    if (!service) return;
+    await updateServiceStatus(service.id, "finalizado");
+    setService({ ...service, status: "finalizado" });
+  };
 
   const handleArrive = async () => {
-    if (nextStop) {
+    if (!nextStop || busy) return;
+    setBusy(true);
+    try {
       await updateStopStatus(nextStop.id, "completada");
       setStops((prev) =>
         prev.map((s) => (s.id === nextStop.id ? { ...s, status: "completada" } : s))
       );
+      const remaining = stops.filter((s) => s.id !== nextStop.id && s.status !== "completada");
+      if (remaining.length === 0) await finishService();
+    } catch (err) {
+      Alert.alert("No se pudo registrar la parada", friendlyError(err));
+    } finally {
+      setBusy(false);
     }
-    const remaining = stops.filter((s) => s.id !== nextStop?.id && s.status !== "completada");
-    if (remaining.length === 0 && service) {
-      await updateServiceStatus(service.id, "finalizado");
-      setService({ ...service, status: "finalizado" });
+  };
+
+  const handleFinish = async () => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      await finishService();
+    } catch (err) {
+      Alert.alert("No se pudo finalizar la ruta", friendlyError(err));
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -96,7 +123,7 @@ export function DriverActiveRouteView({ serviceId, onReportIncident }: Props) {
           ) : null}
         </MapView>
 
-        {nextStop ? (
+        {nextStop && !closed ? (
           <View style={styles.stopCard}>
             <Text style={styles.stopLabel}>Próxima parada</Text>
             <Text style={styles.stopName}>{nextStop.label}</Text>
@@ -108,13 +135,42 @@ export function DriverActiveRouteView({ serviceId, onReportIncident }: Props) {
       </View>
 
       <ScrollView style={styles.sheet} contentContainerStyle={styles.sheetContent}>
-        <View style={styles.actionRow}>
-          <Button label="Llegué a la parada" onPress={handleArrive} style={styles.flexButton} />
-        </View>
-        <TouchableOpacity style={styles.reportRow} onPress={() => onReportIncident(serviceId)}>
-          <Ionicons name="warning-outline" size={16} color={colors.warning} />
-          <Text style={styles.reportText}>Reportar problema</Text>
-        </TouchableOpacity>
+        {gpsError && !closed ? (
+          <View style={styles.gpsBanner} accessibilityRole="alert">
+            <Ionicons name="location-outline" size={16} color={colors.warning} />
+            <Text style={styles.gpsBannerText}>{gpsError}</Text>
+          </View>
+        ) : null}
+        {closed ? (
+          <View style={styles.closedCard}>
+            <Ionicons
+              name={service?.status === "cancelado" ? "close-circle" : "checkmark-done-circle"}
+              size={28}
+              color={service?.status === "cancelado" ? colors.danger : colors.brand}
+            />
+            <Text style={styles.closedTitle}>
+              {service?.status === "cancelado" ? "Ruta cancelada" : "Ruta finalizada"}
+            </Text>
+            <Text style={styles.closedText}>
+              Puedes revisar el registro con las horas en la pestaña Rutas.
+            </Text>
+            {onExit ? <Button label="Volver al inicio" onPress={onExit} style={styles.closedButton} /> : null}
+          </View>
+        ) : (
+          <>
+            <View style={styles.actionRow}>
+              {nextStop ? (
+                <Button label="Llegué a la parada" onPress={handleArrive} loading={busy} style={styles.flexButton} />
+              ) : (
+                <Button label="Finalizar ruta" onPress={handleFinish} loading={busy} style={styles.flexButton} />
+              )}
+            </View>
+            <TouchableOpacity style={styles.reportRow} onPress={() => onReportIncident(serviceId)}>
+              <Ionicons name="warning-outline" size={16} color={colors.warning} />
+              <Text style={styles.reportText}>Reportar problema</Text>
+            </TouchableOpacity>
+          </>
+        )}
 
         <Text style={styles.sheetTitle}>Itinerario de Ruta</Text>
         {stops.map((stop) => (
@@ -138,6 +194,27 @@ export function DriverActiveRouteView({ serviceId, onReportIncident }: Props) {
 }
 
 const styles = StyleSheet.create({
+  gpsBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    padding: spacing.md,
+    borderRadius: radius.md,
+    backgroundColor: colors.warningMuted,
+  },
+  gpsBannerText: { ...typography.caption, color: colors.warning, flex: 1 },
+  closedCard: {
+    alignItems: "center",
+    gap: spacing.xs,
+    padding: spacing.lg,
+    borderRadius: radius.lg,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  closedTitle: { ...typography.h3, color: colors.text },
+  closedText: { ...typography.caption, color: colors.textMuted, textAlign: "center" },
+  closedButton: { alignSelf: "stretch", marginTop: spacing.sm },
   flex: { flex: 1 },
   flexButton: { flex: 1 },
   mapWrapper: { height: 260, backgroundColor: colors.surface },

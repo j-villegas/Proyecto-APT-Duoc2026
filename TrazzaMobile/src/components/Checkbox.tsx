@@ -11,7 +11,14 @@ interface CheckboxProps {
 
 export function Checkbox({ label, checked, onToggle }: CheckboxProps) {
   return (
-    <TouchableOpacity style={styles.row} onPress={onToggle} activeOpacity={0.7}>
+    <TouchableOpacity
+      style={styles.row}
+      onPress={onToggle}
+      activeOpacity={0.7}
+      accessibilityRole="checkbox"
+      accessibilityState={{ checked }}
+      accessibilityLabel={label}
+    >
       <Ionicons
         name={checked ? "checkbox" : "square-outline"}
         size={22}

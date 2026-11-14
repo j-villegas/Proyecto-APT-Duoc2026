@@ -28,6 +28,14 @@ jest.mock("../services/services", () => ({
   getServiceStops: jest.fn().mockResolvedValue([]),
   updateServiceStatus: jest.fn(),
   updateStopStatus: jest.fn(),
+  getDriverProfileDetails: jest.fn().mockResolvedValue({
+    licenseType: null,
+    licenseNumber: null,
+    licenseExpiresAt: null,
+    companyName: null,
+    companyPhone: null,
+    companyEmail: null,
+  }),
 }));
 
 async function renderApp() {

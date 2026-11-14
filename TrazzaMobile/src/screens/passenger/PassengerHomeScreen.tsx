@@ -1,11 +1,12 @@
 import React, { useCallback, useState } from "react";
-import { RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useAuth } from "../../context/AuthContext";
 import { Card } from "../../components/Card";
+import { ErrorState } from "../../components/ErrorState";
 import { Button } from "../../components/Button";
 import { StatusBadge } from "../../components/StatusBadge";
 import { RoutePoints } from "../../components/RoutePoints";
@@ -22,14 +23,16 @@ export default function PassengerHomeScreen({ navigation }: { navigation: Nav })
   const [trip, setTrip] = useState<Service | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [loadError, setLoadError] = useState<unknown>(null);
 
   const load = useCallback(async () => {
     if (!profile?.passenger_id) return;
     try {
       const next = await getNextServiceForPassenger(profile.passenger_id);
       setTrip(next);
-    } catch {
-      setTrip(null);
+      setLoadError(null);
+    } catch (err) {
+      setLoadError(err);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -66,9 +69,6 @@ export default function PassengerHomeScreen({ navigation }: { navigation: Nav })
               {trip ? "Tu próximo traslado" : "No tienes traslados programados"}
             </Text>
           </View>
-          <TouchableOpacity hitSlop={12}>
-            <Ionicons name="notifications-outline" size={22} color={colors.text} />
-          </TouchableOpacity>
         </View>
 
         {!loading && trip ? (
@@ -101,7 +101,11 @@ export default function PassengerHomeScreen({ navigation }: { navigation: Nav })
           </Card>
         ) : null}
 
-        {!loading && !trip ? (
+        {!loading && loadError ? (
+          <ErrorState what="tu próximo viaje" error={loadError} onRetry={load} />
+        ) : null}
+
+        {!loading && !trip && !loadError ? (
           <Card style={styles.emptyCard}>
             <Ionicons name="calendar-outline" size={28} color={colors.textMuted} />
             <Text style={styles.emptyText}>
@@ -110,16 +114,6 @@ export default function PassengerHomeScreen({ navigation }: { navigation: Nav })
           </Card>
         ) : null}
 
-        <View style={styles.quickActions}>
-          <Card style={styles.quickAction}>
-            <Ionicons name="qr-code-outline" size={22} color={colors.brand} />
-            <Text style={styles.quickActionText}>Mi QR</Text>
-          </Card>
-          <Card style={styles.quickAction}>
-            <Ionicons name="headset-outline" size={22} color={colors.brand} />
-            <Text style={styles.quickActionText}>Soporte</Text>
-          </Card>
-        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -157,7 +151,4 @@ const styles = StyleSheet.create({
   tripButton: { marginTop: spacing.xs },
   emptyCard: { alignItems: "center", gap: spacing.sm, paddingVertical: spacing.xxl },
   emptyText: { ...typography.caption, color: colors.textMuted, textAlign: "center" },
-  quickActions: { flexDirection: "row", gap: spacing.md },
-  quickAction: { flex: 1, alignItems: "center", gap: spacing.sm, paddingVertical: spacing.lg },
-  quickActionText: { ...typography.captionStrong, color: colors.text },
 });

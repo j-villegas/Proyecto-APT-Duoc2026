@@ -6,6 +6,7 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { ScreenHeader } from "../../components/ScreenHeader";
 import { Button } from "../../components/Button";
 import { useAuth } from "../../context/AuthContext";
+import { friendlyError } from "../../lib/errors";
 import { createIncident } from "../../services/incidents";
 import type { IncidentType } from "../../types/database";
 import { colors, radius, spacing, typography } from "../../constants/theme";
@@ -45,8 +46,8 @@ export default function ReportIncidentScreen({ route, navigation }: Props) {
       Alert.alert("Incidencia enviada", "Gracias por tu reporte, nuestro equipo lo revisará.", [
         { text: "OK", onPress: () => navigation.goBack() },
       ]);
-    } catch {
-      Alert.alert("No se pudo enviar", "Intenta nuevamente en unos segundos.");
+    } catch (err) {
+      Alert.alert("No se pudo enviar el reporte", `${friendlyError(err)} Tu reporte no se perdió: puedes volver a enviarlo.`);
     } finally {
       setSubmitting(false);
     }
@@ -54,7 +55,7 @@ export default function ReportIncidentScreen({ route, navigation }: Props) {
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
-      <ScreenHeader title="TRAZZA" onBack={navigation.goBack} rightIcon="notifications-outline" />
+      <ScreenHeader title="TRAZZA" onBack={navigation.goBack} />
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.title}>Reportar Incidencia</Text>
         <Text style={styles.subtitle}>
@@ -70,6 +71,8 @@ export default function ReportIncidentScreen({ route, navigation }: Props) {
                 key={category.key}
                 style={[styles.categoryCard, active && styles.categoryCardActive]}
                 onPress={() => setSelected(category.key)}
+                accessibilityRole="button"
+                accessibilityState={{ selected: active }}
                 activeOpacity={0.85}
               >
                 <Ionicons

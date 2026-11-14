@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import * as Location from "expo-location";
 import { supabase } from "../lib/supabase";
+import { friendlyError } from "../lib/errors";
 
 interface Options {
   serviceId: string;
@@ -24,7 +25,7 @@ export function useDriverLocationBroadcast({ serviceId, enabled }: Options) {
     (async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") {
-        setError("Permiso de ubicación denegado.");
+        setError("Activa tu ubicación para que los pasajeros y la central puedan seguir tu ruta.");
         return;
       }
 
@@ -46,7 +47,7 @@ export function useDriverLocationBroadcast({ serviceId, enabled }: Options) {
             p_heading: heading !== null && heading >= 0 ? heading : null,
             p_accuracy_meters: accuracy,
           });
-          if (rpcError) setError(rpcError.message);
+          setError(rpcError ? friendlyError(rpcError) : null);
         }
       );
 

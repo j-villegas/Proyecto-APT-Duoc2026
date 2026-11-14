@@ -6,12 +6,14 @@ import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useAuth } from "../../context/AuthContext";
 import { Card } from "../../components/Card";
+import { ErrorState } from "../../components/ErrorState";
 import { Button } from "../../components/Button";
 import { StatusBadge } from "../../components/StatusBadge";
 import { getDriverServices } from "../../services/services";
 import type { Service } from "../../types/database";
 import { colors, radius, spacing, typography } from "../../constants/theme";
 import { formatTime } from "../../utils/format";
+import { driverActionFor } from "../../utils/serviceStatus";
 import type { DriverStackParamList } from "../../navigation/types";
 
 type Nav = NativeStackNavigationProp<DriverStackParamList>;
@@ -26,15 +28,19 @@ export default function DriverRoutesScreen({ navigation }: { navigation: Nav }) 
   const { profile } = useAuth();
   const [services, setServices] = useState<Service[]>([]);
   const [filter, setFilter] = useState<Filter>("todas");
+  const [loadError, setLoadError] = useState<unknown>(null);
 
-  useFocusEffect(
-    useCallback(() => {
-      if (!profile?.driver_id) return;
-      getDriverServices(profile.driver_id)
-        .then(setServices)
-        .catch(() => setServices([]));
-    }, [profile])
-  );
+  const load = useCallback(() => {
+    if (!profile?.driver_id) return;
+    getDriverServices(profile.driver_id)
+      .then((list) => {
+        setServices(list);
+        setLoadError(null);
+      })
+      .catch(setLoadError);
+  }, [profile]);
+
+  useFocusEffect(load);
 
   const filtered = useMemo(() => {
     const now = new Date();
@@ -72,6 +78,8 @@ export default function DriverRoutesScreen({ navigation }: { navigation: Nav }) 
             key={f.key}
             style={[styles.filterChip, filter === f.key && styles.filterChipActive]}
             onPress={() => setFilter(f.key)}
+            accessibilityRole="button"
+            accessibilityState={{ selected: filter === f.key }}
           >
             <Text style={[styles.filterLabel, filter === f.key && styles.filterLabelActive]}>
               {f.label}
@@ -85,12 +93,18 @@ export default function DriverRoutesScreen({ navigation }: { navigation: Nav }) 
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
         ListEmptyComponent={
-          <Card style={styles.emptyCard}>
-            <Ionicons name="map-outline" size={26} color={colors.textMuted} />
-            <Text style={styles.emptyText}>No hay rutas para este filtro.</Text>
-          </Card>
+          loadError ? (
+            <ErrorState what="tus rutas" error={loadError} onRetry={load} />
+          ) : (
+            <Card style={styles.emptyCard}>
+              <Ionicons name="map-outline" size={26} color={colors.textMuted} />
+              <Text style={styles.emptyText}>No tienes rutas para este filtro.</Text>
+            </Card>
+          )
         }
-        renderItem={({ item }) => (
+        renderItem={({ item }) => {
+          const action = driverActionFor(item.status);
+          return (
           <Card style={styles.card}>
             <View style={styles.cardHeader}>
               <Text style={styles.code}>{item.code}</Text>
@@ -111,13 +125,19 @@ export default function DriverRoutesScreen({ navigation }: { navigation: Nav }) 
             <View style={styles.cardFooter}>
               <Text style={styles.time}>{formatTime(item.scheduled_at)}</Text>
               <Button
-                label="Preparar ruta"
-                onPress={() => navigation.navigate("RouteDetail", { serviceId: item.id })}
+                label={action.label}
+                variant={action.kind === "view" ? "outline" : "primary"}
+                onPress={() =>
+                  action.kind === "continue"
+                    ? navigation.navigate("ActiveRoute", { serviceId: item.id })
+                    : navigation.navigate("RouteDetail", { serviceId: item.id })
+                }
                 style={styles.button}
               />
             </View>
           </Card>
-        )}
+          );
+        }}
       />
     </SafeAreaView>
   );

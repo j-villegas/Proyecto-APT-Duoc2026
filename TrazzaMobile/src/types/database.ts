@@ -36,7 +36,6 @@ export interface Profile {
   /** Fila de passengers vinculada (solo pasajeros). */
   passenger_id: string | null;
   avatar_url: string | null;
-  rating: number | null;
   created_at: string;
 }
 
@@ -45,7 +44,6 @@ export interface DriverInfo {
   id: string;
   full_name: string;
   phone: string | null;
-  rating: number | null;
 }
 
 export interface Vehicle {
@@ -65,6 +63,8 @@ export interface ServiceStop {
   eta: string | null;
   passenger_count: number;
   status: StopStatus;
+  arrived_at: string | null;
+  completed_at: string | null;
 }
 
 export interface Service {
@@ -87,6 +87,10 @@ export interface Service {
   eta: string | null;
   status: ServiceStatus;
   passenger_count: number;
+  /** Hora real de inicio / término registrada por la app o el panel. */
+  actual_start_at: string | null;
+  actual_end_at: string | null;
+  cancel_reason: string | null;
   created_at: string;
 }
 
@@ -132,6 +136,9 @@ export interface DbServiceRow {
   scheduled_at: string;
   eta: string | null;
   passenger_count: number | null;
+  actual_start_at: string | null;
+  actual_end_at: string | null;
+  cancel_reason: string | null;
   route: {
     origin_name: string | null;
     origin_address: string | null;
@@ -154,6 +161,8 @@ export interface DbServiceStopRow {
   status: DbStopStatus;
   eta: string | null;
   passenger_count: number | null;
+  actual_arrival_at: string | null;
+  completed_at: string | null;
 }
 
 export interface DbVehicleRow {

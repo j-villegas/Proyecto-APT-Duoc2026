@@ -27,6 +27,9 @@ const baseService: DbServiceRow = {
   scheduled_at: "2026-10-09T11:30:00+00:00",
   eta: null,
   passenger_count: 12,
+  actual_start_at: "2026-10-09T11:35:00+00:00",
+  actual_end_at: null,
+  cancel_reason: null,
   route: {
     origin_name: "Planta Maipú",
     origin_address: "Av. Pajaritos 1234",
@@ -114,6 +117,8 @@ describe("mapServiceStop", () => {
       status: db,
       eta: null,
       passenger_count: null,
+      actual_arrival_at: null,
+      completed_at: null,
     });
     expect(stop).toMatchObject({ order_index: 2, label: "Paradero 1", address: "", status: app });
   });

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
+import { authenticateRealtime } from "../lib/realtime";
 import { mapLocation } from "../services/mappers";
 import type { DbServiceLocationRow, DriverLocation } from "../types/database";
 
@@ -25,26 +26,30 @@ export function useDriverLocationSubscription(serviceId: string | null) {
       });
 
     // service_locations es append-only: cada ping es un INSERT.
-    const channel = supabase
-      .channel(`service-location-${serviceId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "service_locations",
-          filter: `service_id=eq.${serviceId}`,
-        },
-        (payload) => {
-          const mapped = mapLocation(payload.new as DbServiceLocationRow);
-          if (active && mapped) setLocation(mapped);
-        }
-      )
-      .subscribe();
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    authenticateRealtime().then(() => {
+      if (!active) return;
+      channel = supabase
+        .channel(`service-location-${serviceId}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "service_locations",
+            filter: `service_id=eq.${serviceId}`,
+          },
+          (payload) => {
+            const mapped = mapLocation(payload.new as DbServiceLocationRow);
+            if (active && mapped) setLocation(mapped);
+          }
+        )
+        .subscribe();
+    });
 
     return () => {
       active = false;
-      supabase.removeChannel(channel);
+      if (channel) supabase.removeChannel(channel);
     };
   }, [serviceId]);
 

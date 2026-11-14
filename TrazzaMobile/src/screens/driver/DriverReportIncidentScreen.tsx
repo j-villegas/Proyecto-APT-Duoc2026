@@ -9,6 +9,7 @@ import { ScreenHeader } from "../../components/ScreenHeader";
 import { Card } from "../../components/Card";
 import { Button } from "../../components/Button";
 import { useAuth } from "../../context/AuthContext";
+import { friendlyError } from "../../lib/errors";
 import { createIncident, uploadIncidentPhoto } from "../../services/incidents";
 import type { IncidentPriority, IncidentType } from "../../types/database";
 import { colors, radius, spacing, typography } from "../../constants/theme";
@@ -83,8 +84,8 @@ export default function DriverReportIncidentScreen({ route, navigation }: Props)
       Alert.alert("Incidencia enviada", "El reporte fue registrado correctamente.", [
         { text: "OK", onPress: () => navigation.goBack() },
       ]);
-    } catch {
-      Alert.alert("No se pudo enviar", "Intenta nuevamente en unos segundos.");
+    } catch (err) {
+      Alert.alert("No se pudo enviar el reporte", `${friendlyError(err)} Tu reporte no se perdió: puedes volver a enviarlo.`);
     } finally {
       setSubmitting(false);
     }
@@ -103,6 +104,8 @@ export default function DriverReportIncidentScreen({ route, navigation }: Props)
                 key={item.key}
                 style={[styles.categoryChip, active && styles.categoryChipActive]}
                 onPress={() => setCategory(item.key)}
+                accessibilityRole="button"
+                accessibilityState={{ selected: active }}
               >
                 <Text style={[styles.categoryLabel, active && styles.categoryLabelActive]}>
                   {item.label}
@@ -140,7 +143,7 @@ export default function DriverReportIncidentScreen({ route, navigation }: Props)
               <Image key={uri} source={{ uri }} style={styles.photoThumb} />
             ))}
             {photos.length < 3 ? (
-              <TouchableOpacity style={styles.photoAdd} onPress={addPhoto}>
+              <TouchableOpacity style={styles.photoAdd} onPress={addPhoto} accessibilityRole="button" accessibilityLabel="Agregar foto">
                 <Ionicons name="camera-outline" size={22} color={colors.textMuted} />
               </TouchableOpacity>
             ) : null}
@@ -153,7 +156,7 @@ export default function DriverReportIncidentScreen({ route, navigation }: Props)
                 ? `Lat: ${coords.latitude.toFixed(4)}, Lng: ${coords.longitude.toFixed(4)}`
                 : "Ubicación no registrada"}
             </Text>
-            <TouchableOpacity onPress={updateLocation}>
+            <TouchableOpacity onPress={updateLocation} accessibilityRole="button" accessibilityLabel="Actualizar ubicación">
               <Text style={styles.updateLink}>Actualizar</Text>
             </TouchableOpacity>
           </View>
@@ -168,6 +171,8 @@ export default function DriverReportIncidentScreen({ route, navigation }: Props)
                 key={item.key}
                 style={[styles.priorityChip, active && styles.priorityChipActive]}
                 onPress={() => setPriority(item.key)}
+                accessibilityRole="button"
+                accessibilityState={{ selected: active }}
               >
                 <Text style={[styles.categoryLabel, active && styles.categoryLabelActive]}>
                   {item.label}

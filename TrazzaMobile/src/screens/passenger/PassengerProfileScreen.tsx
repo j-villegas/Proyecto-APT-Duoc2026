@@ -1,16 +1,8 @@
 import React from "react";
 import { ProfileScreenBase } from "../../components/ProfileScreenBase";
 
+// Sin opciones de menú hasta que existan pantallas reales para ellas
+// (antes había 4 opciones que no hacían nada al tocarlas).
 export default function PassengerProfileScreen() {
-  return (
-    <ProfileScreenBase
-      roleLabel="Pasajero"
-      items={[
-        { icon: "person-outline", label: "Datos personales" },
-        { icon: "notifications-outline", label: "Notificaciones" },
-        { icon: "shield-checkmark-outline", label: "Privacidad y seguridad" },
-        { icon: "help-circle-outline", label: "Ayuda y soporte" },
-      ]}
-    />
-  );
+  return <ProfileScreenBase roleLabel="Pasajero" />;
 }

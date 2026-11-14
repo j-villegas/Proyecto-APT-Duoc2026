@@ -6,6 +6,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useAuth } from "../../context/AuthContext";
 import { Card } from "../../components/Card";
+import { ErrorState } from "../../components/ErrorState";
 import { StatusBadge } from "../../components/StatusBadge";
 import { getPassengerHistory } from "../../services/services";
 import type { Service } from "../../types/database";
@@ -18,15 +19,19 @@ type Nav = NativeStackNavigationProp<PassengerStackParamList>;
 export default function PassengerHistoryScreen({ navigation }: { navigation: Nav }) {
   const { profile } = useAuth();
   const [trips, setTrips] = useState<Service[]>([]);
+  const [loadError, setLoadError] = useState<unknown>(null);
 
-  useFocusEffect(
-    useCallback(() => {
-      if (!profile?.passenger_id) return;
-      getPassengerHistory(profile.passenger_id)
-        .then(setTrips)
-        .catch(() => setTrips([]));
-    }, [profile])
-  );
+  const load = useCallback(() => {
+    if (!profile?.passenger_id) return;
+    getPassengerHistory(profile.passenger_id)
+      .then((list) => {
+        setTrips(list);
+        setLoadError(null);
+      })
+      .catch(setLoadError);
+  }, [profile]);
+
+  useFocusEffect(load);
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
@@ -38,10 +43,14 @@ export default function PassengerHistoryScreen({ navigation }: { navigation: Nav
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
         ListEmptyComponent={
-          <Card style={styles.emptyCard}>
-            <Ionicons name="time-outline" size={26} color={colors.textMuted} />
-            <Text style={styles.emptyText}>Aún no tienes viajes registrados.</Text>
-          </Card>
+          loadError ? (
+            <ErrorState what="tu historial" error={loadError} onRetry={load} />
+          ) : (
+            <Card style={styles.emptyCard}>
+              <Ionicons name="time-outline" size={26} color={colors.textMuted} />
+              <Text style={styles.emptyText}>Aún no tienes viajes. Cuando realices el primero, quedará registrado aquí.</Text>
+            </Card>
+          )
         }
         renderItem={({ item }) => (
           <TouchableOpacity onPress={() => navigation.navigate("TripDetail", { serviceId: item.id })}>

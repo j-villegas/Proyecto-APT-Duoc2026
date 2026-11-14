@@ -14,10 +14,11 @@ export default function ActiveRouteScreen({ route, navigation }: Props) {
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
-      <ScreenHeader title="En Ruta" />
+      <ScreenHeader title="En Ruta" onBack={() => navigation.popToTop()} />
       <DriverActiveRouteView
         serviceId={serviceId}
         onReportIncident={(id) => navigation.navigate("DriverReportIncident", { serviceId: id })}
+        onExit={() => navigation.popToTop()}
       />
     </SafeAreaView>
   );

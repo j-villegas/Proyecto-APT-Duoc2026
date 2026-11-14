@@ -1,11 +1,12 @@
 import React, { useCallback, useState } from "react";
-import { RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useAuth } from "../../context/AuthContext";
 import { Card } from "../../components/Card";
+import { ErrorState } from "../../components/ErrorState";
 import { Button } from "../../components/Button";
 import { StatusBadge } from "../../components/StatusBadge";
 import { getDriverServices, getVehicleById } from "../../services/services";
@@ -25,18 +26,20 @@ export default function DriverHomeScreen({ navigation }: { navigation: Nav }) {
   const [services, setServices] = useState<Service[]>([]);
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [loadError, setLoadError] = useState<unknown>(null);
 
   const load = useCallback(async () => {
     if (!profile?.driver_id) return;
     try {
       const list = await getDriverServices(profile.driver_id);
       setServices(list);
+      setLoadError(null);
       if (list[0]?.vehicle_id) {
         const veh = await getVehicleById(list[0].vehicle_id);
         setVehicle(veh);
       }
-    } catch {
-      setServices([]);
+    } catch (err) {
+      setLoadError(err);
     } finally {
       setRefreshing(false);
     }
@@ -51,6 +54,7 @@ export default function DriverHomeScreen({ navigation }: { navigation: Nav }) {
   const todayServices = services.filter((s) => isToday(s.scheduled_at));
   const nextService = services.find((s) => s.status !== "finalizado" && s.status !== "cancelado");
   const firstName = profile?.full_name?.split(" ")[0] ?? "";
+  const onRoute = services.some((s) => s.status === "en_ruta");
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
@@ -72,12 +76,9 @@ export default function DriverHomeScreen({ navigation }: { navigation: Nav }) {
             <Text style={styles.greeting}>Hola, {firstName || "conductor"}</Text>
             <View style={styles.statusRow}>
               <View style={styles.statusDot} />
-              <Text style={styles.statusText}>Disponible</Text>
+              <Text style={styles.statusText}>{onRoute ? "En ruta" : "Disponible"}</Text>
             </View>
           </View>
-          <TouchableOpacity hitSlop={12}>
-            <Ionicons name="notifications-outline" size={22} color={colors.text} />
-          </TouchableOpacity>
         </View>
 
         <View style={styles.statsRow}>
@@ -127,10 +128,13 @@ export default function DriverHomeScreen({ navigation }: { navigation: Nav }) {
               />
             </View>
           </Card>
+        ) : loadError ? (
+          <ErrorState what="tus servicios" error={loadError} onRetry={load} />
         ) : (
           <Card style={styles.emptyCard}>
-            <Ionicons name="calendar-outline" size={24} color={colors.textMuted} />
-            <Text style={styles.emptyText}>No tienes servicios próximos.</Text>
+            <Ionicons name="sunny-outline" size={24} color={colors.textMuted} />
+            <Text style={styles.emptyTitle}>Día despejado</Text>
+            <Text style={styles.emptyText}>No tienes servicios próximos. Aparecerán aquí cuando te asignen uno.</Text>
           </Card>
         )}
       </ScrollView>
@@ -170,5 +174,6 @@ const styles = StyleSheet.create({
   pillText: { ...typography.caption, color: colors.textMuted },
   viewButton: { paddingHorizontal: spacing.lg, paddingVertical: spacing.sm },
   emptyCard: { alignItems: "center", gap: spacing.sm, paddingVertical: spacing.xl },
-  emptyText: { ...typography.caption, color: colors.textMuted },
+  emptyTitle: { ...typography.bodyStrong, color: colors.text },
+  emptyText: { ...typography.caption, color: colors.textMuted, textAlign: "center" },
 });

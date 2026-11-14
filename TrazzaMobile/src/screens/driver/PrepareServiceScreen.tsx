@@ -12,7 +12,9 @@ import { getServiceById, getVehicleById, updateServiceStatus } from "../../servi
 import type { Service, Vehicle } from "../../types/database";
 import { colors, radius, spacing, typography } from "../../constants/theme";
 import { formatTime } from "../../utils/format";
+import { isClosed } from "../../utils/serviceStatus";
 import type { DriverStackParamList } from "../../navigation/types";
+import { friendlyError } from "../../lib/errors";
 
 type Props = NativeStackScreenProps<DriverStackParamList, "PrepareService">;
 
@@ -44,7 +46,7 @@ export default function PrepareServiceScreen({ route, navigation }: Props) {
         const veh = await getVehicleById(svc.vehicle_id);
         setVehicle(veh);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "No se pudo cargar el servicio.");
+        setError(friendlyError(err));
       } finally {
         setLoading(false);
       }
@@ -53,7 +55,13 @@ export default function PrepareServiceScreen({ route, navigation }: Props) {
 
   const allChecked = CHECKS.every((c) => checks[c.key]);
 
+  const closed = !!service && isClosed(service.status);
+
   const handleStart = async () => {
+    if (closed) {
+      Alert.alert("Servicio cerrado", "Este servicio ya fue finalizado o cancelado.");
+      return;
+    }
     if (!mileage.trim()) {
       Alert.alert("Ingresa el kilometraje inicial");
       return;
@@ -70,8 +78,7 @@ export default function PrepareServiceScreen({ route, navigation }: Props) {
       });
       navigation.replace("ActiveRoute", { serviceId });
     } catch (err) {
-      const message = (err as { message?: string } | null)?.message;
-      Alert.alert("No se pudo iniciar la ruta", message ?? "Intenta nuevamente en unos segundos.");
+      Alert.alert("No se pudo iniciar la ruta", friendlyError(err));
     } finally {
       setSubmitting(false);
     }
@@ -154,7 +161,12 @@ export default function PrepareServiceScreen({ route, navigation }: Props) {
       </ScrollView>
 
       <View style={styles.footer}>
-        <Button label="Iniciar ruta" onPress={handleStart} loading={submitting} />
+        <Button
+          label={closed ? "Servicio cerrado" : "Iniciar ruta"}
+          onPress={handleStart}
+          loading={submitting}
+          disabled={closed}
+        />
       </View>
     </SafeAreaView>
   );

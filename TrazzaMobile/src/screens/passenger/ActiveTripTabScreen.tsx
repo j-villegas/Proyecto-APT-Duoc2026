@@ -9,6 +9,7 @@ import { useNavigation } from "@react-navigation/native";
 import { useAuth } from "../../context/AuthContext";
 import { TripTrackingView } from "../../components/TripTrackingView";
 import { Card } from "../../components/Card";
+import { ErrorState } from "../../components/ErrorState";
 import { getNextServiceForPassenger } from "../../services/services";
 import { colors, spacing, typography } from "../../constants/theme";
 import type { PassengerStackParamList, PassengerTabParamList } from "../../navigation/types";
@@ -19,24 +20,36 @@ export default function ActiveTripTabScreen(_props: TabProps) {
   const { profile } = useAuth();
   const [serviceId, setServiceId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<unknown>(null);
   const navigation = useNavigation<NativeStackNavigationProp<PassengerStackParamList>>();
 
-  useFocusEffect(
-    useCallback(() => {
-      if (!profile?.passenger_id) return;
-      setLoading(true);
-      getNextServiceForPassenger(profile.passenger_id)
-        .then((service) => setServiceId(service?.id ?? null))
-        .catch(() => setServiceId(null))
-        .finally(() => setLoading(false));
-    }, [profile])
-  );
+  const load = useCallback(() => {
+    if (!profile?.passenger_id) return;
+    setLoading(true);
+    getNextServiceForPassenger(profile.passenger_id)
+      .then((service) => setServiceId(service?.id ?? null))
+      .then(() => setLoadError(null))
+      .catch(setLoadError)
+      .finally(() => setLoading(false));
+  }, [profile]);
+
+  useFocusEffect(load);
 
   if (loading) {
     return (
       <SafeAreaView style={styles.container} edges={["top"]}>
         <View style={styles.center}>
           <ActivityIndicator color={colors.brand} />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (loadError && !serviceId) {
+    return (
+      <SafeAreaView style={styles.container} edges={["top"]}>
+        <View style={styles.center}>
+          <ErrorState what="tu viaje" error={loadError} onRetry={load} />
         </View>
       </SafeAreaView>
     );

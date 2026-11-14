@@ -5,6 +5,7 @@ import type { Session } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
 import { getPasswordResetRedirectUrl, parseAuthRedirect } from "../lib/authLinks";
 import { mapProfile } from "../services/mappers";
+import { friendlyError } from "../lib/errors";
 import type { DbProfile, Profile } from "../types/database";
 
 type Result = { error: string | null };
@@ -148,7 +149,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       email: normalizedEmail,
       password,
     });
-    if (error) return { error: error.message };
+    if (error) return { error: friendlyError(error) };
 
     // Defensa extra: la sesión debe pertenecer exactamente al correo ingresado.
     if (data.user?.email?.toLowerCase() !== normalizedEmail) {
@@ -175,12 +176,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
       redirectTo: getPasswordResetRedirectUrl(),
     });
-    return { error: error?.message ?? null };
+    return { error: error ? friendlyError(error) : null };
   };
 
   const updatePassword: AuthContextValue["updatePassword"] = async (password) => {
     const { error } = await supabase.auth.updateUser({ password });
-    return { error: error?.message ?? null };
+    return { error: error ? friendlyError(error) : null };
   };
 
   const finishPasswordRecovery = () => setPasswordRecovery(false);

@@ -10,8 +10,10 @@ import { StatusBadge } from "../../components/StatusBadge";
 import { getServiceById, getServiceStops, getVehicleById } from "../../services/services";
 import type { Service, ServiceStop, Vehicle } from "../../types/database";
 import { colors, spacing, typography } from "../../constants/theme";
-import { formatTime } from "../../utils/format";
+import { formatDateTime, formatTime } from "../../utils/format";
+import { buildServiceTimeline, driverActionFor } from "../../utils/serviceStatus";
 import type { DriverStackParamList } from "../../navigation/types";
+import { friendlyError } from "../../lib/errors";
 
 type Props = NativeStackScreenProps<DriverStackParamList, "RouteDetail">;
 
@@ -37,7 +39,7 @@ export default function RouteDetailScreen({ route, navigation }: Props) {
         setVehicle(veh);
         setStops(stopList);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "No se pudo cargar la ruta.");
+        setError(friendlyError(err));
       } finally {
         setLoading(false);
       }
@@ -66,6 +68,9 @@ export default function RouteDetailScreen({ route, navigation }: Props) {
       </SafeAreaView>
     );
   }
+
+  const action = driverActionFor(service.status);
+  const timeline = buildServiceTimeline(service, stops);
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
@@ -123,15 +128,45 @@ export default function RouteDetailScreen({ route, navigation }: Props) {
             </View>
           </View>
         </Card>
+
+        {timeline.length > 1 ? (
+          <>
+            <Text style={styles.sectionTitle}>REGISTRO DEL SERVICIO</Text>
+            <Card style={styles.timelineCard}>
+              {timeline.map((entry) => (
+                <View key={entry.key} style={styles.timelineRow}>
+                  <View
+                    style={[
+                      styles.timelineDot,
+                      entry.tone === "done" && styles.timelineDotDone,
+                      entry.tone === "danger" && styles.timelineDotDanger,
+                    ]}
+                  />
+                  <View style={styles.flex1}>
+                    <Text style={styles.stopLabel}>{entry.label}</Text>
+                    {entry.detail ? <Text style={styles.stopAddress}>{entry.detail}</Text> : null}
+                  </View>
+                  <Text style={styles.timelineTime}>{formatDateTime(entry.at)}</Text>
+                </View>
+              ))}
+            </Card>
+          </>
+        ) : null}
       </ScrollView>
 
-      <View style={styles.footer}>
-        <Button
-          label="Preparar ruta"
-          icon={<Ionicons name="arrow-forward" size={16} color={colors.background} />}
-          onPress={() => navigation.navigate("PrepareService", { serviceId })}
-        />
-      </View>
+      {action.kind !== "view" ? (
+        <View style={styles.footer}>
+          <Button
+            label={action.label}
+            icon={<Ionicons name="arrow-forward" size={16} color={colors.background} />}
+            onPress={() =>
+              action.kind === "continue"
+                ? navigation.navigate("ActiveRoute", { serviceId })
+                : navigation.navigate("PrepareService", { serviceId })
+            }
+          />
+        </View>
+      ) : null}
     </SafeAreaView>
   );
 }
@@ -157,4 +192,10 @@ const styles = StyleSheet.create({
   stopLabel: { ...typography.bodyStrong, color: colors.text },
   stopAddress: { ...typography.caption, color: colors.textMuted, marginTop: 2 },
   footer: { padding: spacing.lg, borderTopWidth: 1, borderTopColor: colors.border },
+  timelineCard: { gap: spacing.md },
+  timelineRow: { flexDirection: "row", gap: spacing.md, alignItems: "flex-start" },
+  timelineDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.borderStrong, marginTop: 5 },
+  timelineDotDone: { backgroundColor: colors.brand },
+  timelineDotDanger: { backgroundColor: colors.danger },
+  timelineTime: { ...typography.caption, color: colors.textMuted },
 });

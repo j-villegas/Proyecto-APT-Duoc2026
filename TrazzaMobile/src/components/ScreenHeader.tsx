@@ -9,27 +9,29 @@ interface ScreenHeaderProps {
   onBack?: () => void;
   rightIcon?: keyof typeof Ionicons.glyphMap;
   onRightPress?: () => void;
+  /** Texto para lectores de pantalla del botón derecho. */
+  rightLabel?: string;
 }
 
-export function ScreenHeader({ title, subtitle, onBack, rightIcon, onRightPress }: ScreenHeaderProps) {
+export function ScreenHeader({ title, subtitle, onBack, rightIcon, onRightPress, rightLabel }: ScreenHeaderProps) {
   return (
     <View style={styles.container}>
       <View style={styles.side}>
         {onBack ? (
-          <TouchableOpacity onPress={onBack} hitSlop={12}>
+          <TouchableOpacity onPress={onBack} hitSlop={12} accessibilityRole="button" accessibilityLabel="Volver">
             <Ionicons name="chevron-back" size={24} color={colors.text} />
           </TouchableOpacity>
         ) : null}
       </View>
       <View style={styles.center}>
-        <Text style={styles.title} numberOfLines={1}>
+        <Text style={styles.title} numberOfLines={1} accessibilityRole="header">
           {title}
         </Text>
         {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
       </View>
       <View style={[styles.side, styles.sideRight]}>
-        {rightIcon ? (
-          <TouchableOpacity onPress={onRightPress} hitSlop={12}>
+        {rightIcon && onRightPress ? (
+          <TouchableOpacity onPress={onRightPress} hitSlop={12} accessibilityRole="button" accessibilityLabel={rightLabel}>
             <Ionicons name={rightIcon} size={22} color={colors.text} />
           </TouchableOpacity>
         ) : null}

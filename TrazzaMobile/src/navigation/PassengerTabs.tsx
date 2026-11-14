@@ -5,7 +5,7 @@ import PassengerHomeScreen from "../screens/passenger/PassengerHomeScreen";
 import PassengerHistoryScreen from "../screens/passenger/PassengerHistoryScreen";
 import PassengerProfileScreen from "../screens/passenger/PassengerProfileScreen";
 import ActiveTripTabScreen from "../screens/passenger/ActiveTripTabScreen";
-import { colors } from "../constants/theme";
+import { colors, fonts } from "../constants/theme";
 import type { PassengerTabParamList } from "./types";
 
 const Tab = createBottomTabNavigator<PassengerTabParamList>();
@@ -38,7 +38,7 @@ export function PassengerTabs() {
           paddingBottom: 10,
           paddingTop: 8,
         },
-        tabBarLabelStyle: { fontSize: 11, fontWeight: "600" },
+        tabBarLabelStyle: { fontSize: 11, fontFamily: fonts.semibold },
         tabBarIcon: ({ color }) => (
           <Ionicons name={ICONS[route.name as keyof PassengerTabParamList]} color={color} size={22} />
         ),

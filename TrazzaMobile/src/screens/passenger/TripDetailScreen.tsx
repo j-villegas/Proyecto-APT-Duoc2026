@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Image, Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -14,6 +14,7 @@ import type { DriverInfo, Service, Vehicle } from "../../types/database";
 import { colors, spacing, typography } from "../../constants/theme";
 import { formatTime } from "../../utils/format";
 import type { PassengerStackParamList } from "../../navigation/types";
+import { friendlyError } from "../../lib/errors";
 
 type Props = NativeStackScreenProps<PassengerStackParamList, "TripDetail">;
 
@@ -39,7 +40,7 @@ export default function TripDetailScreen({ route, navigation }: Props) {
         setVehicle(veh);
         setDriver(driverInfo);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "No se pudo cargar el viaje.");
+        setError(friendlyError(err));
       } finally {
         setLoading(false);
       }
@@ -122,13 +123,19 @@ export default function TripDetailScreen({ route, navigation }: Props) {
               <Ionicons name="person" size={20} color={colors.textMuted} />
             </View>
             <View style={styles.flex1}>
-              <Text style={styles.assignmentName}>{driver?.full_name ?? "Conductor"}</Text>
-              <View style={styles.ratingRow}>
-                <Ionicons name="star" size={12} color={colors.warning} />
-                <Text style={styles.ratingText}>{driver?.rating ?? "4.9"}</Text>
-              </View>
+              <Text style={styles.assignmentName}>{driver?.full_name ?? "Conductor por asignar"}</Text>
+              <Text style={styles.roleText}>Conductor</Text>
             </View>
-            <Ionicons name="call-outline" size={20} color={colors.brand} />
+            {driver?.phone ? (
+              <TouchableOpacity
+                hitSlop={10}
+                onPress={() => Linking.openURL(`tel:${driver.phone}`)}
+                accessibilityRole="button"
+                accessibilityLabel={`Llamar a ${driver.full_name}`}
+              >
+                <Ionicons name="call-outline" size={20} color={colors.brand} />
+              </TouchableOpacity>
+            ) : null}
           </View>
           <View style={styles.divider} />
           <View style={styles.assignmentRow}>
@@ -192,8 +199,7 @@ const styles = StyleSheet.create({
   },
   flex1: { flex: 1 },
   assignmentName: { ...typography.bodyStrong, color: colors.text },
-  ratingRow: { flexDirection: "row", alignItems: "center", gap: 4, marginTop: 2 },
-  ratingText: { ...typography.caption, color: colors.textMuted },
+  roleText: { ...typography.caption, color: colors.textMuted },
   plateText: { ...typography.caption, color: colors.textMuted, marginTop: 2 },
   divider: { height: 1, backgroundColor: colors.border },
   footer: {

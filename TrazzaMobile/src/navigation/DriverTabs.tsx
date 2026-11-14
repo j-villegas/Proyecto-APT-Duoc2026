@@ -5,7 +5,7 @@ import DriverHomeScreen from "../screens/driver/DriverHomeScreen";
 import DriverRoutesScreen from "../screens/driver/DriverRoutesScreen";
 import DriverProfileScreen from "../screens/driver/DriverProfileScreen";
 import ActiveRouteTabScreen from "../screens/driver/ActiveRouteTabScreen";
-import { colors } from "../constants/theme";
+import { colors, fonts } from "../constants/theme";
 import type { DriverTabParamList } from "./types";
 
 const Tab = createBottomTabNavigator<DriverTabParamList>();
@@ -38,7 +38,7 @@ export function DriverTabs() {
           paddingBottom: 10,
           paddingTop: 8,
         },
-        tabBarLabelStyle: { fontSize: 11, fontWeight: "600" },
+        tabBarLabelStyle: { fontSize: 11, fontFamily: fonts.semibold },
         tabBarIcon: ({ color }) => (
           <Ionicons name={ICONS[route.name as keyof DriverTabParamList]} color={color} size={22} />
         ),

@@ -3,12 +3,14 @@ import { StyleSheet, Text, View } from "react-native";
 import { colors, radius, spacing, typography } from "../constants/theme";
 import type { ServiceStatus } from "../types/database";
 
+// Mismos colores que el panel (TrazzaAdmin/lib/service-status.ts):
+// azul = programado, verde = en movimiento, gris = cerrado, rojo = cancelado.
 const STATUS_CONFIG: Record<ServiceStatus, { label: string; color: string; bg: string }> = {
-  programado: { label: "PROGRAMADO", color: colors.warning, bg: colors.warningMuted },
+  programado: { label: "PROGRAMADO", color: colors.info, bg: colors.infoMuted },
   en_espera: { label: "EN ESPERA", color: colors.warning, bg: colors.warningMuted },
   en_camino: { label: "EN CAMINO", color: colors.brand, bg: colors.brandMuted },
   en_ruta: { label: "EN RUTA", color: colors.brand, bg: colors.brandMuted },
-  finalizado: { label: "FINALIZADO", color: colors.info, bg: colors.infoMuted },
+  finalizado: { label: "FINALIZADO", color: colors.textMuted, bg: colors.surfaceAlt },
   cancelado: { label: "CANCELADO", color: colors.danger, bg: colors.dangerMuted },
 };
 

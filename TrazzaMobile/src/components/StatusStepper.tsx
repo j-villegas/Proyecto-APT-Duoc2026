@@ -1,9 +1,11 @@
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { colors, spacing, typography } from "../constants/theme";
+import { colors, fonts, spacing, typography } from "../constants/theme";
 
 export interface Step {
+  /** Identificador único (por defecto, label). */
+  key?: string;
   label: string;
   time?: string;
   state: "done" | "active" | "pending";
@@ -15,7 +17,7 @@ export function StatusStepper({ steps }: { steps: Step[] }) {
       {steps.map((step, index) => {
         const isLast = index === steps.length - 1;
         return (
-          <View key={step.label} style={styles.row}>
+          <View key={step.key ?? step.label} style={styles.row}>
             <View style={styles.markerColumn}>
               {step.state === "done" ? (
                 <View style={[styles.marker, styles.markerDone]}>
@@ -86,6 +88,6 @@ const styles = StyleSheet.create({
   textColumn: { flex: 1, paddingBottom: spacing.lg, paddingLeft: spacing.sm },
   label: { ...typography.bodyStrong, color: colors.text },
   labelActive: { color: colors.brand },
-  labelPending: { color: colors.textFaint, fontWeight: "400" },
+  labelPending: { color: colors.textFaint, fontFamily: fonts.regular },
   time: { ...typography.caption, color: colors.textMuted, marginTop: 2 },
 });

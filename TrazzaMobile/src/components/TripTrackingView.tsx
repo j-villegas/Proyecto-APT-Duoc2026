@@ -1,24 +1,18 @@
 import React, { useEffect, useState } from "react";
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import MapView, { Marker } from "../lib/maps";
 import { StatusStepper, type Step } from "./StatusStepper";
 import { Button } from "./Button";
-import { getServiceById, getServiceDriver } from "../services/services";
+import { getServiceDriver } from "../services/services";
 import { useDriverLocationSubscription } from "../hooks/useDriverLocationSubscription";
-import type { DriverInfo, Service } from "../types/database";
+import { useServiceLive } from "../hooks/useServiceLive";
+import type { DriverInfo } from "../types/database";
 import { colors, radius, spacing, typography } from "../constants/theme";
 import { darkMapStyle } from "../constants/mapStyle";
 import { mapProvider, supportsCustomMapStyle } from "../constants/mapProvider";
 import { formatTime } from "../utils/format";
-
-const STATUS_ORDER: Service["status"][] = [
-  "programado",
-  "en_espera",
-  "en_camino",
-  "en_ruta",
-  "finalizado",
-];
+import { buildTripSteps } from "../utils/serviceStatus";
 
 interface TripTrackingViewProps {
   serviceId: string;
@@ -26,36 +20,24 @@ interface TripTrackingViewProps {
 }
 
 export function TripTrackingView({ serviceId, onReportIncident }: TripTrackingViewProps) {
-  const [service, setService] = useState<Service | null>(null);
+  const { service, stops } = useServiceLive(serviceId);
   const [driver, setDriver] = useState<DriverInfo | null>(null);
 
   useEffect(() => {
-    (async () => {
-      try {
-        const svc = await getServiceById(serviceId);
-        setService(svc);
-        setDriver(await getServiceDriver(serviceId));
-      } catch (err) {
-        console.warn("No se pudo cargar el viaje:", err);
-      }
-    })();
+    getServiceDriver(serviceId)
+      .then(setDriver)
+      .catch(() => setDriver(null));
   }, [serviceId]);
 
   const driverLocation = useDriverLocationSubscription(service ? serviceId : null);
-  const currentIndex = service ? STATUS_ORDER.indexOf(service.status) : 0;
 
-  const steps: Step[] = [
-    { label: "Servicio programado", time: service ? formatTime(service.scheduled_at) : undefined },
-    { label: "Vehículo asignado" },
-    { label: "Conductor en camino", time: "Aproximadamente 7 min." },
-    { label: "Llegada al punto" },
-    { label: "Pasajero abordo" },
-    { label: "En ruta" },
-    { label: "Finalizado" },
-  ].map((step, index) => ({
-    ...step,
-    state: index < currentIndex + 1 ? "done" : index === currentIndex + 1 ? "active" : "pending",
-  })) as Step[];
+  // Solo hechos registrados: inicio, paradas y término con su hora real.
+  const steps: Step[] = service
+    ? buildTripSteps(service, stops).map((step) => ({
+        ...step,
+        time: step.time ? formatTime(step.time) : undefined,
+      }))
+    : [];
 
   const region = driverLocation
     ? {
@@ -107,9 +89,17 @@ export function TripTrackingView({ serviceId, onReportIncident }: TripTrackingVi
                 <Text style={styles.driverName}>{driver.full_name}</Text>
                 <Text style={styles.driverSub}>Conductor</Text>
               </View>
-              <TouchableOpacity hitSlop={10} style={styles.callIcon}>
-                <Ionicons name="call" size={18} color={colors.brand} />
-              </TouchableOpacity>
+              {driver.phone ? (
+                <TouchableOpacity
+                  hitSlop={10}
+                  style={styles.callIcon}
+                  onPress={() => Linking.openURL(`tel:${driver.phone}`)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Llamar a ${driver.full_name}`}
+                >
+                  <Ionicons name="call" size={18} color={colors.brand} />
+                </TouchableOpacity>
+              ) : null}
             </View>
           ) : null}
         </View>
@@ -121,12 +111,10 @@ export function TripTrackingView({ serviceId, onReportIncident }: TripTrackingVi
       </ScrollView>
 
       <View style={styles.footer}>
-        <Button label="Estoy listo en el punto" onPress={() => {}} />
         <Button
           label="Reportar problema"
           variant="secondary"
           onPress={() => onReportIncident(serviceId)}
-          style={styles.reportButton}
           icon={<Ionicons name="warning-outline" size={16} color={colors.text} />}
         />
       </View>
@@ -185,5 +173,4 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: colors.border,
   },
-  reportButton: { marginTop: spacing.sm },
 });

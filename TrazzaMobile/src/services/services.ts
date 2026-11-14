@@ -8,11 +8,13 @@ import type {
   ServiceStop,
 } from "../types/database";
 import { STOP_STATUS_TO_DB, mapService, mapServiceStop, mapVehicle } from "./mappers";
+import { AppError } from "../lib/errors";
 
 // scheduled_at / eta / passenger_count son campos calculados de la base
 // (funciones mobile_* en TrazzaAdmin/migrations/025_mobile_app.sql).
 const SERVICE_COLUMNS = `
   id, service_code, status, driver_id, vehicle_id, created_at,
+  actual_start_at, actual_end_at, cancel_reason,
   scheduled_at:mobile_scheduled_at, eta:mobile_eta, passenger_count:mobile_passenger_count,
   route:routes(origin_name, origin_address, origin_latitude, origin_longitude,
     destination_name, destination_address, destination_latitude, destination_longitude),
@@ -20,7 +22,7 @@ const SERVICE_COLUMNS = `
 `;
 
 const STOP_COLUMNS = `
-  id, service_id, stop_order, name, address, status,
+  id, service_id, stop_order, name, address, status, actual_arrival_at, completed_at,
   eta:mobile_eta, passenger_count:mobile_passenger_count
 `;
 
@@ -71,7 +73,7 @@ export async function getServiceById(serviceId: string) {
     .eq("id", serviceId)
     .maybeSingle();
   if (error) throw error;
-  if (!data) throw new Error(`No se encontró el servicio ${serviceId}`);
+  if (!data) throw new AppError("Este viaje ya no está disponible. Puede que lo hayan cancelado o reasignado.");
   return mapService(data as unknown as DbServiceRow);
 }
 
@@ -86,14 +88,14 @@ export async function getServiceStops(serviceId: string) {
 }
 
 export async function getVehicleById(vehicleId: string | null) {
-  if (!vehicleId) throw new Error("El servicio no tiene vehículo asignado.");
+  if (!vehicleId) throw new AppError("Este servicio aún no tiene vehículo asignado.");
   const { data, error } = await supabase
     .from("vehicles")
     .select("id, plate, brand, model, capacity_passengers")
     .eq("id", vehicleId)
     .maybeSingle();
   if (error) throw error;
-  if (!data) throw new Error(`No se encontró el vehículo ${vehicleId}`);
+  if (!data) throw new AppError("No encontramos el vehículo de este servicio. Puede que lo hayan cambiado.");
   return mapVehicle(data as DbVehicleRow);
 }
 
@@ -102,7 +104,7 @@ export async function getServiceDriver(serviceId: string): Promise<DriverInfo | 
   const { data, error } = await supabase.rpc("get_service_driver", { p_service_id: serviceId });
   if (error) throw error;
   const row = (data as { id: string; full_name: string; phone: string | null }[] | null)?.[0];
-  return row ? { ...row, rating: null } : null;
+  return row ?? null;
 }
 
 /** driverId: drivers.id del perfil (profile.driver_id). */
@@ -148,4 +150,39 @@ export async function updateStopStatus(stopId: string, status: ServiceStop["stat
     p_status: STOP_STATUS_TO_DB[status],
   });
   if (error) throw error;
+}
+
+export interface DriverProfileDetails {
+  licenseType: string | null;
+  licenseNumber: string | null;
+  licenseExpiresAt: string | null;
+  companyName: string | null;
+  companyPhone: string | null;
+  companyEmail: string | null;
+}
+
+/** Licencia del conductor y contacto de su empresa, tal como los registra el panel. */
+export async function getDriverProfileDetails(driverId: string, companyId: string): Promise<DriverProfileDetails> {
+  const [driver, company] = await Promise.all([
+    supabase
+      .from("drivers")
+      .select("license_type, license_number, license_expires_at")
+      .eq("id", driverId)
+      .maybeSingle(),
+    supabase
+      .from("companies")
+      .select("name, contact_phone, contact_email")
+      .eq("id", companyId)
+      .maybeSingle(),
+  ]);
+  if (driver.error) throw driver.error;
+  return {
+    licenseType: driver.data?.license_type ?? null,
+    licenseNumber: driver.data?.license_number ?? null,
+    licenseExpiresAt: driver.data?.license_expires_at ?? null,
+    // La empresa es opcional: si no se puede leer, el perfil igual se muestra.
+    companyName: company.data?.name ?? null,
+    companyPhone: company.data?.contact_phone ?? null,
+    companyEmail: company.data?.contact_email ?? null,
+  };
 }

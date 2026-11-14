@@ -60,7 +60,6 @@ export function mapProfile(row: DbProfile): Profile | null {
     driver_id: row.role === "driver" ? firstActive(row.drivers) : null,
     passenger_id: row.role === "passenger" ? firstActive(row.passengers) : null,
     avatar_url: null,
-    rating: null,
     created_at: row.created_at,
   };
 }
@@ -85,6 +84,9 @@ export function mapService(row: DbServiceRow): Service {
     eta: row.eta,
     status: SERVICE_STATUS_FROM_DB[row.status] ?? "programado",
     passenger_count: row.passenger_count ?? 0,
+    actual_start_at: row.actual_start_at,
+    actual_end_at: row.actual_end_at,
+    cancel_reason: row.cancel_reason,
     created_at: row.created_at,
   };
 }
@@ -99,6 +101,8 @@ export function mapServiceStop(row: DbServiceStopRow): ServiceStop {
     eta: row.eta,
     passenger_count: row.passenger_count ?? 0,
     status: STOP_STATUS_FROM_DB[row.status] ?? "pendiente",
+    arrived_at: row.actual_arrival_at,
+    completed_at: row.completed_at,
   };
 }
 

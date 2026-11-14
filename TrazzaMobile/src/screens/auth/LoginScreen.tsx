@@ -28,7 +28,7 @@ export default function LoginScreen({ navigation }: Props) {
     const { error: signInError } = await signIn(email, password);
     setLoading(false);
     if (signInError) {
-      setError("Credenciales inválidas. Verifica tus datos e intenta de nuevo.");
+      setError(signInError);
     }
   };
 

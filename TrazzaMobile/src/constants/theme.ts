@@ -43,15 +43,23 @@ export const radius = {
   pill: 999,
 } as const;
 
+// Manrope, la misma tipografía del panel web. En React Native cada peso es su
+// propia fuente (se cargan en App.tsx); si aún no carga, se usa la del sistema.
+export const fonts = {
+  regular: "Manrope_400Regular",
+  semibold: "Manrope_600SemiBold",
+  bold: "Manrope_700Bold",
+} as const;
+
 export const typography = {
-  h1: { fontSize: 28, fontWeight: "700" as const },
-  h2: { fontSize: 22, fontWeight: "700" as const },
-  h3: { fontSize: 18, fontWeight: "600" as const },
-  body: { fontSize: 15, fontWeight: "400" as const },
-  bodyStrong: { fontSize: 15, fontWeight: "600" as const },
-  caption: { fontSize: 13, fontWeight: "400" as const },
-  captionStrong: { fontSize: 13, fontWeight: "600" as const },
-  label: { fontSize: 11, fontWeight: "700" as const, letterSpacing: 0.6 },
+  h1: { fontSize: 28, fontFamily: fonts.bold },
+  h2: { fontSize: 22, fontFamily: fonts.bold },
+  h3: { fontSize: 18, fontFamily: fonts.semibold },
+  body: { fontSize: 15, fontFamily: fonts.regular },
+  bodyStrong: { fontSize: 15, fontFamily: fonts.semibold },
+  caption: { fontSize: 13, fontFamily: fonts.regular },
+  captionStrong: { fontSize: 13, fontFamily: fonts.semibold },
+  label: { fontSize: 11, fontFamily: fonts.bold, letterSpacing: 0.6 },
 };
 
 export const shadow = {
