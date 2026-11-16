@@ -348,6 +348,7 @@ body.wire .frame img,body.wire .frame video{opacity:.2}
   .pausebtn .ring{animation:none}
   .g-stage::after{animation:none}
 }
+@media (max-width:640px){.pausebtn{width:40px;height:40px;right:max(10px,calc(env(safe-area-inset-right,0px) + 8px));bottom:calc(12px + env(safe-area-inset-bottom,0px));opacity:.85}.pausebtn .core i{height:12px;width:3px}.pausebtn.is-paused .core i:first-child{border-width:7px 0 7px 11px}.pausebtn .tip{display:none}}
 </style>
 </head>
 <body>
@@ -776,7 +777,8 @@ body.wire .frame img,body.wire .frame video{opacity:.2}
   sizeLayer(); addEventListener('load', sizeLayer); addEventListener('resize', sizeLayer); setInterval(sizeLayer, 2000);
   var targets = Array.prototype.slice.call(document.querySelectorAll('[data-agent]'));
   var COLORS = ['#3f6bff','#ff5c39','#22c55e','#f5c518','#e64ce6','#18c5e8','#ff8a00','#a78bfa','#ff3d7f','#7cff6b','#00d1b2','#ffd166'];
-  var N = innerWidth < 640 ? 10 : 24;
+  var MOBILE = innerWidth < 640;
+  var N = MOBILE ? 5 : 24;
   var TEAM = [{name:'jose', c:'#3f6bff', sel:true}];
   for(var k=1;k<N;k++) TEAM.push({name:'', c:COLORS[k % COLORS.length], sel: k % 3 === 0});
   var ACTIONS = ['align','edit text','review','resize','ship','test','refactor','comment','deploy','fix'];
@@ -817,11 +819,15 @@ body.wire .frame img,body.wire .frame video{opacity:.2}
     }
     return true;
   }
-  function visibleTargets(){ return targets.filter(seen); }
+  function visibleTargets(){
+    var list = targets.filter(seen);
+    if(MOBILE) list = list.filter(function(n){ return !n.closest('.g-stage'); });
+    return list;
+  }
 
   function placeSel(a){
     if(!a.sel || !a.target) return;
-    if(a.job || !seen(a.target)){ a.sel.classList.remove('show'); return; }
+    if(a.job || !seen(a.target) || (MOBILE && a.target.closest('.g-stage'))){ a.sel.classList.remove('show'); return; }
     var r = pr(a.target), s = a.sel.style;
     s.left = (r.left-4)+'px'; s.top = (r.top-4)+'px'; s.width = (r.width+8)+'px'; s.height = (r.height+8)+'px';
   }
@@ -848,7 +854,19 @@ body.wire .frame img,body.wire .frame video{opacity:.2}
     if(a.sel) a.sel.classList.remove('show');
     var pool = visibleTargets();
     if(a.sel) pool = pool.filter(function(n){ return !agents.some(function(o){ return o !== a && o.sel && o.target === n; }); });
-    if(!pool.length){ a.timer = setTimeout(function(){ step(a); }, 900/speed); return; }
+    if(!pool.length){
+      if(MOBILE){
+        var st = document.getElementById('g-stage').getBoundingClientRect();
+        if(st.bottom > 0 && st.top < innerHeight){
+          a.target = null; a.anchor = null;
+          var d1 = (2.2 + Math.random()*1.4)/speed;
+          moveTo(a, scrollX + innerWidth*(.55 + Math.random()*.4), scrollY + innerHeight*(Math.random() < .5 ? .05 + Math.random()*.15 : .82 + Math.random()*.1), d1);
+          a.timer = setTimeout(function(){ step(a); }, d1*1000 + 1500 + Math.random()*2000);
+          return;
+        }
+      }
+      a.timer = setTimeout(function(){ step(a); }, 900/speed); return;
+    }
     var n = pool[Math.floor(Math.random()*pool.length)];
     var r = pr(n);
     a.target = n;
