@@ -188,16 +188,20 @@ p{margin:0}
 .frame.media .m-video,.frame.media .m-shot{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top center}
 .frame.media .m-shot{opacity:0;transition:opacity .6s var(--ease),transform .8s var(--ease)}
 .frame.media .m-shot.on{opacity:1}
-.thumbs{position:absolute;right:12px;bottom:12px;display:flex;gap:6px;padding:5px;border-radius:12px;background:rgba(10,10,10,.6);border:1px solid var(--line-strong);backdrop-filter:blur(8px);z-index:2}
-.th{position:relative;width:56px;aspect-ratio:16/10;padding:0;border:1px solid transparent;border-radius:6px;overflow:hidden;background:var(--surface);cursor:pointer;opacity:.6;transition:opacity .25s,border-color .25s,transform .25s var(--ease)}
-.th img{width:100%;height:100%;object-fit:cover;object-position:top}
-.th i{position:absolute;inset:0;display:grid;place-items:center;font-style:normal;font-size:12px;color:#fff;background:rgba(0,0,0,.35)}
-.th:hover,.th:focus-visible{opacity:1;transform:translateY(-2px)}
-.th.on{opacity:1;border-color:var(--text)}
-.th.aim{opacity:1;border-color:var(--c,#3f6bff);box-shadow:0 0 0 2px var(--c,#3f6bff)}
-.th.press{transform:scale(.88)!important;transition:transform .12s}
-.th .bar{position:absolute;left:0;bottom:0;height:2px;width:0;background:var(--text)}
-@media (max-width:640px){.th{width:40px}.thumbs{right:8px;bottom:8px;gap:4px;padding:4px}}
+.frame.media::after{content:"";position:absolute;left:0;right:0;bottom:0;height:34%;background:linear-gradient(to top,rgba(0,0,0,.5),transparent);pointer-events:none;z-index:1}
+.thumbs{position:absolute;left:16px;right:16px;bottom:10px;display:flex;gap:6px;z-index:2}
+.th{position:relative;flex:1;height:22px;padding:0;border:0;background:none;cursor:pointer;transition:transform .15s}
+.th img,.th i{display:none}
+.th::before,.th::after{content:"";position:absolute;left:0;right:0;top:50%;height:3px;margin-top:-1.5px;border-radius:3px}
+.th::before{background:rgba(255,255,255,.32);box-shadow:0 1px 6px rgba(0,0,0,.35);transition:background .25s,height .2s,margin .2s}
+.th::after{background:#fff;transform-origin:left center;transform:scaleX(0)}
+.th.done::after{transform:scaleX(1)}
+.th.on::after{animation:fillbar var(--dur,3s) linear forwards}
+.frame.idle .th.on::after{animation-play-state:paused}
+.th:hover::before,.th:focus-visible::before{background:rgba(255,255,255,.6)}
+.th.aim::before{background:var(--c,#3f6bff);height:5px;margin-top:-2.5px}
+.th.press{transform:scaleY(1.8)}
+@keyframes fillbar{to{transform:scaleX(1)}}
 .frame figcaption{position:absolute;left:14px;top:14px;z-index:2;font:700 10px/1 var(--sans);letter-spacing:.16em;text-transform:uppercase;padding:7px 10px;border-radius:999px;background:rgba(10,10,10,.72);border:1px solid var(--line-strong);backdrop-filter:blur(6px);color:var(--text)}
 .proj-body{display:flex;flex-direction:column;gap:14px;min-width:0}
 .proj h3{overflow-wrap:anywhere;font:800 clamp(28px,3.2vw,44px)/.92 var(--sans);text-transform:uppercase;letter-spacing:-.02em;margin:0}
@@ -306,17 +310,21 @@ body[data-mode="A"] .bp-back{opacity:1}
 .sel i::before{left:-4px;bottom:-4px}.sel i::after{right:-4px;bottom:-4px}
 .sel em{position:absolute;left:-1px;top:-21px;font:800 10px/1 var(--sans);letter-spacing:.04em;font-style:normal;padding:4px 6px;border-radius:3px;background:var(--c);color:#0A0A0A;white-space:nowrap}
 
-/* HUD */
-.hud{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:55;display:flex;align-items:center;gap:12px;padding:8px 8px 8px 14px;border:1px solid var(--line-strong);border-radius:999px;background:rgba(20,20,20,.88);backdrop-filter:blur(10px);font:700 11px/1 var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);white-space:nowrap;max-width:calc(100% - 32px)}
-.hud .dots{display:flex}
-.hud .dots i{width:10px;height:10px;border-radius:50%;margin-left:-3px;border:1px solid var(--surface)}
-.hud .dots i:first-child{margin-left:0}
-.hud b{color:var(--text);font-weight:800;font-variant-numeric:tabular-nums}
-.hud .bar{width:64px;height:2px;background:var(--line-strong);overflow:hidden}
-.hud .bar i{display:block;height:100%;background:var(--text);width:0;transition:width .4s}
-.hud button{font:inherit;letter-spacing:inherit;text-transform:inherit;color:var(--text);background:var(--surface-2);border:1px solid var(--line);border-radius:999px;padding:7px 11px;cursor:pointer}
-.hud button[aria-pressed="true"]{background:var(--text);color:var(--ink)}
-@media (max-width:560px){.hud .bar,.hud .lyr{display:none}}
+/* botón de pausa de los cursores */
+.pausebtn{position:fixed;right:max(20px,calc(env(safe-area-inset-right,0px) + 16px));bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:55;width:56px;height:56px;padding:0;border:0;border-radius:50%;background:none;cursor:pointer;display:grid;place-items:center;-webkit-tap-highlight-color:transparent}
+.pausebtn .ring{position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 0deg,#3f6bff,#18c5e8,#22c55e,#f5c518,#ff8a00,#ff5c39,#ff3d7f,#e64ce6,#a78bfa,#3f6bff);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 2px),#000 calc(100% - 2px));mask:radial-gradient(farthest-side,transparent calc(100% - 2px),#000 calc(100% - 2px));animation:spin 6s linear infinite;transition:opacity .4s,filter .4s}
+.pausebtn .core{position:absolute;inset:4px;border-radius:50%;background:rgba(20,20,20,.86);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:0 10px 30px rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;gap:5px;transition:transform .3s var(--ease),background .3s}
+.pausebtn .core i{display:block;width:4px;height:16px;border-radius:2px;background:var(--text);transition:all .35s var(--ease)}
+.pausebtn.is-paused .core{gap:0}
+.pausebtn.is-paused .core i:first-child{width:0;height:0;border-radius:0;background:none;border-style:solid;border-width:9px 0 9px 15px;border-color:transparent transparent transparent var(--text);margin-left:4px}
+.pausebtn.is-paused .core i:last-child{width:0;opacity:0}
+.pausebtn.is-paused .ring{animation-play-state:paused;filter:grayscale(1);opacity:.45}
+.pausebtn:hover .core{transform:scale(1.06);background:rgba(30,30,30,.92)}
+.pausebtn:active .core{transform:scale(.94)}
+.pausebtn:focus-visible{outline:2px solid var(--text);outline-offset:4px}
+.pausebtn .tip{position:absolute;right:calc(100% + 12px);top:50%;transform:translate(6px,-50%);opacity:0;pointer-events:none;white-space:nowrap;padding:8px 12px;border-radius:999px;background:rgba(20,20,20,.92);border:1px solid var(--line-strong);font:700 11px/1 var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--text);transition:opacity .25s,transform .25s var(--ease)}
+.pausebtn:hover .tip,.pausebtn:focus-visible .tip{opacity:1;transform:translate(0,-50%)}
+@keyframes spin{to{transform:rotate(360deg)}}
 
 /* modo capas */
 body.wire .row,body.wire .proj,body.wire .proj-body,body.wire .sec-head,body.wire .facts>div,body.wire .steps li,body.wire .hero h1{outline:1px dashed rgba(127,127,127,.6);outline-offset:4px}
@@ -328,6 +336,7 @@ body.wire .frame img,body.wire .frame video{opacity:.2}
   html{scroll-behavior:auto}
   .hero .in,.cue svg,.live::before,.mm.open .mm-list a,.mm.open .mm-side a.sec-link{animation:none;opacity:1;transform:none}
   .agent,.frame img,.frame video{transition:none}
+  .pausebtn .ring{animation:none}
 }
 </style>
 </head>
@@ -451,7 +460,7 @@ body.wire .frame img,body.wire .frame video{opacity:.2}
           <figure class="frame media" data-media>
             <video class="m-video" src="assets/projects/cotizapet/loop.mp4" poster="assets/projects/cotizapet/poster.jpg" muted loop playsinline preload="none" aria-label="CotizaPet en vivo: portada, ofertas del día, catálogo y comparación de precios entre tiendas"></video><img class="m-shot" src="assets/projects/cotizapet/desktop-1-hero.jpg" alt="CotizaPet en vivo: portada, ofertas del día, catálogo y comparación de precios entre tiendas" loading="lazy">
             <figcaption>En vivo · cotizapet.cl</figcaption>
-            <div class="thumbs" role="group" aria-label="Pantallas de CotizaPet"><button type="button" class="th on" data-kind="video" aria-label="Ver video"><img src="assets/projects/cotizapet/poster.jpg" alt=""><i>▶</i></button><button type="button" class="th" data-src="assets/projects/cotizapet/desktop-1-hero.jpg" data-cap="Portada con categorías" aria-label="Portada con categorías"><img src="assets/projects/cotizapet/desktop-1-hero.jpg" alt="" loading="lazy"></button><button type="button" class="th" data-src="assets/projects/cotizapet/desktop-2.jpg" data-cap="Mejores diferencias del día" aria-label="Mejores diferencias del día"><img src="assets/projects/cotizapet/desktop-2.jpg" alt="" loading="lazy"></button><button type="button" class="th" data-src="assets/projects/cotizapet/desktop-3.jpg" data-cap="Catálogo de alimentos" aria-label="Catálogo de alimentos"><img src="assets/projects/cotizapet/desktop-3.jpg" alt="" loading="lazy"></button><button type="button" class="th" data-src="assets/projects/cotizapet/desktop-4.jpg" data-cap="Comparación entre 10 tiendas" aria-label="Comparación entre 10 tiendas"><img src="assets/projects/cotizapet/desktop-4.jpg" alt="" loading="lazy"></button></div>
+            <div class="thumbs" role="group" aria-label="Pantallas de CotizaPet"><button type="button" class="th" data-kind="video" aria-label="Ver video"><img src="assets/projects/cotizapet/poster.jpg" alt=""><i>▶</i></button><button type="button" class="th" data-src="assets/projects/cotizapet/desktop-1-hero.jpg" data-cap="Portada con categorías" aria-label="Portada con categorías"><img src="assets/projects/cotizapet/desktop-1-hero.jpg" alt="" loading="lazy"></button><button type="button" class="th" data-src="assets/projects/cotizapet/desktop-2.jpg" data-cap="Mejores diferencias del día" aria-label="Mejores diferencias del día"><img src="assets/projects/cotizapet/desktop-2.jpg" alt="" loading="lazy"></button><button type="button" class="th" data-src="assets/projects/cotizapet/desktop-3.jpg" data-cap="Catálogo de alimentos" aria-label="Catálogo de alimentos"><img src="assets/projects/cotizapet/desktop-3.jpg" alt="" loading="lazy"></button><button type="button" class="th" data-src="assets/projects/cotizapet/desktop-4.jpg" data-cap="Comparación entre 10 tiendas" aria-label="Comparación entre 10 tiendas"><img src="assets/projects/cotizapet/desktop-4.jpg" alt="" loading="lazy"></button></div>
           </figure>
           <div class="proj-body">
             <div class="eyebrow">Plataforma · Comparador de precios</div>
@@ -467,7 +476,7 @@ body.wire .frame img,body.wire .frame video{opacity:.2}
           <figure class="frame media" data-media>
             <video class="m-video" src="assets/projects/coto-fpv/loop.mp4" poster="assets/projects/coto-fpv/poster.jpg" muted loop playsinline preload="none" aria-label="Tomas reales de Coto FPV: dron persiguiendo una moto en la Cuesta Barriga"></video><img class="m-shot" src="assets/projects/coto-fpv/desktop-1-hero.jpg" alt="Tomas reales de Coto FPV: dron persiguiendo una moto en la Cuesta Barriga" loading="lazy">
             <figcaption>Tomas reales · Cuesta Barriga</figcaption>
-            <div class="thumbs" role="group" aria-label="Pantallas de Coto FPV"><button type="button" class="th on" data-kind="video" aria-label="Ver video"><img src="assets/projects/coto-fpv/poster.jpg" alt=""><i>▶</i></button><button type="button" class="th" data-src="assets/projects/coto-fpv/desktop-2.jpg" data-cap="En la curva" aria-label="En la curva"><img src="assets/projects/coto-fpv/desktop-2.jpg" alt="" loading="lazy"></button><button type="button" class="th" data-src="assets/projects/coto-fpv/desktop-3.jpg" data-cap="A ras del asfalto" aria-label="A ras del asfalto"><img src="assets/projects/coto-fpv/desktop-3.jpg" alt="" loading="lazy"></button><button type="button" class="th" data-src="assets/projects/coto-fpv/desktop-4.jpg" data-cap="Frente a la moto" aria-label="Frente a la moto"><img src="assets/projects/coto-fpv/desktop-4.jpg" alt="" loading="lazy"></button></div>
+            <div class="thumbs" role="group" aria-label="Pantallas de Coto FPV"><button type="button" class="th" data-kind="video" aria-label="Ver video"><img src="assets/projects/coto-fpv/poster.jpg" alt=""><i>▶</i></button><button type="button" class="th" data-src="assets/projects/coto-fpv/desktop-2.jpg" data-cap="En la curva" aria-label="En la curva"><img src="assets/projects/coto-fpv/desktop-2.jpg" alt="" loading="lazy"></button><button type="button" class="th" data-src="assets/projects/coto-fpv/desktop-3.jpg" data-cap="A ras del asfalto" aria-label="A ras del asfalto"><img src="assets/projects/coto-fpv/desktop-3.jpg" alt="" loading="lazy"></button><button type="button" class="th" data-src="assets/projects/coto-fpv/desktop-4.jpg" data-cap="Frente a la moto" aria-label="Frente a la moto"><img src="assets/projects/coto-fpv/desktop-4.jpg" alt="" loading="lazy"></button></div>
           </figure>
           <div class="proj-body">
             <div class="eyebrow">Sitio 3D · FPV</div>
@@ -483,7 +492,7 @@ body.wire .frame img,body.wire .frame video{opacity:.2}
           <figure class="frame media" data-media>
             <video class="m-video" src="assets/projects/prime-performance/loop.mp4" poster="assets/projects/prime-performance/poster.jpg" muted loop playsinline preload="none" aria-label="Prime Performance en vivo: portada, trayectoria, planes y planilla de contratación"></video><img class="m-shot" src="assets/projects/prime-performance/desktop-1-hero.jpg" alt="Prime Performance en vivo: portada, trayectoria, planes y planilla de contratación" loading="lazy">
             <figcaption>En vivo · primeperformancee.cl</figcaption>
-            <div class="thumbs" role="group" aria-label="Pantallas de Prime Performance"><button type="button" class="th on" data-kind="video" aria-label="Ver video"><img src="assets/projects/prime-performance/poster.jpg" alt=""><i>▶</i></button><button type="button" class="th" data-src="assets/projects/prime-performance/desktop-1-hero.jpg" data-cap="Portada con Kilya Marchant" aria-label="Portada con Kilya Marchant"><img src="assets/projects/prime-performance/desktop-1-hero.jpg" alt="" loading="lazy"></button><button type="button" class="th" data-src="assets/projects/prime-performance/desktop-2.jpg" data-cap="Trayectoria" aria-label="Trayectoria"><img src="assets/projects/prime-performance/desktop-2.jpg" alt="" loading="lazy"></button><button type="button" class="th" data-src="assets/projects/prime-performance/desktop-3.jpg" data-cap="Planes de entrenamiento" aria-label="Planes de entrenamiento"><img src="assets/projects/prime-performance/desktop-3.jpg" alt="" loading="lazy"></button><button type="button" class="th" data-src="assets/projects/prime-performance/desktop-4.jpg" data-cap="Planilla de contratación" aria-label="Planilla de contratación"><img src="assets/projects/prime-performance/desktop-4.jpg" alt="" loading="lazy"></button></div>
+            <div class="thumbs" role="group" aria-label="Pantallas de Prime Performance"><button type="button" class="th" data-kind="video" aria-label="Ver video"><img src="assets/projects/prime-performance/poster.jpg" alt=""><i>▶</i></button><button type="button" class="th" data-src="assets/projects/prime-performance/desktop-1-hero.jpg" data-cap="Portada con Kilya Marchant" aria-label="Portada con Kilya Marchant"><img src="assets/projects/prime-performance/desktop-1-hero.jpg" alt="" loading="lazy"></button><button type="button" class="th" data-src="assets/projects/prime-performance/desktop-2.jpg" data-cap="Trayectoria" aria-label="Trayectoria"><img src="assets/projects/prime-performance/desktop-2.jpg" alt="" loading="lazy"></button><button type="button" class="th" data-src="assets/projects/prime-performance/desktop-3.jpg" data-cap="Planes de entrenamiento" aria-label="Planes de entrenamiento"><img src="assets/projects/prime-performance/desktop-3.jpg" alt="" loading="lazy"></button><button type="button" class="th" data-src="assets/projects/prime-performance/desktop-4.jpg" data-cap="Planilla de contratación" aria-label="Planilla de contratación"><img src="assets/projects/prime-performance/desktop-4.jpg" alt="" loading="lazy"></button></div>
           </figure>
           <div class="proj-body">
             <div class="eyebrow">Sitio web · CrossFit</div>
@@ -499,7 +508,7 @@ body.wire .frame img,body.wire .frame video{opacity:.2}
           <figure class="frame media" data-media>
             <video class="m-video" src="assets/projects/horai/loop.mp4" poster="assets/projects/horai/poster.jpg" muted loop playsinline preload="none" aria-label="Horai en vivo: portada, demo de reserva, agendas con identidad propia y precio"></video><img class="m-shot" src="assets/projects/horai/desktop-1-hero.jpg" alt="Horai en vivo: portada, demo de reserva, agendas de una barbería y otros negocios, y precio" loading="lazy">
             <figcaption>En vivo · horai.cl</figcaption>
-            <div class="thumbs" role="group" aria-label="Pantallas de Horai"><button type="button" class="th on" data-kind="video" aria-label="Ver video"><img src="assets/projects/horai/poster.jpg" alt=""><i>▶</i></button><button type="button" class="th" data-src="assets/projects/horai/desktop-1-hero.jpg" data-cap="Portada" aria-label="Portada"><img src="assets/projects/horai/desktop-1-hero.jpg" alt="" loading="lazy"></button><button type="button" class="th" data-src="assets/projects/horai/desktop-3.jpg" data-cap="Barbería, uñas, kine y salón" aria-label="Barbería, uñas, kine y salón"><img src="assets/projects/horai/desktop-3.jpg" alt="" loading="lazy"></button><button type="button" class="th" data-src="assets/projects/horai/desktop-2.jpg" data-cap="Demo de reserva" aria-label="Demo de reserva"><img src="assets/projects/horai/desktop-2.jpg" alt="" loading="lazy"></button><button type="button" class="th" data-src="assets/projects/horai/desktop-4.jpg" data-cap="Un plan, sin letra chica" aria-label="Un plan, sin letra chica"><img src="assets/projects/horai/desktop-4.jpg" alt="" loading="lazy"></button></div>
+            <div class="thumbs" role="group" aria-label="Pantallas de Horai"><button type="button" class="th" data-kind="video" aria-label="Ver video"><img src="assets/projects/horai/poster.jpg" alt=""><i>▶</i></button><button type="button" class="th" data-src="assets/projects/horai/desktop-1-hero.jpg" data-cap="Portada" aria-label="Portada"><img src="assets/projects/horai/desktop-1-hero.jpg" alt="" loading="lazy"></button><button type="button" class="th" data-src="assets/projects/horai/desktop-3.jpg" data-cap="Barbería, uñas, kine y salón" aria-label="Barbería, uñas, kine y salón"><img src="assets/projects/horai/desktop-3.jpg" alt="" loading="lazy"></button><button type="button" class="th" data-src="assets/projects/horai/desktop-2.jpg" data-cap="Demo de reserva" aria-label="Demo de reserva"><img src="assets/projects/horai/desktop-2.jpg" alt="" loading="lazy"></button><button type="button" class="th" data-src="assets/projects/horai/desktop-4.jpg" data-cap="Un plan, sin letra chica" aria-label="Un plan, sin letra chica"><img src="assets/projects/horai/desktop-4.jpg" alt="" loading="lazy"></button></div>
           </figure>
           <div class="proj-body">
             <div class="eyebrow">SaaS propio · Agenda online</div>
@@ -515,7 +524,7 @@ body.wire .frame img,body.wire .frame video{opacity:.2}
           <figure class="frame media" data-media>
             <video class="m-video" src="assets/projects/solstudio/loop.mp4" poster="assets/projects/solstudio/poster.jpg" muted loop playsinline preload="none" aria-label="SolStudio en vivo: portada, servicios, ficha y reserva de hora"></video><img class="m-shot" src="assets/projects/solstudio/desktop-1-hero.jpg" alt="SolStudio en vivo: portada, servicios, ficha y reserva de hora" loading="lazy">
             <figcaption>En vivo · solstudio.cl</figcaption>
-            <div class="thumbs" role="group" aria-label="Pantallas de SolStudio"><button type="button" class="th on" data-kind="video" aria-label="Ver video"><img src="assets/projects/solstudio/poster.jpg" alt=""><i>▶</i></button><button type="button" class="th" data-src="assets/projects/solstudio/desktop-1-hero.jpg" data-cap="Portada del salón" aria-label="Portada del salón"><img src="assets/projects/solstudio/desktop-1-hero.jpg" alt="" loading="lazy"></button><button type="button" class="th" data-src="assets/projects/solstudio/desktop-2.jpg" data-cap="Servicios destacados" aria-label="Servicios destacados"><img src="assets/projects/solstudio/desktop-2.jpg" alt="" loading="lazy"></button><button type="button" class="th" data-src="assets/projects/solstudio/desktop-3.jpg" data-cap="Ficha de un servicio" aria-label="Ficha de un servicio"><img src="assets/projects/solstudio/desktop-3.jpg" alt="" loading="lazy"></button><button type="button" class="th" data-src="assets/projects/solstudio/desktop-4.jpg" data-cap="Elegir día y hora" aria-label="Elegir día y hora"><img src="assets/projects/solstudio/desktop-4.jpg" alt="" loading="lazy"></button></div>
+            <div class="thumbs" role="group" aria-label="Pantallas de SolStudio"><button type="button" class="th" data-kind="video" aria-label="Ver video"><img src="assets/projects/solstudio/poster.jpg" alt=""><i>▶</i></button><button type="button" class="th" data-src="assets/projects/solstudio/desktop-1-hero.jpg" data-cap="Portada del salón" aria-label="Portada del salón"><img src="assets/projects/solstudio/desktop-1-hero.jpg" alt="" loading="lazy"></button><button type="button" class="th" data-src="assets/projects/solstudio/desktop-2.jpg" data-cap="Servicios destacados" aria-label="Servicios destacados"><img src="assets/projects/solstudio/desktop-2.jpg" alt="" loading="lazy"></button><button type="button" class="th" data-src="assets/projects/solstudio/desktop-3.jpg" data-cap="Ficha de un servicio" aria-label="Ficha de un servicio"><img src="assets/projects/solstudio/desktop-3.jpg" alt="" loading="lazy"></button><button type="button" class="th" data-src="assets/projects/solstudio/desktop-4.jpg" data-cap="Elegir día y hora" aria-label="Elegir día y hora"><img src="assets/projects/solstudio/desktop-4.jpg" alt="" loading="lazy"></button></div>
           </figure>
           <div class="proj-body">
             <div class="eyebrow">Reservas · Salón de belleza</div>
@@ -531,7 +540,7 @@ body.wire .frame img,body.wire .frame video{opacity:.2}
           <figure class="frame media" data-media>
             <img class="m-shot on" src="assets/projects/las-condes-7350/desktop-1-hero.jpg" alt="Las Condes 7350: portada, recorrido de obra y departamentos" loading="lazy">
             <figcaption>Demo · imágenes referenciales</figcaption>
-            <div class="thumbs" role="group" aria-label="Pantallas de Las Condes 7350"><button type="button" class="th on" data-src="assets/projects/las-condes-7350/desktop-1-hero.jpg" data-cap="Portada con precio en UF" aria-label="Portada con precio en UF"><img src="assets/projects/las-condes-7350/desktop-1-hero.jpg" alt="" loading="lazy"></button><button type="button" class="th" data-src="assets/projects/las-condes-7350/desktop-2.jpg" data-cap="Etapa 3 · terminaciones" aria-label="Etapa 3 · terminaciones"><img src="assets/projects/las-condes-7350/desktop-2.jpg" alt="" loading="lazy"></button><button type="button" class="th" data-src="assets/projects/las-condes-7350/desktop-3.jpg" data-cap="Cowork" aria-label="Cowork"><img src="assets/projects/las-condes-7350/desktop-3.jpg" alt="" loading="lazy"></button><button type="button" class="th" data-src="assets/projects/las-condes-7350/desktop-4.jpg" data-cap="Elige tu departamento" aria-label="Elige tu departamento"><img src="assets/projects/las-condes-7350/desktop-4.jpg" alt="" loading="lazy"></button></div>
+            <div class="thumbs" role="group" aria-label="Pantallas de Las Condes 7350"><button type="button" class="th" data-src="assets/projects/las-condes-7350/desktop-1-hero.jpg" data-cap="Portada con precio en UF" aria-label="Portada con precio en UF"><img src="assets/projects/las-condes-7350/desktop-1-hero.jpg" alt="" loading="lazy"></button><button type="button" class="th" data-src="assets/projects/las-condes-7350/desktop-2.jpg" data-cap="Etapa 3 · terminaciones" aria-label="Etapa 3 · terminaciones"><img src="assets/projects/las-condes-7350/desktop-2.jpg" alt="" loading="lazy"></button><button type="button" class="th" data-src="assets/projects/las-condes-7350/desktop-3.jpg" data-cap="Cowork" aria-label="Cowork"><img src="assets/projects/las-condes-7350/desktop-3.jpg" alt="" loading="lazy"></button><button type="button" class="th" data-src="assets/projects/las-condes-7350/desktop-4.jpg" data-cap="Elige tu departamento" aria-label="Elige tu departamento"><img src="assets/projects/las-condes-7350/desktop-4.jpg" alt="" loading="lazy"></button></div>
           </figure>
           <div class="proj-body">
             <div class="eyebrow">Inmobiliaria · Demo</div>
@@ -546,7 +555,7 @@ body.wire .frame img,body.wire .frame video{opacity:.2}
           <figure class="frame media" data-media>
             <img class="m-shot on" src="assets/projects/chf-abogados/desktop-1-hero.jpg" alt="CHF Abogados en vivo: portada, estudio, equipo y contacto" loading="lazy">
             <figcaption>En vivo · chfabogados.cl</figcaption>
-            <div class="thumbs" role="group" aria-label="Pantallas de CHF Abogados"><button type="button" class="th on" data-src="assets/projects/chf-abogados/desktop-1-hero.jpg" data-cap="Portada" aria-label="Portada"><img src="assets/projects/chf-abogados/desktop-1-hero.jpg" alt="" loading="lazy"></button><button type="button" class="th" data-src="assets/projects/chf-abogados/desktop-2.jpg" data-cap="Sobre nosotros" aria-label="Sobre nosotros"><img src="assets/projects/chf-abogados/desktop-2.jpg" alt="" loading="lazy"></button><button type="button" class="th" data-src="assets/projects/chf-abogados/desktop-3.jpg" data-cap="Equipo" aria-label="Equipo"><img src="assets/projects/chf-abogados/desktop-3.jpg" alt="" loading="lazy"></button><button type="button" class="th" data-src="assets/projects/chf-abogados/desktop-4.jpg" data-cap="Contacto" aria-label="Contacto"><img src="assets/projects/chf-abogados/desktop-4.jpg" alt="" loading="lazy"></button></div>
+            <div class="thumbs" role="group" aria-label="Pantallas de CHF Abogados"><button type="button" class="th" data-src="assets/projects/chf-abogados/desktop-1-hero.jpg" data-cap="Portada" aria-label="Portada"><img src="assets/projects/chf-abogados/desktop-1-hero.jpg" alt="" loading="lazy"></button><button type="button" class="th" data-src="assets/projects/chf-abogados/desktop-2.jpg" data-cap="Sobre nosotros" aria-label="Sobre nosotros"><img src="assets/projects/chf-abogados/desktop-2.jpg" alt="" loading="lazy"></button><button type="button" class="th" data-src="assets/projects/chf-abogados/desktop-3.jpg" data-cap="Equipo" aria-label="Equipo"><img src="assets/projects/chf-abogados/desktop-3.jpg" alt="" loading="lazy"></button><button type="button" class="th" data-src="assets/projects/chf-abogados/desktop-4.jpg" data-cap="Contacto" aria-label="Contacto"><img src="assets/projects/chf-abogados/desktop-4.jpg" alt="" loading="lazy"></button></div>
           </figure>
           <div class="proj-body">
             <div class="eyebrow">Servicios profesionales</div>
@@ -561,7 +570,7 @@ body.wire .frame img,body.wire .frame video{opacity:.2}
           <figure class="frame media" data-media>
             <img class="m-shot on" src="assets/projects/bionautica/desktop-1-hero.jpg" alt="Bionáutica en vivo: portada, zonas, cita y áreas" loading="lazy">
             <figcaption>En vivo · bionautica.cl</figcaption>
-            <div class="thumbs" role="group" aria-label="Pantallas de Bionáutica"><button type="button" class="th on" data-src="assets/projects/bionautica/desktop-1-hero.jpg" data-cap="Portada del mapa" aria-label="Portada del mapa"><img src="assets/projects/bionautica/desktop-1-hero.jpg" alt="" loading="lazy"></button><button type="button" class="th" data-src="assets/projects/bionautica/desktop-2.jpg" data-cap="Zonas temáticas" aria-label="Zonas temáticas"><img src="assets/projects/bionautica/desktop-2.jpg" alt="" loading="lazy"></button><button type="button" class="th" data-src="assets/projects/bionautica/desktop-3.jpg" data-cap="Cita" aria-label="Cita"><img src="assets/projects/bionautica/desktop-3.jpg" alt="" loading="lazy"></button><button type="button" class="th" data-src="assets/projects/bionautica/desktop-4.jpg" data-cap="Áreas emergentes" aria-label="Áreas emergentes"><img src="assets/projects/bionautica/desktop-4.jpg" alt="" loading="lazy"></button></div>
+            <div class="thumbs" role="group" aria-label="Pantallas de Bionáutica"><button type="button" class="th" data-src="assets/projects/bionautica/desktop-1-hero.jpg" data-cap="Portada del mapa" aria-label="Portada del mapa"><img src="assets/projects/bionautica/desktop-1-hero.jpg" alt="" loading="lazy"></button><button type="button" class="th" data-src="assets/projects/bionautica/desktop-2.jpg" data-cap="Zonas temáticas" aria-label="Zonas temáticas"><img src="assets/projects/bionautica/desktop-2.jpg" alt="" loading="lazy"></button><button type="button" class="th" data-src="assets/projects/bionautica/desktop-3.jpg" data-cap="Cita" aria-label="Cita"><img src="assets/projects/bionautica/desktop-3.jpg" alt="" loading="lazy"></button><button type="button" class="th" data-src="assets/projects/bionautica/desktop-4.jpg" data-cap="Áreas emergentes" aria-label="Áreas emergentes"><img src="assets/projects/bionautica/desktop-4.jpg" alt="" loading="lazy"></button></div>
           </figure>
           <div class="proj-body">
             <div class="eyebrow">Mapa interactivo · Educación</div>
@@ -613,16 +622,11 @@ body.wire .frame img,body.wire .frame video{opacity:.2}
 <div class="bp-back" aria-hidden="true"></div>
 <div id="agents" aria-hidden="true"></div>
 
-<div class="hud" role="toolbar" aria-label="Controles de los cursores">
-  <span class="dots" id="hud-dots"></span>
-  <span><b id="hud-count">0</b> cursores</span>
-  <span class="bar" aria-hidden="true"><i id="hud-bar"></i></span>
-  <span class="mode" id="hud-mode"><i></i><span>Listo</span></span>
-  <span class="lyr"><b id="hud-built">0</b> / <span id="hud-total">0</span> piezas</span>
-  <button type="button" id="btn-wire" aria-pressed="false">Capas</button>
-  <button type="button" id="btn-speed">1x</button>
-  <button type="button" id="btn-pause" aria-pressed="false" aria-label="Pausar cursores">❚❚</button>
-</div>
+<button type="button" class="pausebtn" id="btn-pause" aria-pressed="false" aria-label="Pausar cursores">
+  <span class="ring" aria-hidden="true"></span>
+  <span class="core" aria-hidden="true"><i></i><i></i></span>
+  <span class="tip" aria-hidden="true">Pausar cursores</span>
+</button>
 
 <script>
 (function(){
@@ -715,7 +719,7 @@ body.wire .frame img,body.wire .frame video{opacity:.2}
       var video = fr.querySelector('.m-video'), shot = fr.querySelector('.m-shot'), cap = fr.querySelector('figcaption');
       var ths = Array.prototype.slice.call(fr.querySelectorAll('.th')), idx = 0, timer = null, visible = false, touched = false, baseCap = cap.textContent;
       function show(i, user){
-        idx = i; ths.forEach(function(t,k){ t.classList.toggle('on', k === i); });
+        idx = i; ths.forEach(function(t,k){ t.classList.remove('on'); t.classList.toggle('done', k < i); });
         var t = ths[i];
         if(t.dataset.kind === 'video'){ shot.classList.remove('on'); cap.textContent = baseCap; if(visible && video) video.play().catch(function(){}); }
         else {
@@ -731,6 +735,7 @@ body.wire .frame img,body.wire .frame video{opacity:.2}
         clearTimeout(timer);
         if(reduce || !visible) return;
         var t = ths[idx], wait = ms || (t.dataset.kind === 'video' ? 8000 : 3000);
+        t.style.setProperty('--dur', wait + 'ms'); t.classList.remove('on'); void t.offsetWidth; t.classList.add('on');
         timer = setTimeout(function(){
           var nx = (idx + 1) % ths.length;
           var go = function(){ if(!visible) return; show(nx); schedule(); };
@@ -740,7 +745,7 @@ body.wire .frame img,body.wire .frame video{opacity:.2}
       ths.forEach(function(t,i){ t.addEventListener('click', function(){ show(i, true); }); });
       if('IntersectionObserver' in window){
         new IntersectionObserver(function(es){ es.forEach(function(e){
-          visible = e.isIntersecting;
+          visible = e.isIntersecting; fr.classList.toggle('idle', !visible);
           if(visible){ if(video && ths[idx].dataset.kind === 'video' && !reduce) video.play().catch(function(){}); schedule(); }
           else { clearTimeout(timer); if(video) video.pause(); }
         }); }, {threshold:.35}).observe(fr);
@@ -749,6 +754,7 @@ body.wire .frame img,body.wire .frame video{opacity:.2}
   })();
 
   /* ---------- cursores ---------- */
+  function byId(id){ return document.getElementById(id) || (function(){ var e = document.createElement('span'); e.appendChild(document.createElement('span')); return e; })(); }
   var layer = document.getElementById('agents');
   /* los cursores viven en la capa de la página: coordenadas del documento, no de la pantalla */
   function pr(el){ var r = el.getBoundingClientRect(); return {left:r.left+scrollX, top:r.top+scrollY, right:r.right+scrollX, bottom:r.bottom+scrollY, width:r.width, height:r.height}; }
@@ -762,8 +768,8 @@ body.wire .frame img,body.wire .frame video{opacity:.2}
   var ACTIONS = ['align','edit text','review','resize','ship','test','refactor','comment','deploy','fix'];
   var speed = 1, paused = false;
 
-  document.getElementById('hud-count').textContent = String(TEAM.length);
-  var dots = document.getElementById('hud-dots');
+  byId('hud-count').textContent = String(TEAM.length);
+  var dots = byId('hud-dots');
   TEAM.slice(0,6).forEach(function(t){ var d=document.createElement('i'); d.style.background = t.c; dots.appendChild(d); });
 
   function cursorSVG(c){
@@ -911,8 +917,8 @@ body.wire .frame img,body.wire .frame video{opacity:.2}
     return {el:el, name:name, delay:delay, mode:mode, pieces:pieces, code:code, ends:ends, t:0, b:0, ov:null, done:false, crew:[], c:COLORS[i % COLORS.length], paper: !!el.closest('.paper')};
   });
   var built = 0, curMode = null;
-  var hudBuilt = document.getElementById('hud-built'), hudBar = document.getElementById('hud-bar'), hudMode = document.getElementById('hud-mode');
-  document.getElementById('hud-total').textContent = String(bs.length);
+  var hudBuilt = byId('hud-built'), hudBar = byId('hud-bar'), hudMode = byId('hud-mode');
+  byId('hud-total').textContent = String(bs.length);
 
   function setMode(m){
     if(m === curMode) return;
@@ -1132,18 +1138,13 @@ body.wire .frame img,body.wire .frame video{opacity:.2}
   function setPaused(p){
     paused = p;
     bPause.setAttribute('aria-pressed', String(p));
-    bPause.textContent = p ? '▶' : '❚❚';
+    bPause.classList.toggle('is-paused', p); bPause.querySelector('.tip').textContent = p ? 'Reanudar cursores' : 'Pausar cursores';
     bPause.setAttribute('aria-label', p ? 'Reanudar cursores' : 'Pausar cursores');
     layer.style.visibility = p ? 'hidden' : 'visible';
     if(p){ agents.forEach(function(a){ clearTimeout(a.timer); }); } else { startAll(); }
   }
   bPause.addEventListener('click', function(){ setPaused(!paused); });
 
-  var bSpeed = document.getElementById('btn-speed');
-  bSpeed.addEventListener('click', function(){ speed = speed === 1 ? 2 : 1; bSpeed.textContent = speed + 'x'; if(!paused) startAll(); });
-
-  var bWire = document.getElementById('btn-wire');
-  bWire.addEventListener('click', function(){ var on = document.body.classList.toggle('wire'); bWire.setAttribute('aria-pressed', String(on)); });
 
   if(reduce){ document.querySelectorAll('video[autoplay]').forEach(function(v){ v.removeAttribute('autoplay'); try{ v.pause(); }catch(e){} }); hudBuilt.textContent = String(bs.length); setPaused(true); }
   else { kick(); startAll(); }
