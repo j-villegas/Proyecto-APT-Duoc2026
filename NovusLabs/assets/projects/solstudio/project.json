@@ -1,0 +1,25 @@
+{
+  "slug": "solstudio",
+  "nombre": "SolStudio",
+  "url": "https://solstudio.cl",
+  "categoria": "Plataforma · Reservas online para salón de belleza",
+  "resumen": "Sitio de reservas para un salón de belleza en Padre Hurtado: la clienta elige servicio, día y hora, y deja su abono.",
+  "descripcion": "SolStudio es la plataforma de reservas de un salón de belleza en Padre Hurtado. Las clientas revisan el catálogo con precios, duración y requisitos de cada servicio, y agendan en tres pasos desde el celular. La dueña administra agenda, servicios, profesionales y bloqueos de horario desde su propio panel.",
+  "destacados": [
+    "Reserva en tres pasos con elección de día, hora y profesional, y abono para confirmar la hora",
+    "Ficha de cada servicio con opciones, requisitos antes de venir, reglas y pago, más consultas y cotizaciones por WhatsApp",
+    "Panel para la dueña con agenda diaria y semanal, reservas manuales y bloqueo de horarios"
+  ],
+  "cifras": [
+    { "valor": "15", "etiqueta": "servicios en el catálogo" },
+    { "valor": "3", "etiqueta": "profesionales con agenda propia" },
+    { "valor": "3", "etiqueta": "pasos para reservar" }
+  ],
+  "stack": ["Next.js 15", "React 19", "TypeScript", "Supabase", "Vercel"],
+  "estado": "En vivo",
+  "anio": 2026,
+  "capturas": ["desktop-1-hero.jpg", "desktop-2.jpg", "desktop-3.jpg", "desktop-4.jpg", "mobile-1-hero.jpg", "mobile-2.jpg"],
+  "video": "loop.mp4",
+  "video_mobile": "loop-mobile.mp4",
+  "poster": "poster.jpg"
+}

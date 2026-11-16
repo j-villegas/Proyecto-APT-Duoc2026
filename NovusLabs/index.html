@@ -184,10 +184,22 @@ p{margin:0}
 .frame.slot{aspect-ratio:16/10;display:grid;place-items:center;border-style:dashed;border-color:var(--line-strong);background:repeating-linear-gradient(135deg,transparent 0 12px,rgba(255,255,255,.025) 12px 13px)}
 .frame.slot div{text-align:center;display:grid;gap:8px}
 .frame.slot strong{font:800 clamp(20px,2.4vw,30px)/1 var(--sans);text-transform:uppercase;letter-spacing:-.01em}
-.frame figcaption{position:absolute;left:14px;bottom:14px;font:700 10px/1 var(--sans);letter-spacing:.16em;text-transform:uppercase;padding:7px 10px;border-radius:999px;background:rgba(10,10,10,.72);border:1px solid var(--line-strong);backdrop-filter:blur(6px);color:var(--text)}
+.frame.media{aspect-ratio:16/10}
+.frame.media .m-video,.frame.media .m-shot{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top center}
+.frame.media .m-shot{opacity:0;transition:opacity .6s var(--ease),transform .8s var(--ease)}
+.frame.media .m-shot.on{opacity:1}
+.thumbs{position:absolute;right:12px;bottom:12px;display:flex;gap:6px;padding:5px;border-radius:12px;background:rgba(10,10,10,.6);border:1px solid var(--line-strong);backdrop-filter:blur(8px);z-index:2}
+.th{position:relative;width:56px;aspect-ratio:16/10;padding:0;border:1px solid transparent;border-radius:6px;overflow:hidden;background:var(--surface);cursor:pointer;opacity:.6;transition:opacity .25s,border-color .25s,transform .25s var(--ease)}
+.th img{width:100%;height:100%;object-fit:cover;object-position:top}
+.th i{position:absolute;inset:0;display:grid;place-items:center;font-style:normal;font-size:12px;color:#fff;background:rgba(0,0,0,.35)}
+.th:hover,.th:focus-visible{opacity:1;transform:translateY(-2px)}
+.th.on{opacity:1;border-color:var(--text)}
+.th .bar{position:absolute;left:0;bottom:0;height:2px;width:0;background:var(--text)}
+@media (max-width:640px){.th{width:40px}.thumbs{right:8px;bottom:8px;gap:4px;padding:4px}}
+.frame figcaption{position:absolute;left:14px;top:14px;z-index:2;font:700 10px/1 var(--sans);letter-spacing:.16em;text-transform:uppercase;padding:7px 10px;border-radius:999px;background:rgba(10,10,10,.72);border:1px solid var(--line-strong);backdrop-filter:blur(6px);color:var(--text)}
 .proj-body{display:flex;flex-direction:column;gap:14px;min-width:0}
-.proj h3{font:800 clamp(28px,3.2vw,44px)/.92 var(--sans);text-transform:uppercase;letter-spacing:-.02em;margin:0}
-.proj.wide h3{font-size:clamp(44px,6.2vw,92px)}
+.proj h3{overflow-wrap:anywhere;font:800 clamp(28px,3.2vw,44px)/.92 var(--sans);text-transform:uppercase;letter-spacing:-.02em;margin:0}
+.proj.wide h3{font-size:clamp(40px,4.6vw,74px)}
 .proj p{color:var(--muted);max-width:56ch}
 .meta{margin:4px 0 0;border-top:1px solid var(--line)}
 .meta div{display:flex;justify-content:space-between;gap:16px;padding:10px 0;border-bottom:1px solid var(--line);font-size:14px}
@@ -279,7 +291,7 @@ body[data-mode="A"] .bp-back{opacity:1}
 @media (max-width:560px){.hud .mode{display:none}}
 
 /* ---------- cursores de colores ---------- */
-#agents{position:fixed;inset:0;pointer-events:none;z-index:50;overflow:hidden}
+#agents{position:absolute;left:0;top:0;width:100%;height:100vh;pointer-events:none;z-index:50;overflow:hidden}
 .agent{position:absolute;left:0;top:0;transition:transform 1.2s var(--ease);will-change:transform}
 .agent svg{display:block;filter:drop-shadow(0 2px 4px rgba(0,0,0,.55))}
 .agent span{position:absolute;left:14px;top:16px;white-space:nowrap;font:800 10px/1 var(--sans);letter-spacing:.06em;padding:4px 7px;border-radius:999px;color:#fff}
@@ -343,15 +355,16 @@ body.wire .frame img,body.wire .frame video{opacity:.2}
 <div class="mm" id="mm" aria-hidden="true">
   <div class="mm-in">
     <nav aria-label="Índice de proyectos">
-      <div class="eyebrow"><b>Índice</b> · 07 proyectos</div>
+      <div class="eyebrow"><b>Índice</b> · 08 proyectos</div>
       <ol class="mm-list">
-      <li><a href="#p-cotizapet" style="--i:0"><i>01</i><span class="nm">CotizaPet</span><small>Comparador</small></a></li>
-      <li><a href="#p-coto" style="--i:1"><i>02</i><span class="nm">Coto FPV</span><small>Sitio 3D</small></a><div class="pk" aria-hidden="true"><img src="assets/shots/coto.jpg" alt=""></div></li>
-      <li><a href="#p-kilya" style="--i:2"><i>03</i><span class="nm">Prime Performance</span><small>Marca personal</small></a><div class="pk" aria-hidden="true"><img src="assets/shots/kilya.jpg" alt=""></div></li>
-      <li><a href="#p-lc" style="--i:3"><i>04</i><span class="nm">Las Condes 7350</span><small>Inmobiliaria</small></a><div class="pk" aria-hidden="true"><img src="assets/shots/lc.jpg" alt=""></div></li>
-      <li><a href="#p-chf" style="--i:4"><i>05</i><span class="nm">CHF Abogados</span><small>Servicios</small></a><div class="pk" aria-hidden="true"><img src="assets/shots/ejc.jpg" alt=""></div></li>
-      <li><a href="#p-solstudio" style="--i:5"><i>06</i><span class="nm">SolStudio</span><small>Agenda online</small></a></li>
-      <li><a href="#p-bionautica" style="--i:6"><i>07</i><span class="nm">Bionáutica</span><small>Mapa interactivo</small></a><div class="pk" aria-hidden="true"><img src="assets/shots/bio.jpg" alt=""></div></li>
+      <li><a href="#p-cotizapet" style="--i:0"><i>01</i><span class="nm">CotizaPet</span><small>Comparador</small></a><div class="pk" aria-hidden="true"><img src="assets/projects/cotizapet/desktop-2.jpg" alt=""></div></li>
+      <li><a href="#p-coto" style="--i:1"><i>02</i><span class="nm">Coto FPV</span><small>Sitio 3D · FPV</small></a><div class="pk" aria-hidden="true"><img src="assets/projects/coto-fpv/desktop-1-hero.jpg" alt=""></div></li>
+      <li><a href="#p-kilya" style="--i:2"><i>03</i><span class="nm">Prime Performance</span><small>CrossFit</small></a><div class="pk" aria-hidden="true"><img src="assets/projects/prime-performance/desktop-1-hero.jpg" alt=""></div></li>
+      <li><a href="#p-horai" style="--i:3"><i>04</i><span class="nm">Horai</span><small>SaaS · Agenda</small></a><div class="pk" aria-hidden="true"><img src="assets/projects/horai/desktop-3.jpg" alt=""></div></li>
+      <li><a href="#p-solstudio" style="--i:4"><i>05</i><span class="nm">SolStudio</span><small>Salón de belleza</small></a><div class="pk" aria-hidden="true"><img src="assets/projects/solstudio/desktop-2.jpg" alt=""></div></li>
+      <li><a href="#p-lc" style="--i:5"><i>06</i><span class="nm">Las Condes 7350</span><small>Inmobiliaria</small></a><div class="pk" aria-hidden="true"><img src="assets/projects/las-condes-7350/desktop-1-hero.jpg" alt=""></div></li>
+      <li><a href="#p-chf" style="--i:6"><i>07</i><span class="nm">CHF Abogados</span><small>Servicios</small></a><div class="pk" aria-hidden="true"><img src="assets/projects/chf-abogados/desktop-1-hero.jpg" alt=""></div></li>
+      <li><a href="#p-bionautica" style="--i:7"><i>08</i><span class="nm">Bionáutica</span><small>Mapa interactivo</small></a><div class="pk" aria-hidden="true"><img src="assets/projects/bionautica/desktop-1-hero.jpg" alt=""></div></li>
       </ol>
     </nav>
     <nav class="mm-side" aria-label="Secciones">
@@ -374,21 +387,22 @@ body.wire .frame img,body.wire .frame video{opacity:.2}
         <div class="inner">
           <div class="eyebrow" data-agent="hero-label"><b>NovusLabs</b> · Estudio de software · Chile</div>
           <h1 class="display" data-agent="h1">Productos web <span class="outline">hechos a la medida</span></h1>
-          <p class="lede" data-agent="lede">Siete proyectos publicados, desde un comparador de precios que revisa más de 20 tiendas cada día hasta un sitio en 3D para un piloto de drones.</p>
+          <p class="lede" data-agent="lede">Ocho proyectos publicados, desde un comparador de precios que revisa más de 20 tiendas cada día hasta un sitio en 3D para un piloto de drones.</p>
           <div class="hero-actions"><a class="btn solid" href="#trabajo">Ver proyectos</a><a class="btn" href="#contacto">Cotizar</a></div>
         </div>
       </div>
       <div class="g-index" id="g-index">
         <div class="inner">
-          <div class="eyebrow"><b>Índice</b> · 07 proyectos</div>
+          <div class="eyebrow"><b>Índice</b> · 08 proyectos</div>
           <ol class="idx" id="idx" data-agent="idx">
           <li><a href="#p-cotizapet"><span class="n">01</span><span class="name">CotizaPet</span><span class="cat">Comparador</span></a></li>
-          <li><a href="#p-coto"><span class="n">02</span><span class="name">Coto FPV</span><span class="cat">Sitio 3D</span></a></li>
-          <li><a href="#p-kilya"><span class="n">03</span><span class="name">Prime Performance</span><span class="cat">Marca personal</span></a></li>
-          <li><a href="#p-lc"><span class="n">04</span><span class="name">Las Condes 7350</span><span class="cat">Inmobiliaria</span></a></li>
-          <li><a href="#p-chf"><span class="n">05</span><span class="name">CHF Abogados</span><span class="cat">Servicios</span></a></li>
-          <li><a href="#p-solstudio"><span class="n">06</span><span class="name">SolStudio</span><span class="cat">Agenda online</span></a></li>
-          <li><a href="#p-bionautica"><span class="n">07</span><span class="name">Bionáutica</span><span class="cat">Mapa interactivo</span></a></li>
+          <li><a href="#p-coto"><span class="n">02</span><span class="name">Coto FPV</span><span class="cat">Sitio 3D · FPV</span></a></li>
+          <li><a href="#p-kilya"><span class="n">03</span><span class="name">Prime Performance</span><span class="cat">CrossFit</span></a></li>
+          <li><a href="#p-horai"><span class="n">04</span><span class="name">Horai</span><span class="cat">SaaS · Agenda</span></a></li>
+          <li><a href="#p-solstudio"><span class="n">05</span><span class="name">SolStudio</span><span class="cat">Salón de belleza</span></a></li>
+          <li><a href="#p-lc"><span class="n">06</span><span class="name">Las Condes 7350</span><span class="cat">Inmobiliaria</span></a></li>
+          <li><a href="#p-chf"><span class="n">07</span><span class="name">CHF Abogados</span><span class="cat">Servicios</span></a></li>
+          <li><a href="#p-bionautica"><span class="n">08</span><span class="name">Bionáutica</span><span class="cat">Mapa interactivo</span></a></li>
           </ol>
         </div>
       </div>
@@ -415,119 +429,142 @@ body.wire .frame img,body.wire .frame video{opacity:.2}
     <div class="wrap">
       <div class="sec-head reveal">
         <div><div class="eyebrow"><b>02</b> · Trabajo seleccionado</div><h2 class="display">La prueba está <span class="outline">en lo que corre</span></h2></div>
-        <p class="lede">Proyectos publicados y en uso. Cada imagen es el sitio real.</p>
+        <p class="lede">Proyectos publicados y en uso. Cada video y captura viene del sitio real.</p>
       </div>
 
       <div class="hero-num reveal" data-agent="stats">
-        <div class="big">07</div>
+        <div class="big">08</div>
         <div>
           <div class="eyebrow" style="margin-bottom:16px">Proyectos publicados</div>
           <div class="facts">
-            <div><div class="v">20+</div><div class="k">Tiendas en CotizaPet</div></div>
+            <div><div class="v">17.702</div><div class="k">Productos en CotizaPet</div></div>
             <div><div class="v">69</div><div class="k">Áreas en Bionáutica</div></div>
-            <div><div class="v">1</div><div class="k">Sitio 3D en tiempo real</div></div>
+            <div><div class="v">10</div><div class="k">Planes en Prime Performance</div></div>
           </div>
         </div>
       </div>
 
       <div class="work">
         <article class="proj wide reveal" id="p-cotizapet" data-agent="cotizapet">
-          <figure class="frame" aria-hidden="true">
-            <div class="cp">
-              <div class="cp-top"><span class="cp-logo">Cotiza<span>pet</span></span><span class="cp-search">Alimento gato adulto 7,5 kg</span></div>
-              <div class="cp-prod"><div class="cp-pack">GATO<br>ADULTO<br>7,5 KG</div><div><b>Alimento gato adulto pollo y arroz 7,5 kg</b><small>Comparado en 6 tiendas · actualizado hoy 09:00</small></div></div>
-              <div class="cp-rows">
-                <div class="cp-row best"><span>Tienda A <span class="m">· despacho RM</span></span><em>mejor precio</em><strong>$31.990</strong></div>
-                <div class="cp-row"><span>Tienda B</span><span class="m">+ $2.000</span><strong>$33.990</strong></div>
-                <div class="cp-row"><span>Tienda C</span><span class="m">+ $4.500</span><strong>$36.490</strong></div>
-              </div>
-              <div class="cp-alert"><span>Avísame si baja de $30.000</span><span>Alerta activa</span></div>
-            </div>
-            <figcaption>Maqueta · tiendas y precios de ejemplo</figcaption>
+          <figure class="frame media" data-media>
+            <video class="m-video" src="assets/projects/cotizapet/loop.mp4" poster="assets/projects/cotizapet/poster.jpg" muted loop playsinline preload="none" aria-label="CotizaPet en vivo: portada, ofertas del día, catálogo y comparación de precios entre tiendas"></video><img class="m-shot" src="assets/projects/cotizapet/desktop-1-hero.jpg" alt="CotizaPet en vivo: portada, ofertas del día, catálogo y comparación de precios entre tiendas" loading="lazy">
+            <figcaption>En vivo · cotizapet.cl</figcaption>
+            <div class="thumbs" role="group" aria-label="Pantallas de CotizaPet"><button type="button" class="th on" data-kind="video" aria-label="Ver video"><img src="assets/projects/cotizapet/poster.jpg" alt=""><i>▶</i></button><button type="button" class="th" data-src="assets/projects/cotizapet/desktop-1-hero.jpg" data-cap="Portada con categorías" aria-label="Portada con categorías"><img src="assets/projects/cotizapet/desktop-1-hero.jpg" alt="" loading="lazy"></button><button type="button" class="th" data-src="assets/projects/cotizapet/desktop-2.jpg" data-cap="Mejores diferencias del día" aria-label="Mejores diferencias del día"><img src="assets/projects/cotizapet/desktop-2.jpg" alt="" loading="lazy"></button><button type="button" class="th" data-src="assets/projects/cotizapet/desktop-3.jpg" data-cap="Catálogo de alimentos" aria-label="Catálogo de alimentos"><img src="assets/projects/cotizapet/desktop-3.jpg" alt="" loading="lazy"></button><button type="button" class="th" data-src="assets/projects/cotizapet/desktop-4.jpg" data-cap="Comparación entre 10 tiendas" aria-label="Comparación entre 10 tiendas"><img src="assets/projects/cotizapet/desktop-4.jpg" alt="" loading="lazy"></button></div>
           </figure>
           <div class="proj-body">
             <div class="eyebrow">Plataforma · Comparador de precios</div>
             <h3>CotizaPet</h3>
-            <p>Comparador de precios para mascotas en Chile. Junta alimento, farmacia e higiene de más de 20 tiendas online y avisa por correo cuando un producto baja de precio.</p>
-            <ul>
-              <li>Scrapers diarios para Shopify, WooCommerce, PrestaShop y Cencosud</li>
-              <li>El mismo producto se reconoce entre tiendas por marca y código de barras</li>
-              <li>Historial de precios y alertas por correo</li>
-            </ul>
-            <dl class="meta"><div><dt>Stack</dt><dd>Laravel, React, Python, PostgreSQL</dd></div><div><dt>Estado</dt><dd class="live">En vivo</dd></div></dl>
+            <p>Reúne los precios de 20 tiendas de mascotas de Chile para encontrar la opción más barata sin abrir decenas de pestañas. Agrupa el mismo producto de distintas tiendas y muestra cuánto ahorras y cuánto cuesta cada kilo.</p>
+            <ul><li>Compara el mismo producto entre tiendas y marca la opción más barata</li><li>Alertas por correo cuando un producto llega al precio que definiste</li><li>Historial del mejor precio para saber si es buen momento de comprar</li></ul>
+            <dl class="meta"><div><dt>Catálogo</dt><dd>17.702 productos · 20 tiendas</dd></div><div><dt>Stack</dt><dd>Laravel 12, React 19, Python, PostgreSQL</dd></div><div><dt>Estado</dt><dd class="live">En vivo</dd></div></dl>
             <a class="visit" href="https://cotizapet.cl" target="_blank" rel="noopener">cotizapet.cl ↗</a>
           </div>
         </article>
 
         <article class="proj wide reverse reveal" id="p-coto" data-agent="coto">
-          <figure class="frame">
-            <video src="assets/coto-fpv.mp4" poster="assets/shots/coto.jpg" autoplay muted loop playsinline preload="metadata" aria-label="Recorrido grabado del sitio Coto FPV: el dron 3D se arma y vuela por la página mientras se hace scroll"></video>
-            <figcaption>3D en tiempo real</figcaption>
+          <figure class="frame media" data-media>
+            <video class="m-video" src="assets/projects/coto-fpv/loop.mp4" poster="assets/projects/coto-fpv/poster.jpg" muted loop playsinline preload="none" aria-label="Tomas reales de Coto FPV: dron persiguiendo una moto en la Cuesta Barriga"></video><img class="m-shot" src="assets/projects/coto-fpv/desktop-1-hero.jpg" alt="Tomas reales de Coto FPV: dron persiguiendo una moto en la Cuesta Barriga" loading="lazy">
+            <figcaption>Tomas reales · Cuesta Barriga</figcaption>
+            <div class="thumbs" role="group" aria-label="Pantallas de Coto FPV"><button type="button" class="th on" data-kind="video" aria-label="Ver video"><img src="assets/projects/coto-fpv/poster.jpg" alt=""><i>▶</i></button><button type="button" class="th" data-src="assets/projects/coto-fpv/desktop-2.jpg" data-cap="En la curva" aria-label="En la curva"><img src="assets/projects/coto-fpv/desktop-2.jpg" alt="" loading="lazy"></button><button type="button" class="th" data-src="assets/projects/coto-fpv/desktop-3.jpg" data-cap="A ras del asfalto" aria-label="A ras del asfalto"><img src="assets/projects/coto-fpv/desktop-3.jpg" alt="" loading="lazy"></button><button type="button" class="th" data-src="assets/projects/coto-fpv/desktop-4.jpg" data-cap="Frente a la moto" aria-label="Frente a la moto"><img src="assets/projects/coto-fpv/desktop-4.jpg" alt="" loading="lazy"></button></div>
           </figure>
           <div class="proj-body">
-            <div class="eyebrow">Sitio 3D · WebGL</div>
+            <div class="eyebrow">Sitio 3D · FPV</div>
             <h3>Coto FPV</h3>
-            <p>Sitio en 3D para un piloto de drones FPV. Un dron modelado en 3D se arma frente a ti y vuela por la página a medida que bajas, con un visor de vuelo y tomas reales de persecución.</p>
-            <ul>
-              <li>Escena 3D renderizada en el navegador, sin plugins</li>
-              <li>Animación controlada por el scroll, cuadro a cuadro</li>
-              <li>Pantalla de carga y telemetría propias</li>
-            </ul>
+            <p>Sitio para un piloto de drones FPV que filma persecuciones de motos. Un dron en 3D se arma y vuela por la página mientras bajas, junto a sus tomas reales en la Cuesta Barriga.</p>
+            <ul><li>Escena 3D renderizada en el navegador, sin plugins</li><li>Animación controlada por el scroll</li><li>Reel de persecuciones filmadas con dron FPV</li></ul>
             <dl class="meta"><div><dt>Stack</dt><dd>Next.js, Three.js, R3F, GSAP</dd></div><div><dt>Estado</dt><dd class="live">En vivo</dd></div></dl>
             <a class="visit" href="https://coto-fpv.vercel.app" target="_blank" rel="noopener">coto-fpv.vercel.app ↗</a>
           </div>
         </article>
 
-        <article class="proj reveal" id="p-kilya" data-agent="kilya">
-          <figure class="frame"><img src="assets/shots/kilya.jpg" alt="Prime Performance: portada con la atleta Kilya Marchant entrenando en anillas"></figure>
+        <article class="proj wide reveal" id="p-kilya" data-agent="kilya">
+          <figure class="frame media" data-media>
+            <video class="m-video" src="assets/projects/prime-performance/loop.mp4" poster="assets/projects/prime-performance/poster.jpg" muted loop playsinline preload="none" aria-label="Prime Performance en vivo: portada, trayectoria, planes y planilla de contratación"></video><img class="m-shot" src="assets/projects/prime-performance/desktop-1-hero.jpg" alt="Prime Performance en vivo: portada, trayectoria, planes y planilla de contratación" loading="lazy">
+            <figcaption>En vivo · primeperformancee.cl</figcaption>
+            <div class="thumbs" role="group" aria-label="Pantallas de Prime Performance"><button type="button" class="th on" data-kind="video" aria-label="Ver video"><img src="assets/projects/prime-performance/poster.jpg" alt=""><i>▶</i></button><button type="button" class="th" data-src="assets/projects/prime-performance/desktop-1-hero.jpg" data-cap="Portada con Kilya Marchant" aria-label="Portada con Kilya Marchant"><img src="assets/projects/prime-performance/desktop-1-hero.jpg" alt="" loading="lazy"></button><button type="button" class="th" data-src="assets/projects/prime-performance/desktop-2.jpg" data-cap="Trayectoria" aria-label="Trayectoria"><img src="assets/projects/prime-performance/desktop-2.jpg" alt="" loading="lazy"></button><button type="button" class="th" data-src="assets/projects/prime-performance/desktop-3.jpg" data-cap="Planes de entrenamiento" aria-label="Planes de entrenamiento"><img src="assets/projects/prime-performance/desktop-3.jpg" alt="" loading="lazy"></button><button type="button" class="th" data-src="assets/projects/prime-performance/desktop-4.jpg" data-cap="Planilla de contratación" aria-label="Planilla de contratación"><img src="assets/projects/prime-performance/desktop-4.jpg" alt="" loading="lazy"></button></div>
+          </figure>
           <div class="proj-body">
-            <div class="eyebrow">Marca personal · Deporte</div>
+            <div class="eyebrow">Sitio web · CrossFit</div>
             <h3>Prime Performance</h3>
-            <p>Sitio de coaching de Kilya Marchant, campeona nacional de CrossFit. Planes de entrenamiento, programación para box y evaluación deportiva.</p>
-            <dl class="meta"><div><dt>Stack</dt><dd>HTML, Tailwind, GSAP, Lenis</dd></div></dl>
-            <a class="visit" href="https://primeperformancee.cl" target="_blank" rel="noopener">primeperformancee.cl ↗</a>
+            <p>Sitio de la coach Kilya Marchant, campeona nacional de CrossFit. Cuenta su historia con escenas al hacer scroll y permite contratar un plan sin salir del sitio.</p>
+            <ul><li>Historia en 4 capítulos con cifras que se animan al bajar</li><li>Catálogo de 10 planes con filtro por categoría</li><li>Contratación en 6 pasos con planilla digital que se envía por WhatsApp</li></ul>
+            <dl class="meta"><div><dt>Stack</dt><dd>HTML, Tailwind, GSAP, Lenis, jsPDF</dd></div><div><dt>Estado</dt><dd class="live">En vivo</dd></div></dl>
+            <a class="visit" href="https://www.primeperformancee.cl" target="_blank" rel="noopener">primeperformancee.cl ↗</a>
           </div>
         </article>
 
-        <article class="proj reveal" id="p-lc" data-agent="lc">
-          <figure class="frame"><img src="assets/shots/lc.jpg" alt="Las Condes 7350: portada con precio desde UF y piscina en el rooftop"><figcaption>Imágenes referenciales</figcaption></figure>
+        <article class="proj wide reverse reveal" id="p-horai" data-agent="horai">
+          <figure class="frame media" data-media>
+            <video class="m-video" src="assets/projects/horai/loop.mp4" poster="assets/projects/horai/poster.jpg" muted loop playsinline preload="none" aria-label="Horai en vivo: portada, demo de reserva, agendas con identidad propia y precio"></video><img class="m-shot" src="assets/projects/horai/desktop-1-hero.jpg" alt="Horai en vivo: portada, demo de reserva, agendas de una barbería y otros negocios, y precio" loading="lazy">
+            <figcaption>En vivo · horai.cl</figcaption>
+            <div class="thumbs" role="group" aria-label="Pantallas de Horai"><button type="button" class="th on" data-kind="video" aria-label="Ver video"><img src="assets/projects/horai/poster.jpg" alt=""><i>▶</i></button><button type="button" class="th" data-src="assets/projects/horai/desktop-1-hero.jpg" data-cap="Portada" aria-label="Portada"><img src="assets/projects/horai/desktop-1-hero.jpg" alt="" loading="lazy"></button><button type="button" class="th" data-src="assets/projects/horai/desktop-3.jpg" data-cap="Barbería, uñas, kine y salón" aria-label="Barbería, uñas, kine y salón"><img src="assets/projects/horai/desktop-3.jpg" alt="" loading="lazy"></button><button type="button" class="th" data-src="assets/projects/horai/desktop-2.jpg" data-cap="Demo de reserva" aria-label="Demo de reserva"><img src="assets/projects/horai/desktop-2.jpg" alt="" loading="lazy"></button><button type="button" class="th" data-src="assets/projects/horai/desktop-4.jpg" data-cap="Un plan, sin letra chica" aria-label="Un plan, sin letra chica"><img src="assets/projects/horai/desktop-4.jpg" alt="" loading="lazy"></button></div>
+          </figure>
           <div class="proj-body">
-            <div class="eyebrow">Inmobiliaria · Demo</div>
-            <h3>Las Condes 7350</h3>
-            <p>Sitio de venta para un edificio en Las Condes. Abre con un recorrido de las etapas de obra recreadas digitalmente y calcula el dividendo de cada departamento.</p>
-            <dl class="meta"><div><dt>Stack</dt><dd>HTML, video por scroll, JS</dd></div></dl>
-            <a class="visit" href="https://lascondes7350-demo.vercel.app" target="_blank" rel="noopener">lascondes7350-demo.vercel.app ↗</a>
+            <div class="eyebrow">SaaS propio · Agenda online</div>
+            <h3>Horai</h3>
+            <p>Nuestra plataforma de agenda online para negocios que trabajan por hora: barberías, salones, uñas, pestañas, kinesiología y más. Cada negocio tiene su página de reservas con su logo, sus colores y sus precios, y sus clientes reservan a cualquier hora sin escribir por WhatsApp.</p>
+            <ul><li>Página de reservas con identidad propia, como la barbería Navaja Club o Estudio Daniela</li><li>Abono por servicio y recordatorios por WhatsApp</li><li>Un plan de $40.000 al mes con una semana de prueba gratis</li></ul>
+            <dl class="meta"><div><dt>Rubros</dt><dd>Barbería, salón, uñas, pestañas, kine y más</dd></div><div><dt>Stack</dt><dd>Next.js 15, Supabase</dd></div><div><dt>Estado</dt><dd class="live">En vivo</dd></div></dl>
+            <a class="visit" href="https://horai.cl" target="_blank" rel="noopener">horai.cl ↗</a>
           </div>
         </article>
 
-        <article class="proj reveal" id="p-solstudio" data-agent="solstudio">
-          <figure class="frame slot"><div><span class="eyebrow">Captura pendiente</span><strong>solstudio.cl</strong></div></figure>
+        <article class="proj wide reveal" id="p-solstudio" data-agent="solstudio">
+          <figure class="frame media" data-media>
+            <video class="m-video" src="assets/projects/solstudio/loop.mp4" poster="assets/projects/solstudio/poster.jpg" muted loop playsinline preload="none" aria-label="SolStudio en vivo: portada, servicios, ficha y reserva de hora"></video><img class="m-shot" src="assets/projects/solstudio/desktop-1-hero.jpg" alt="SolStudio en vivo: portada, servicios, ficha y reserva de hora" loading="lazy">
+            <figcaption>En vivo · solstudio.cl</figcaption>
+            <div class="thumbs" role="group" aria-label="Pantallas de SolStudio"><button type="button" class="th on" data-kind="video" aria-label="Ver video"><img src="assets/projects/solstudio/poster.jpg" alt=""><i>▶</i></button><button type="button" class="th" data-src="assets/projects/solstudio/desktop-1-hero.jpg" data-cap="Portada del salón" aria-label="Portada del salón"><img src="assets/projects/solstudio/desktop-1-hero.jpg" alt="" loading="lazy"></button><button type="button" class="th" data-src="assets/projects/solstudio/desktop-2.jpg" data-cap="Servicios destacados" aria-label="Servicios destacados"><img src="assets/projects/solstudio/desktop-2.jpg" alt="" loading="lazy"></button><button type="button" class="th" data-src="assets/projects/solstudio/desktop-3.jpg" data-cap="Ficha de un servicio" aria-label="Ficha de un servicio"><img src="assets/projects/solstudio/desktop-3.jpg" alt="" loading="lazy"></button><button type="button" class="th" data-src="assets/projects/solstudio/desktop-4.jpg" data-cap="Elegir día y hora" aria-label="Elegir día y hora"><img src="assets/projects/solstudio/desktop-4.jpg" alt="" loading="lazy"></button></div>
+          </figure>
           <div class="proj-body">
-            <div class="eyebrow">Agenda online · Belleza</div>
+            <div class="eyebrow">Reservas · Salón de belleza</div>
             <h3>SolStudio</h3>
-            <p>Reservas online para un salón de belleza. La clienta elige servicio, profesional y hora, y la reserva queda pendiente hasta que paga el abono. Dos clientas nunca pueden tomar la misma hora y la dueña lo gestiona todo desde su panel.</p>
-            <dl class="meta"><div><dt>Stack</dt><dd>Next.js 15, Supabase</dd></div><div><dt>Estado</dt><dd class="live">En vivo</dd></div></dl>
+            <p>Reservas online para un salón de belleza en Padre Hurtado, hecho sobre Horai. Las clientas ven cada servicio con foto, precio y duración, y agendan desde el celular en tres pasos. La dueña maneja agenda, servicios y profesionales desde su panel.</p>
+            <ul><li>Reserva en tres pasos con día, hora, profesional y abono</li><li>Ficha de cada servicio con opciones, requisitos y consultas por WhatsApp</li><li>Panel con agenda diaria y semanal, reservas manuales y bloqueos</li></ul>
+            <dl class="meta"><div><dt>Catálogo</dt><dd>17 servicios · 4 profesionales</dd></div><div><dt>Stack</dt><dd>Next.js 15, Supabase</dd></div><div><dt>Estado</dt><dd class="live">En vivo</dd></div></dl>
             <a class="visit" href="https://solstudio.cl" target="_blank" rel="noopener">solstudio.cl ↗</a>
           </div>
         </article>
 
+        <article class="proj reveal" id="p-lc" data-agent="lc">
+          <figure class="frame media" data-media>
+            <img class="m-shot on" src="assets/projects/las-condes-7350/desktop-1-hero.jpg" alt="Las Condes 7350: portada, recorrido de obra y departamentos" loading="lazy">
+            <figcaption>Demo · imágenes referenciales</figcaption>
+            <div class="thumbs" role="group" aria-label="Pantallas de Las Condes 7350"><button type="button" class="th on" data-src="assets/projects/las-condes-7350/desktop-1-hero.jpg" data-cap="Portada con precio en UF" aria-label="Portada con precio en UF"><img src="assets/projects/las-condes-7350/desktop-1-hero.jpg" alt="" loading="lazy"></button><button type="button" class="th" data-src="assets/projects/las-condes-7350/desktop-2.jpg" data-cap="Etapa 3 · terminaciones" aria-label="Etapa 3 · terminaciones"><img src="assets/projects/las-condes-7350/desktop-2.jpg" alt="" loading="lazy"></button><button type="button" class="th" data-src="assets/projects/las-condes-7350/desktop-3.jpg" data-cap="Cowork" aria-label="Cowork"><img src="assets/projects/las-condes-7350/desktop-3.jpg" alt="" loading="lazy"></button><button type="button" class="th" data-src="assets/projects/las-condes-7350/desktop-4.jpg" data-cap="Elige tu departamento" aria-label="Elige tu departamento"><img src="assets/projects/las-condes-7350/desktop-4.jpg" alt="" loading="lazy"></button></div>
+          </figure>
+          <div class="proj-body">
+            <div class="eyebrow">Inmobiliaria · Demo</div>
+            <h3>Las Condes 7350</h3>
+            <p>Sitio de venta para un edificio en Las Condes. Abre con un recorrido de las etapas de obra y calcula el dividendo de cada departamento.</p>
+            <dl class="meta"><div><dt>Stack</dt><dd>HTML, video por scroll, JS</dd></div><div><dt>Estado</dt><dd>Demo</dd></div></dl>
+            <a class="visit" href="https://lascondes7350-demo.vercel.app" target="_blank" rel="noopener">lascondes7350-demo.vercel.app ↗</a>
+          </div>
+        </article>
+
         <article class="proj reveal" id="p-chf" data-agent="chf">
-          <figure class="frame"><img src="assets/shots/ejc.jpg" alt="CHF Abogados: portada con el título Defensa legal con experiencia y compromiso"></figure>
+          <figure class="frame media" data-media>
+            <img class="m-shot on" src="assets/projects/chf-abogados/desktop-1-hero.jpg" alt="CHF Abogados en vivo: portada, estudio, equipo y contacto" loading="lazy">
+            <figcaption>En vivo · chfabogados.cl</figcaption>
+            <div class="thumbs" role="group" aria-label="Pantallas de CHF Abogados"><button type="button" class="th on" data-src="assets/projects/chf-abogados/desktop-1-hero.jpg" data-cap="Portada" aria-label="Portada"><img src="assets/projects/chf-abogados/desktop-1-hero.jpg" alt="" loading="lazy"></button><button type="button" class="th" data-src="assets/projects/chf-abogados/desktop-2.jpg" data-cap="Sobre nosotros" aria-label="Sobre nosotros"><img src="assets/projects/chf-abogados/desktop-2.jpg" alt="" loading="lazy"></button><button type="button" class="th" data-src="assets/projects/chf-abogados/desktop-3.jpg" data-cap="Equipo" aria-label="Equipo"><img src="assets/projects/chf-abogados/desktop-3.jpg" alt="" loading="lazy"></button><button type="button" class="th" data-src="assets/projects/chf-abogados/desktop-4.jpg" data-cap="Contacto" aria-label="Contacto"><img src="assets/projects/chf-abogados/desktop-4.jpg" alt="" loading="lazy"></button></div>
+          </figure>
           <div class="proj-body">
             <div class="eyebrow">Servicios profesionales</div>
             <h3>CHF Abogados</h3>
             <p>Sitio para un estudio jurídico. Áreas de práctica, equipo y botones directos a llamada y WhatsApp para agendar una consulta.</p>
-            <dl class="meta"><div><dt>Stack</dt><dd>Astro</dd></div></dl>
+            <dl class="meta"><div><dt>Stack</dt><dd>Astro</dd></div><div><dt>Estado</dt><dd class="live">En vivo</dd></div></dl>
             <a class="visit" href="https://chfabogados.cl" target="_blank" rel="noopener">chfabogados.cl ↗</a>
           </div>
         </article>
 
         <article class="proj wide reveal" id="p-bionautica" data-agent="bionautica">
-          <figure class="frame"><img src="assets/shots/bio.jpg" alt="Bionáutica: portada del mapa interactivo de las ciencias del mar"></figure>
+          <figure class="frame media" data-media>
+            <img class="m-shot on" src="assets/projects/bionautica/desktop-1-hero.jpg" alt="Bionáutica en vivo: portada, zonas, cita y áreas" loading="lazy">
+            <figcaption>En vivo · bionautica.cl</figcaption>
+            <div class="thumbs" role="group" aria-label="Pantallas de Bionáutica"><button type="button" class="th on" data-src="assets/projects/bionautica/desktop-1-hero.jpg" data-cap="Portada del mapa" aria-label="Portada del mapa"><img src="assets/projects/bionautica/desktop-1-hero.jpg" alt="" loading="lazy"></button><button type="button" class="th" data-src="assets/projects/bionautica/desktop-2.jpg" data-cap="Zonas temáticas" aria-label="Zonas temáticas"><img src="assets/projects/bionautica/desktop-2.jpg" alt="" loading="lazy"></button><button type="button" class="th" data-src="assets/projects/bionautica/desktop-3.jpg" data-cap="Cita" aria-label="Cita"><img src="assets/projects/bionautica/desktop-3.jpg" alt="" loading="lazy"></button><button type="button" class="th" data-src="assets/projects/bionautica/desktop-4.jpg" data-cap="Áreas emergentes" aria-label="Áreas emergentes"><img src="assets/projects/bionautica/desktop-4.jpg" alt="" loading="lazy"></button></div>
+          </figure>
           <div class="proj-body">
             <div class="eyebrow">Mapa interactivo · Educación</div>
             <h3>Bionáutica</h3>
-            <p>El mapa de las ciencias del mar: 5 zonas y 69 áreas temáticas con videos y noticias. El equipo publica contenido desde su propio panel.</p>
+            <p>El mapa de las ciencias del mar: 5 zonas, 69 áreas y 432 temas con videos y noticias. El equipo publica contenido desde su propio panel.</p>
             <dl class="meta"><div><dt>Stack</dt><dd>Astro, Sveltia CMS</dd></div><div><dt>Estado</dt><dd class="live">En vivo</dd></div></dl>
             <a class="visit" href="https://bionautica.cl" target="_blank" rel="noopener">bionautica.cl ↗</a>
           </div>
@@ -609,8 +646,8 @@ body.wire .frame img,body.wire .frame video{opacity:.2}
     var gTitle = document.getElementById('g-title'), gShade = document.getElementById('g-shade'), gIndex = document.getElementById('g-index');
     var gInner = gIndex.querySelector('.inner'), gCue = document.getElementById('g-cue');
     var rows = Array.prototype.slice.call(document.querySelectorAll('#idx li'));
-    var SH = [['coto','Coto FPV'],['kilya','Prime Performance'],['lc','Las Condes 7350'],['ejc','CHF Abogados'],['bio','Bionáutica']];
-    var ORDER = [2,1,0,3,4,0,1,2,3,4,1,0,2,4,3];
+    var SH = [['coto-fpv/desktop-3','Coto FPV'],['prime-performance/desktop-1-hero','Prime Performance'],['cotizapet/desktop-2','CotizaPet'],['solstudio/desktop-2','SolStudio'],['las-condes-7350/desktop-1-hero','Las Condes 7350'],['chf-abogados/desktop-1-hero','CHF Abogados'],['bionautica/desktop-1-hero','Bionáutica'],['prime-performance/desktop-3','Prime Performance'],['cotizapet/desktop-4','CotizaPet'],['solstudio/desktop-1-hero','SolStudio'],['horai/desktop-3','Horai'],['horai/desktop-1-hero','Horai']];
+    var ORDER = [2,1,0,3,10,4,5,6,11,7,8,9,0,3,1];
     var tiles = [], poses = [];
     function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
     function ease(t){ return t<.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2,3)/2; }
@@ -629,7 +666,7 @@ body.wire .frame img,body.wire .frame video{opacity:.2}
       for(var i=0;i<n;i++){
         var sh = SH[ORDER[i % ORDER.length]], d = document.createElement('div');
         d.className = 'tile';
-        d.innerHTML = '<div class="bar"><i></i><i></i><i></i><span>'+sh[1]+'</span></div><img src="assets/shots/'+sh[0]+'.jpg" alt="">';
+        d.innerHTML = '<div class="bar"><i></i><i></i><i></i><span>'+sh[1]+'</span></div><img src="assets/projects/'+sh[0]+'.jpg" alt="">';
         gTiles.appendChild(d); tiles.push(d);
         var c = i % cols, r = Math.floor(i / cols);
         var gx = (c - (cols-1)/2) * (wallW + gap), gy = (r - (rowsN-1)/2) * (th*wallScale + gap);
@@ -668,8 +705,49 @@ body.wire .frame img,body.wire .frame video{opacity:.2}
     build();
   })();
 
+
+  /* ---------- galerías de proyectos: video real y capturas que rotan ---------- */
+  (function(){
+    var frames = Array.prototype.slice.call(document.querySelectorAll('[data-media]'));
+    frames.forEach(function(fr){
+      var video = fr.querySelector('.m-video'), shot = fr.querySelector('.m-shot'), cap = fr.querySelector('figcaption');
+      var ths = Array.prototype.slice.call(fr.querySelectorAll('.th')), idx = 0, timer = null, visible = false, touched = false, baseCap = cap.textContent;
+      function show(i, user){
+        idx = i; ths.forEach(function(t,k){ t.classList.toggle('on', k === i); });
+        var t = ths[i];
+        if(t.dataset.kind === 'video'){ shot.classList.remove('on'); cap.textContent = baseCap; if(visible && video) video.play().catch(function(){}); }
+        else {
+          var nx = new Image(); nx.src = t.dataset.src;
+          var swap = function(){ shot.classList.remove('on'); setTimeout(function(){ shot.src = t.dataset.src; shot.classList.add('on'); }, video ? 0 : 180); };
+          if(nx.complete) swap(); else nx.onload = swap;
+          cap.textContent = t.dataset.cap + ' · ' + baseCap.split(' · ').pop();
+          if(video && user) video.pause();
+        }
+        if(user){ touched = true; schedule(9000); }
+      }
+      function schedule(ms){
+        clearTimeout(timer);
+        if(reduce || !visible) return;
+        var t = ths[idx], wait = ms || (t.dataset.kind === 'video' ? 9000 : 3800);
+        timer = setTimeout(function(){ show((idx + 1) % ths.length); schedule(); }, wait);
+      }
+      ths.forEach(function(t,i){ t.addEventListener('click', function(){ show(i, true); }); });
+      if('IntersectionObserver' in window){
+        new IntersectionObserver(function(es){ es.forEach(function(e){
+          visible = e.isIntersecting;
+          if(visible){ if(video && ths[idx].dataset.kind === 'video' && !reduce) video.play().catch(function(){}); schedule(); }
+          else { clearTimeout(timer); if(video) video.pause(); }
+        }); }, {threshold:.35}).observe(fr);
+      }
+    });
+  })();
+
   /* ---------- cursores ---------- */
   var layer = document.getElementById('agents');
+  /* los cursores viven en la capa de la página: coordenadas del documento, no de la pantalla */
+  function pr(el){ var r = el.getBoundingClientRect(); return {left:r.left+scrollX, top:r.top+scrollY, right:r.right+scrollX, bottom:r.bottom+scrollY, width:r.width, height:r.height}; }
+  function sizeLayer(){ layer.style.height = document.documentElement.scrollHeight + 'px'; }
+  sizeLayer(); addEventListener('load', sizeLayer); addEventListener('resize', sizeLayer); setInterval(sizeLayer, 2000);
   var targets = Array.prototype.slice.call(document.querySelectorAll('[data-agent]'));
   var COLORS = ['#3f6bff','#ff5c39','#22c55e','#f5c518','#e64ce6','#18c5e8','#ff8a00','#a78bfa','#ff3d7f','#7cff6b','#00d1b2','#ffd166'];
   var N = innerWidth < 640 ? 10 : 24;
@@ -699,7 +777,7 @@ body.wire .frame img,body.wire .frame video{opacity:.2}
       layer.appendChild(sel);
     }
     layer.appendChild(el);
-    var x = Math.random()*innerWidth, y = Math.random()*innerHeight;
+    var x = Math.random()*innerWidth, y = scrollY + Math.random()*innerHeight;
     el.style.transform = 'translate('+x+'px,'+y+'px)';
     return {t:t, el:el, sel:sel, target:null, timer:null, x:x, y:y, job:null, delay: idx*140};
   });
@@ -718,7 +796,7 @@ body.wire .frame img,body.wire .frame video{opacity:.2}
   function placeSel(a){
     if(!a.sel || !a.target) return;
     if(a.job || !seen(a.target)){ a.sel.classList.remove('show'); return; }
-    var r = a.target.getBoundingClientRect(), s = a.sel.style;
+    var r = pr(a.target), s = a.sel.style;
     s.left = (r.left-4)+'px'; s.top = (r.top-4)+'px'; s.width = (r.width+8)+'px'; s.height = (r.height+8)+'px';
   }
 
@@ -746,10 +824,12 @@ body.wire .frame img,body.wire .frame video{opacity:.2}
     if(a.sel) pool = pool.filter(function(n){ return !agents.some(function(o){ return o !== a && o.sel && o.target === n; }); });
     if(!pool.length){ a.timer = setTimeout(function(){ step(a); }, 900/speed); return; }
     var n = pool[Math.floor(Math.random()*pool.length)];
-    var r = n.getBoundingClientRect();
+    var r = pr(n);
     a.target = n;
     var dur = (1.2 + Math.random()*1)/speed;
-    moveTo(a, r.left + r.width*(0.1+Math.random()*0.8), r.top + Math.min(r.height*(0.15+Math.random()*0.7), 220), dur);
+    var tx = r.left + r.width*(0.1+Math.random()*0.8), ty = r.top + Math.min(r.height*(0.15+Math.random()*0.7), 220);
+    a.anchor = n.closest('.g-stage') ? n : null; a.rel = {dx: tx - r.left, dy: ty - r.top};
+    moveTo(a, tx, ty, dur);
     a.timer = setTimeout(function(){
       if(a.job){ step(a); return; }
       if(Math.random() < .15) ripple(a);
@@ -883,10 +963,10 @@ body.wire .frame img,body.wire .frame video{opacity:.2}
     var free = agents.filter(function(a){ return !a.job; });
     free.sort(function(a,b){ return (a.t.name ? -1 : 0) - (b.t.name ? -1 : 0); });
     var crew = free.slice(0, 3);
-    crew.forEach(function(a,k){ a.job = {s:s, k:k}; if(a.sel) a.sel.classList.remove('show'); clearTimeout(a.timer); a.el.style.transitionDuration = '0s'; });
+    crew.forEach(function(a,k){ a.anchor = null; a.job = {s:s, k:k}; if(a.sel) a.sel.classList.remove('show'); clearTimeout(a.timer); a.el.style.transitionDuration = '0s'; });
     s.crew = crew;
     setMode(s.mode);
-    if(crew[0] && !paused){ var r = s.el.getBoundingClientRect(); crew[0].x = r.left; crew[0].y = r.top; ripple(crew[0]); }
+    if(crew[0] && !paused){ var r = pr(s.el); crew[0].x = r.left; crew[0].y = r.top; ripple(crew[0]); }
   }
   function release(s){
     s.crew.forEach(function(a){ a.job = null; a.timer = setTimeout(function(){ step(a); }, 400 + Math.random()*900); });
@@ -912,7 +992,7 @@ body.wire .frame img,body.wire .frame video{opacity:.2}
       if(b < .4){
         if(k === 0) go(a, r.left + r.width*dl, r.top - 8);
         else if(k === 1) go(a, r.right + 8, r.top + r.height*dl);
-        else { var p = s.pieces[Math.min(s.pieces.length-1, Math.floor(dl*s.pieces.length))].getBoundingClientRect(); go(a, p.left + p.width*.5, p.top + p.height*.5, .15); }
+        else { var p = pr(s.pieces[Math.min(s.pieces.length-1, Math.floor(dl*s.pieces.length))]); go(a, p.left + p.width*.5, p.top + p.height*.5, .15); }
       } else go(a, r.left + r.width*[.18,.52,.84][k], r.top + r.height*reveal, .3);
     });
   }
@@ -924,7 +1004,7 @@ body.wire .frame img,body.wire .frame video{opacity:.2}
       var on = n >= s.ends[i+1] - 1;
       p.style.opacity = on ? 1 : 0; p.style.transform = on ? '' : 'translateY(10px)';
       p.style.transition = 'opacity .45s cubic-bezier(.2,.7,.2,1), transform .45s cubic-bezier(.2,.7,.2,1), box-shadow .5s';
-      if(on && !s.shown[i]){ s.shown[i] = true; p.classList.add('pflash'); setTimeout(function(){ p.classList.remove('pflash'); }, 450); var c = s.crew[1]; if(c && !paused){ var q = p.getBoundingClientRect(); c.x = q.left + 10; c.y = q.top + 8; ripple(c); } }
+      if(on && !s.shown[i]){ s.shown[i] = true; p.classList.add('pflash'); setTimeout(function(){ p.classList.remove('pflash'); }, 450); var c = s.crew[1]; if(c && !paused){ var q = pr(p); c.x = q.left + 10; c.y = q.top + 8; ripple(c); } }
     });
     if(!s.ov) return;
     var ew = Math.min(440, Math.max(250, r.width*.48)), col = eio(seg(b,.74,.94));
@@ -933,7 +1013,7 @@ body.wire .frame img,body.wire .frame video{opacity:.2}
     s.ed.style.opacity = 1 - col;
     var caret = s.pre.querySelector('.caret');
     s.crew.forEach(function(a,k){
-      if(k === 0 && caret && col < .6){ var cr = caret.getBoundingClientRect(); go(a, cr.left + 4, cr.top + 10, .35); }
+      if(k === 0 && caret && col < .6){ var cr = pr(caret); go(a, cr.left + 4, cr.top + 10, .35); }
       else if(k === 2){ go(a, r.left + r.width*.3, r.bottom + 14, .08); }
       else if(k === 0){ go(a, r.left + r.width*.5, r.top + r.height*.5, .12); }
     });
@@ -961,7 +1041,7 @@ body.wire .frame img,body.wire .frame video{opacity:.2}
   }
   function render(s){
     var b = s.b;
-    var r = s.el.getBoundingClientRect(), onscreen = r.bottom > 0 && r.top < innerHeight;
+    var vr = s.el.getBoundingClientRect(), onscreen = vr.bottom > 0 && vr.top < innerHeight, r = pr(s.el);
     var building = b > .001 && b < .995 && onscreen;
     if(building && !s.ov){ s.ov = makeOv(s); if(!s.crew.length) hire(s); }
     if(!building && s.ov){ s.ov.remove(); s.ov = null; }
@@ -992,7 +1072,7 @@ body.wire .frame img,body.wire .frame video{opacity:.2}
         s.done = true; built++;
         hudBuilt.textContent = String(built); hudBar.style.width = Math.round(built / bs.length * 100) + '%';
         if(s.mode === 'B' && s.ov && t !== 2 && !paused){
-          var r = s.el.getBoundingClientRect(), ok = document.createElement('div');
+          var r = pr(s.el), ok = document.createElement('div');
           ok.className = 'bov'; ok.style.transform = 'translate('+r.left+'px,'+r.top+'px)'; ok.style.width = r.width+'px'; ok.style.height = r.height+'px';
           ok.innerHTML = '<span class="ok">✓ compilado en '+(280 + Math.round(Math.random()*400))+' ms</span>';
           layer.appendChild(ok); setTimeout(function(){ ok.remove(); }, 1300);
@@ -1011,7 +1091,14 @@ body.wire .frame img,body.wire .frame video{opacity:.2}
   /* estado inicial: lo que aún no se construye parte oculto */
   if(!reduce) bs.forEach(function(s){ if(targetOf(s) !== 2) render(s); });
 
-  addEventListener('scroll', function(){ kick(); agents.forEach(placeSel); }, {passive:true});
+  addEventListener('scroll', function(){
+    kick(); agents.forEach(placeSel);
+    agents.forEach(function(a){
+      if(a.job || !a.anchor || !a.rel) return;
+      var r = pr(a.anchor); a.x = r.left + a.rel.dx; a.y = r.top + a.rel.dy;
+      a.el.style.transitionDuration = '0s'; a.el.style.transform = 'translate('+a.x+'px,'+a.y+'px)';
+    });
+  }, {passive:true});
   addEventListener('resize', function(){ kick(); agents.forEach(placeSel); });
   addEventListener('load', kick);
 

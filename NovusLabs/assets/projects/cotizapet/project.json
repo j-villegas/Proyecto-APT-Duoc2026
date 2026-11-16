@@ -1,0 +1,40 @@
+{
+  "slug": "cotizapet",
+  "nombre": "Cotizapet",
+  "url": "https://cotizapet.cl",
+  "categoria": "Plataforma · Comparador de precios",
+  "resumen": "Comparador de precios de alimentos y productos para mascotas en tiendas de Chile, con precio por kilo y alertas.",
+  "descripcion": "Cotizapet reúne en un solo lugar los precios de las principales tiendas de mascotas de Chile para que los dueños de perros y gatos encuentren la opción más barata sin abrir decenas de pestañas. Scrapers automáticos actualizan el catálogo y agrupan el mismo producto de distintas tiendas, y el sitio muestra cuánto se ahorra y cuánto cuesta cada kilo.",
+  "destacados": [
+    "Compara el mismo producto entre tiendas y marca la opción más barata, con el ahorro y el precio por kilo de cada una",
+    "Alertas de precio: avisa por correo cuando un producto llega al precio que el usuario definió",
+    "Historial del mejor precio de cada producto para saber si es buen momento para comprar"
+  ],
+  "cifras": [
+    { "valor": "16.373", "etiqueta": "productos comparados" },
+    { "valor": "20", "etiqueta": "tiendas monitoreadas" },
+    { "valor": "3", "etiqueta": "categorías: alimentos, higiene y arena, farmacia y salud" }
+  ],
+  "stack": [
+    "Laravel 12",
+    "Inertia.js",
+    "React 19",
+    "Tailwind CSS 4",
+    "Vite",
+    "Recharts",
+    "PostgreSQL (Neon)",
+    "Python",
+    "SQLAlchemy",
+    "Beautiful Soup",
+    "Cloudinary",
+    "Resend",
+    "Vercel",
+    "GitHub Actions"
+  ],
+  "estado": "En vivo",
+  "anio": 2026,
+  "capturas": ["desktop-1-hero.jpg", "desktop-2.jpg", "desktop-3.jpg", "desktop-4.jpg", "mobile-1-hero.jpg", "mobile-2.jpg"],
+  "video": "loop.mp4",
+  "video_mobile": "loop-mobile.mp4",
+  "poster": "poster.jpg"
+}

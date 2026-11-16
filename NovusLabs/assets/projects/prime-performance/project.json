@@ -1,0 +1,51 @@
+{
+  "slug": "prime-performance",
+  "nombre": "Prime Performance",
+  "url": "https://www.primeperformancee.cl",
+  "categoria": "Sitio web · Entrenamiento deportivo (CrossFit)",
+  "resumen": "Sitio de la coach Kilya Marchant con historia en scroll, catálogo de 10 planes y contratación guiada con planilla digital.",
+  "descripcion": "Sitio para la coach de CrossFit Kilya Marchant, Campeona Nacional, que presenta su historia con escenas fijas al hacer scroll y un catálogo de planes de entrenamiento con filtro. El alumno contrata sin salir del sitio: elige su plan, completa una planilla digital y envía la planilla junto al comprobante de transferencia en un solo mensaje al WhatsApp de la coach.",
+  "destacados": [
+    "Historia de 4 capítulos con foto fija y cifras que se animan al hacer scroll, con botón para saltarla.",
+    "Catálogo de 10 planes con filtro por categoría y botón de contratar en cada uno.",
+    "Contratación en 6 pasos con planilla digital que se arma como documento y se envía por WhatsApp junto al comprobante."
+  ],
+  "cifras": [
+    {
+      "valor": "10",
+      "etiqueta": "planes de entrenamiento"
+    },
+    {
+      "valor": "37",
+      "etiqueta": "campos en la planilla digital"
+    },
+    {
+      "valor": "6",
+      "etiqueta": "pasos de contratación guiada"
+    }
+  ],
+  "stack": [
+    "HTML",
+    "JavaScript",
+    "Tailwind CSS",
+    "GSAP",
+    "Lenis",
+    "Lucide",
+    "html2canvas",
+    "jsPDF",
+    "Vercel"
+  ],
+  "estado": "En vivo",
+  "anio": 2026,
+  "capturas": [
+    "desktop-1-hero.jpg",
+    "desktop-2.jpg",
+    "desktop-3.jpg",
+    "desktop-4.jpg",
+    "mobile-1-hero.jpg",
+    "mobile-2.jpg"
+  ],
+  "video": "loop.mp4",
+  "video_mobile": "loop-mobile.mp4",
+  "poster": "poster.jpg"
+}
