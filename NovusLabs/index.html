@@ -93,7 +93,7 @@ p{margin:0}
 @media (max-width:860px){.mm-in{grid-template-columns:1fr}.mm-list .pk{display:none}.mm-list a{grid-template-columns:36px minmax(0,1fr)}.mm-list small{grid-column:2;text-align:left}.mm-side{padding-top:0}}
 
 /* ---------- hero G: abanico, muro e índice ---------- */
-.g{position:relative;height:400vh}
+.g{position:relative;height:230vh}
 .g-stage{position:sticky;top:0;height:100svh;overflow:hidden}
 .g-stage::before{content:"";position:absolute;inset:0;background-image:radial-gradient(circle,rgba(255,255,255,.18) 1px,transparent 1px);background-size:14px 14px;mask-image:radial-gradient(ellipse at 85% 15%,#000 10%,transparent 60%);-webkit-mask-image:radial-gradient(ellipse at 85% 15%,#000 10%,transparent 60%)}
 .tile{position:absolute;left:0;top:0;width:var(--tw);border-radius:12px;overflow:hidden;border:1px solid var(--line-strong);background:var(--surface);box-shadow:0 30px 60px rgba(0,0,0,.45);transform-origin:50% 50%;will-change:transform,opacity}
@@ -188,20 +188,19 @@ p{margin:0}
 .frame.media .m-video,.frame.media .m-shot{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top center}
 .frame.media .m-shot{opacity:0;transition:opacity .6s var(--ease),transform .8s var(--ease)}
 .frame.media .m-shot.on{opacity:1}
-.frame.media::after{content:"";position:absolute;left:0;right:0;bottom:0;height:34%;background:linear-gradient(to top,rgba(0,0,0,.5),transparent);pointer-events:none;z-index:1}
-.thumbs{position:absolute;left:16px;right:16px;bottom:10px;display:flex;gap:6px;z-index:2}
-.th{position:relative;flex:1;height:22px;padding:0;border:0;background:none;cursor:pointer;transition:transform .15s}
-.th img,.th i{display:none}
-.th::before,.th::after{content:"";position:absolute;left:0;right:0;top:50%;height:3px;margin-top:-1.5px;border-radius:3px}
-.th::before{background:rgba(255,255,255,.32);box-shadow:0 1px 6px rgba(0,0,0,.35);transition:background .25s,height .2s,margin .2s}
-.th::after{background:#fff;transform-origin:left center;transform:scaleX(0)}
-.th.done::after{transform:scaleX(1)}
+.thumbs{position:absolute;right:12px;bottom:12px;display:flex;gap:6px;padding:5px;border-radius:12px;background:rgba(10,10,10,.6);border:1px solid var(--line-strong);backdrop-filter:blur(8px);z-index:2}
+.th{position:relative;width:56px;aspect-ratio:16/10;padding:0;border:1px solid transparent;border-radius:6px;overflow:hidden;background:var(--surface);cursor:pointer;opacity:.6;transition:opacity .25s,border-color .25s,transform .25s var(--ease)}
+.th img{width:100%;height:100%;object-fit:cover;object-position:top}
+.th i{position:absolute;inset:0;display:grid;place-items:center;font-style:normal;font-size:12px;color:#fff;background:rgba(0,0,0,.35)}
+.th:hover,.th:focus-visible{opacity:1;transform:translateY(-2px)}
+.th.on{opacity:1;border-color:var(--text)}
+.th::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:#fff;transform-origin:left center;transform:scaleX(0)}
 .th.on::after{animation:fillbar var(--dur,3s) linear forwards}
 .frame.idle .th.on::after{animation-play-state:paused}
-.th:hover::before,.th:focus-visible::before{background:rgba(255,255,255,.6)}
-.th.aim::before{background:var(--c,#3f6bff);height:5px;margin-top:-2.5px}
-.th.press{transform:scaleY(1.8)}
+.th.aim{opacity:1;border-color:var(--c,#3f6bff);box-shadow:0 0 0 2px var(--c,#3f6bff)}
+.th.press{transform:scale(.88)!important;transition:transform .12s}
 @keyframes fillbar{to{transform:scaleX(1)}}
+@media (max-width:640px){.th{width:40px}.thumbs{right:8px;bottom:8px;gap:4px;padding:4px}}
 .frame figcaption{position:absolute;left:14px;top:14px;z-index:2;font:700 10px/1 var(--sans);letter-spacing:.16em;text-transform:uppercase;padding:7px 10px;border-radius:999px;background:rgba(10,10,10,.72);border:1px solid var(--line-strong);backdrop-filter:blur(6px);color:var(--text)}
 .proj-body{display:flex;flex-direction:column;gap:14px;min-width:0}
 .proj h3{overflow-wrap:anywhere;font:800 clamp(28px,3.2vw,44px)/.92 var(--sans);text-transform:uppercase;letter-spacing:-.02em;margin:0}
@@ -669,7 +668,7 @@ body.wire .frame img,body.wire .frame video{opacity:.2}
       var cx = mobile ? W*.55 : W*.75, cy = mobile ? H*.82 : H*.52;
       var fan = [{x:-tw*.22,y:tw*.06,r:-8},{x:0,y:-tw*.08,r:-1},{x:tw*.22,y:tw*.1,r:6}];
       var ang = -6 * Math.PI/180;
-      for(var i=0;i<n;i++){
+      for(var i=0;i<0;i++){
         var sh = SH[ORDER[i % ORDER.length]], d = document.createElement('div');
         d.className = 'tile';
         d.innerHTML = '<div class="bar"><i></i><i></i><i></i><span>'+sh[1]+'</span></div><img src="assets/projects/'+sh[0]+'.jpg" alt="">';
@@ -695,12 +694,12 @@ body.wire .frame img,body.wire .frame video{opacity:.2}
         d.style.opacity = 1 - fade*.82;
         d.style.filter = fade > 0 ? 'grayscale('+fade+')' : '';
       });
-      var tt = seg(p,.08,.3);
+      var tt = seg(p,.06,.4);
       gTitle.style.opacity = 1 - tt; gTitle.style.transform = 'translateY(calc(-50% - '+(tt*60)+'px))';
       gTitle.style.pointerEvents = tt > .5 ? 'none' : '';
       gCue.style.opacity = 1 - seg(p,0,.08);
-      gShade.style.opacity = seg(p,.35,.6);
-      var ip = seg(p,.6,.9);
+      gShade.style.opacity = 0;
+      var ip = seg(p,.38,.8);
       gIndex.classList.toggle('on', ip > .3);
       gInner.style.opacity = clamp(ip*2.5, 0, 1);
       rows.forEach(function(li,i){ var k = clamp(ip*1.6 - i*.09, 0, 1); li.style.opacity = k; li.style.transform = 'translateY('+((1-k)*24)+'px)'; });
@@ -719,7 +718,7 @@ body.wire .frame img,body.wire .frame video{opacity:.2}
       var video = fr.querySelector('.m-video'), shot = fr.querySelector('.m-shot'), cap = fr.querySelector('figcaption');
       var ths = Array.prototype.slice.call(fr.querySelectorAll('.th')), idx = 0, timer = null, visible = false, touched = false, baseCap = cap.textContent;
       function show(i, user){
-        idx = i; ths.forEach(function(t,k){ t.classList.remove('on'); t.classList.toggle('done', k < i); });
+        idx = i; ths.forEach(function(t,k){ t.classList.toggle('on', k === i); });
         var t = ths[i];
         if(t.dataset.kind === 'video'){ shot.classList.remove('on'); cap.textContent = baseCap; if(visible && video) video.play().catch(function(){}); }
         else {
@@ -743,6 +742,7 @@ body.wire .frame img,body.wire .frame video{opacity:.2}
         }, wait);
       }
       ths.forEach(function(t,i){ t.addEventListener('click', function(){ show(i, true); }); });
+      if(ths[0]) ths[0].classList.add('on');
       if('IntersectionObserver' in window){
         new IntersectionObserver(function(es){ es.forEach(function(e){
           visible = e.isIntersecting; fr.classList.toggle('idle', !visible);
