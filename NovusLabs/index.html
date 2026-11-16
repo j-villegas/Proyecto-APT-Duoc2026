@@ -194,6 +194,8 @@ p{margin:0}
 .th i{position:absolute;inset:0;display:grid;place-items:center;font-style:normal;font-size:12px;color:#fff;background:rgba(0,0,0,.35)}
 .th:hover,.th:focus-visible{opacity:1;transform:translateY(-2px)}
 .th.on{opacity:1;border-color:var(--text)}
+.th.aim{opacity:1;border-color:var(--c,#3f6bff);box-shadow:0 0 0 2px var(--c,#3f6bff)}
+.th.press{transform:scale(.88)!important;transition:transform .12s}
 .th .bar{position:absolute;left:0;bottom:0;height:2px;width:0;background:var(--text)}
 @media (max-width:640px){.th{width:40px}.thumbs{right:8px;bottom:8px;gap:4px;padding:4px}}
 .frame figcaption{position:absolute;left:14px;top:14px;z-index:2;font:700 10px/1 var(--sans);letter-spacing:.16em;text-transform:uppercase;padding:7px 10px;border-radius:999px;background:rgba(10,10,10,.72);border:1px solid var(--line-strong);backdrop-filter:blur(6px);color:var(--text)}
@@ -728,8 +730,12 @@ body.wire .frame img,body.wire .frame video{opacity:.2}
       function schedule(ms){
         clearTimeout(timer);
         if(reduce || !visible) return;
-        var t = ths[idx], wait = ms || (t.dataset.kind === 'video' ? 9000 : 3800);
-        timer = setTimeout(function(){ show((idx + 1) % ths.length); schedule(); }, wait);
+        var t = ths[idx], wait = ms || (t.dataset.kind === 'video' ? 8000 : 3000);
+        timer = setTimeout(function(){
+          var nx = (idx + 1) % ths.length;
+          var go = function(){ if(!visible) return; show(nx); schedule(); };
+          if(window.cursorClick) window.cursorClick(ths[nx], go); else go();
+        }, wait);
       }
       ths.forEach(function(t,i){ t.addEventListener('click', function(){ show(i, true); }); });
       if('IntersectionObserver' in window){
@@ -818,7 +824,7 @@ body.wire .frame img,body.wire .frame video{opacity:.2}
   /* cursores libres: van a elementos ya construidos y hacen clic */
   function step(a){
     if(paused) return;
-    if(a.job){ a.timer = setTimeout(function(){ step(a); }, 500); return; }
+    if(a.job || a.busy){ a.timer = setTimeout(function(){ step(a); }, 500); return; }
     if(a.sel) a.sel.classList.remove('show');
     var pool = visibleTargets();
     if(a.sel) pool = pool.filter(function(n){ return !agents.some(function(o){ return o !== a && o.sel && o.target === n; }); });
@@ -842,6 +848,26 @@ body.wire .frame img,body.wire .frame video{opacity:.2}
     }, dur*1000 + 60);
   }
   function startAll(){ agents.forEach(function(a){ clearTimeout(a.timer); a.timer = setTimeout(function(){ step(a); }, a.delay/speed); }); }
+
+
+  /* un cursor libre viaja a la miniatura, hace clic y la galería cambia */
+  window.cursorClick = function(el, cb){
+    if(paused || reduce){ cb(); return; }
+    var r = pr(el), cx = r.left + r.width*.55, cy = r.top + r.height*.6;
+    var free = agents.filter(function(a){ return !a.job && !a.busy; });
+    if(!free.length){ cb(); return; }
+    free.sort(function(a,b){ return Math.hypot(a.x-cx, a.y-cy) - Math.hypot(b.x-cx, b.y-cy); });
+    var a = free[0]; a.busy = true; a.anchor = null; clearTimeout(a.timer);
+    if(a.sel) a.sel.classList.remove('show');
+    var dur = Math.min(1.1, Math.max(.45, Math.hypot(a.x-cx, a.y-cy) / 1400));
+    el.style.setProperty('--c', a.t.c); el.classList.add('aim');
+    moveTo(a, cx, cy, dur);
+    setTimeout(function(){
+      ripple(a); el.classList.add('press');
+      setTimeout(function(){ el.classList.remove('press','aim'); cb(); }, 140);
+      setTimeout(function(){ a.busy = false; a.timer = setTimeout(function(){ step(a); }, 700 + Math.random()*800); }, 900);
+    }, dur*1000 + 80);
+  };
 
   /* ---------- construcción por scroll: tres técnicas (A plano, B código, C capas) ---------- */
   function seg(v,a,b){ return Math.max(0, Math.min(1, (v-a)/(b-a))); }
@@ -960,7 +986,7 @@ body.wire .frame img,body.wire .frame video{opacity:.2}
     s.pieces.forEach(function(p){ p.style.opacity = ''; p.style.transform = ''; p.style.filter = ''; p.classList.remove('pgrab','pflash'); });
   }
   function hire(s){
-    var free = agents.filter(function(a){ return !a.job; });
+    var free = agents.filter(function(a){ return !a.job && !a.busy; });
     free.sort(function(a,b){ return (a.t.name ? -1 : 0) - (b.t.name ? -1 : 0); });
     var crew = free.slice(0, 3);
     crew.forEach(function(a,k){ a.anchor = null; a.job = {s:s, k:k}; if(a.sel) a.sel.classList.remove('show'); clearTimeout(a.timer); a.el.style.transitionDuration = '0s'; });
