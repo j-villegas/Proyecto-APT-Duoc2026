@@ -37,22 +37,28 @@ type PassengerEntry = {
   full_name: string
   rut: string
   phone: string
+  /** Con correo, el pasajero queda habilitado para la app móvil: al existir
+   *  (o crearse) un usuario de Auth con ese correo, se vincula solo (025). */
+  email: string
 }
 
 const EMPTY_PASSENGER = (): PassengerEntry => ({
-  localId: crypto.randomUUID(), full_name: '', rut: '', phone: '',
+  localId: crypto.randomUUID(), full_name: '', rut: '', phone: '', email: '',
 })
 
-type PassengerErrors = Partial<Record<'full_name' | 'rut', string>>
+type PassengerErrors = Partial<Record<'full_name' | 'rut' | 'email', string>>
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 function validatePassengers(rows: PassengerEntry[]): Map<string, PassengerErrors> {
   const errors = new Map<string, PassengerErrors>()
   for (const row of rows) {
-    const touched = row.full_name.trim() || row.rut.trim() || row.phone.trim()
+    const touched = row.full_name.trim() || row.rut.trim() || row.phone.trim() || row.email.trim()
     if (!touched) continue
     const e: PassengerErrors = {}
     if (!row.full_name.trim()) e.full_name = 'Nombre requerido.'
     if (!row.rut.trim())       e.rut       = 'RUT requerido.'
+    if (row.email.trim() && !EMAIL_RE.test(row.email.trim())) e.email = 'Correo inválido.'
     if (Object.keys(e).length > 0) errors.set(row.localId, e)
   }
   return errors
@@ -184,7 +190,7 @@ export default function AddContractModal() {
 
         const { data: existing } = await supabase
           .from('passengers')
-          .select('id, phone')
+          .select('id, phone, email')
           .eq('company_id', companyId)
           .eq('rut', rut)
           .maybeSingle()
@@ -193,8 +199,12 @@ export default function AddContractModal() {
 
         if (existing) {
           passengerId = existing.id
-          if (!existing.phone && row.phone.trim()) {
-            await supabase.from('passengers').update({ phone: row.phone.trim() }).eq('id', passengerId)
+          // Completa teléfono y correo si faltaban (el correo habilita su acceso a la app).
+          const patch: Record<string, string> = {}
+          if (!existing.phone && row.phone.trim()) patch.phone = row.phone.trim()
+          if (!existing.email && row.email.trim()) patch.email = row.email.trim().toLowerCase()
+          if (Object.keys(patch).length > 0) {
+            await supabase.from('passengers').update(patch).eq('id', passengerId)
           }
         } else {
           const insertPayload: Record<string, unknown> = {
@@ -204,6 +214,7 @@ export default function AddContractModal() {
             status:     'active',
           }
           if (row.phone.trim()) insertPayload.phone = row.phone.trim()
+          if (row.email.trim()) insertPayload.email = row.email.trim().toLowerCase()
 
           const { data: newP, error: newPErr } = await supabase
             .from('passengers').insert(insertPayload).select('id').single()
@@ -349,7 +360,7 @@ export default function AddContractModal() {
                             >
                               {idx + 1}
                             </span>
-                            <div className="flex-1 grid grid-cols-3 gap-2">
+                            <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-2">
                               <Field label="Nombre Completo" error={pErr?.full_name}>
                                 <input type="text" placeholder="Juan Pérez" value={p.full_name}
                                   onChange={e => updatePassenger(p.localId, 'full_name', e.target.value)}
@@ -363,6 +374,11 @@ export default function AddContractModal() {
                               <Field label="Teléfono">
                                 <input type="tel" placeholder="+56 9 1234 5678" value={p.phone}
                                   onChange={e => updatePassenger(p.localId, 'phone', e.target.value)}
+                                  className={inputCls} />
+                              </Field>
+                              <Field label="Correo (acceso app)" error={pErr?.email}>
+                                <input type="email" placeholder="pasajero@empresa.cl" value={p.email}
+                                  onChange={e => updatePassenger(p.localId, 'email', e.target.value)}
                                   className={inputCls} />
                               </Field>
                             </div>

@@ -13,6 +13,9 @@ export type ServiceStatus =
 
 export type StopStatus = "pendiente" | "confirmada" | "completada";
 
+/** origen (base) → recogidas → (bajadas) → destino → regreso a la base. */
+export type StopType = "origin" | "pickup" | "dropoff" | "destination" | "return";
+
 export type IncidentType =
   | "frenada_brusca"
   | "conduccion_imprudente"
@@ -58,6 +61,7 @@ export interface ServiceStop {
   id: string;
   service_id: string;
   order_index: number;
+  type: StopType;
   label: string;
   address: string;
   eta: string | null;
@@ -65,6 +69,8 @@ export interface ServiceStop {
   status: StopStatus;
   arrived_at: string | null;
   completed_at: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
 export interface Service {
@@ -83,6 +89,8 @@ export interface Service {
   origin_longitude?: number | null;
   destination_latitude?: number | null;
   destination_longitude?: number | null;
+  /** Recorrido por calles planificado por la central (migración 033). */
+  planned_path?: { latitude: number; longitude: number }[] | null;
   scheduled_at: string;
   eta: string | null;
   status: ServiceStatus;
@@ -150,12 +158,15 @@ export interface DbServiceRow {
     destination_longitude: Numeric | null;
   } | null;
   contract: { contract_name: string | null; client_name: string } | null;
+  /** [[lat, lng], ...] */
+  planned_path?: [number, number][] | null;
 }
 
 export interface DbServiceStopRow {
   id: string;
   service_id: string;
   stop_order: number;
+  stop_type?: StopType | null;
   name: string;
   address: string | null;
   status: DbStopStatus;
@@ -163,6 +174,8 @@ export interface DbServiceStopRow {
   passenger_count: number | null;
   actual_arrival_at: string | null;
   completed_at: string | null;
+  latitude?: Numeric | null;
+  longitude?: Numeric | null;
 }
 
 export interface DbVehicleRow {

@@ -25,6 +25,7 @@ const stop = (id: string, order: number, completed: string | null, arrived: stri
   id,
   service_id: "s1",
   order_index: order,
+  type: "pickup",
   label: `Parada ${order}`,
   address: "",
   eta: null,

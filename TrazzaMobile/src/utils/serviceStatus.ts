@@ -112,3 +112,53 @@ export function buildTripSteps(service: Service, stops: ServiceStop[]): TripStep
     return { ...step, state: "pending" };
   });
 }
+
+/** Nombre visible de una parada para el pasajero (recogidas y bajadas llevan el nombre del pasajero: se usa la dirección). */
+function placeOf(stop: ServiceStop | null) {
+  if (!stop) return "";
+  return stop.type === "pickup" || stop.type === "dropoff" ? stop.address || stop.label : stop.label;
+}
+
+/**
+ * Progreso del viaje desde el punto de vista del pasajero, solo con sus
+ * hitos: salida del conductor → lo recogen → llega a su destino → término.
+ * No muestra las paradas (ni nombres) de otros pasajeros.
+ */
+export function buildPassengerTripSteps(
+  service: Service,
+  legs: { origin: ServiceStop | null; pickup: ServiceStop | null; dropoff: ServiceStop | null }
+): TripStep[] {
+  const cancelled = service.status === "cancelado";
+  const doneAt = (stop: ServiceStop | null) => stop?.completed_at ?? stop?.arrived_at ?? null;
+  const isDone = (stop: ServiceStop | null) => !!stop && (stop.status === "completada" || !!doneAt(stop));
+  const facts: { key: string; label: string; time?: string | null; done: boolean }[] = [
+    { key: "scheduled", label: "Viaje programado", time: service.scheduled_at, done: true },
+    {
+      key: "started",
+      label: legs.origin ? `El conductor salió desde ${placeOf(legs.origin)}` : "El conductor inició la ruta",
+      time: service.actual_start_at,
+      done: !!service.actual_start_at,
+    },
+  ];
+  if (legs.pickup) {
+    facts.push({ key: "pickup", label: `Te recoge en ${placeOf(legs.pickup)}`, time: doneAt(legs.pickup), done: isDone(legs.pickup) });
+  }
+  if (legs.dropoff) {
+    facts.push({ key: "dropoff", label: `Te deja en ${placeOf(legs.dropoff)}`, time: doneAt(legs.dropoff), done: isDone(legs.dropoff) });
+  }
+  facts.push(
+    cancelled
+      ? { key: "cancelled", label: "Viaje cancelado", time: service.actual_end_at, done: true }
+      : { key: "finished", label: "Viaje finalizado", time: service.actual_end_at, done: service.status === "finalizado" }
+  );
+
+  let activeAssigned = cancelled;
+  return facts.map(({ done, ...step }) => {
+    if (done) return { ...step, state: "done" };
+    if (!activeAssigned) {
+      activeAssigned = true;
+      return { ...step, state: "active" };
+    }
+    return { ...step, state: "pending" };
+  });
+}

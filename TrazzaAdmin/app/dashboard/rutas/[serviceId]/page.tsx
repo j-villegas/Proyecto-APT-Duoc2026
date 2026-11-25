@@ -63,8 +63,10 @@ function getStopStatus(status: string | null) {
 
 const stopTypeLabel: Record<string, string> = {
   origin:      'ORIGEN',
-  pickup:      'PARADA',
+  pickup:      'RECOGIDA',
+  dropoff:     'BAJADA',
   destination: 'DESTINO',
+  return:      'REGRESO A BASE',
 }
 
 function formatDate(d: string | null) {
@@ -132,9 +134,9 @@ function Itinerary({ stops, serviceStatus }: { stops: StopRow[]; serviceStatus: 
         const ss = (serviceStatus === 'completed' && stop.status === 'pending')
           ? { label: 'Sin confirmación conductor', color: '#a8b8cc' }
           : rawSs
-        const isOD      = stop.stop_type === 'origin' || stop.stop_type === 'destination'
+        const isOD      = stop.stop_type === 'origin' || stop.stop_type === 'destination' || stop.stop_type === 'return'
         const dotColor  =
-          stop.stop_type === 'origin'      ? '#10b98b' :
+          stop.stop_type === 'origin' || stop.stop_type === 'return' ? '#10b98b' :
           stop.stop_type === 'destination' ? '#f1f5f9' : '#94a3b8'
 
         return (
@@ -265,14 +267,14 @@ export default async function ServiceDetailPage({
   // Intermediate-stop counter used for iconLabel: origin is stop_order=1 so
   // the first intermediate is stop_order=2 → rendered as "1", etc.
   const mapMarkers = stopsWithCoords.map(s => {
-    const isOrigin = s.stop_type === 'origin'
+    const isOrigin = s.stop_type === 'origin' || s.stop_type === 'return'
     const isDest   = s.stop_type === 'destination'
     const stopNum  = s.stop_order - 1   // 1-based intermediate index
     return {
       id:         s.id,
       lat:        s.latitude!,
       lng:        s.longitude!,
-      label:      isOrigin ? 'Origen' : isDest ? 'Destino' : (s.name ?? `Parada ${stopNum}`),
+      label:      s.stop_type === 'return' ? 'Regreso a la base' : isOrigin ? 'Origen' : isDest ? 'Destino' : `${s.stop_type === 'dropoff' ? 'Bajada' : 'Recogida'} · ${s.name ?? `Parada ${stopNum}`}`,
       iconLabel:  isOrigin ? 'A' : isDest ? 'B' : String(stopNum),
       type:       isOrigin ? 'origin'      as const
                 : isDest   ? 'destination' as const
@@ -570,6 +572,14 @@ export default async function ServiceDetailPage({
                 />
               </div>
             ) : null}
+            {(service.status === 'completed' || service.status === 'cancelled') && (
+              <Link
+                href={`/dashboard/auditoria/${service.id}`}
+                className="mt-2 w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-md border border-[#246354] bg-[#143c39] text-[12px] font-semibold text-[#62e7bd] hover:bg-[#185049]"
+              >
+                Auditar servicio
+              </Link>
+            )}
           </InfoCard>
 
         </div>

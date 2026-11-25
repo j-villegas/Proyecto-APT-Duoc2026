@@ -15,15 +15,15 @@ import { AppError } from "../lib/errors";
 const SERVICE_COLUMNS = `
   id, service_code, status, driver_id, vehicle_id, created_at,
   actual_start_at, actual_end_at, cancel_reason,
-  scheduled_at:mobile_scheduled_at, eta:mobile_eta, passenger_count:mobile_passenger_count,
+  scheduled_at:mobile_scheduled_at, eta:mobile_eta, passenger_count:mobile_passenger_count, planned_path,
   route:routes(origin_name, origin_address, origin_latitude, origin_longitude,
     destination_name, destination_address, destination_latitude, destination_longitude),
   contract:contracts(contract_name, client_name)
 `;
 
 const STOP_COLUMNS = `
-  id, service_id, stop_order, name, address, status, actual_arrival_at, completed_at,
-  eta:mobile_eta, passenger_count:mobile_passenger_count
+  id, service_id, stop_order, stop_type, name, address, status, actual_arrival_at, completed_at,
+  latitude, longitude, eta:mobile_eta, passenger_count:mobile_passenger_count
 `;
 
 /** Días hacia atrás que se cargan en el listado del conductor. */
@@ -85,6 +85,22 @@ export async function getServiceStops(serviceId: string) {
     .order("stop_order", { ascending: true });
   if (error) throw error;
   return ((data ?? []) as unknown as DbServiceStopRow[]).map(mapServiceStop);
+}
+
+/**
+ * Paradas del pasajero en un servicio: dónde lo recogen y dónde baja
+ * (dropoffStopId null = baja en el destino final). RLS: solo su propia fila.
+ */
+export async function getPassengerStopIds(serviceId: string, passengerId: string) {
+  const { data, error } = await supabase
+    .from("service_passengers")
+    .select("service_stop_id, dropoff_stop_id")
+    .eq("service_id", serviceId)
+    .eq("passenger_id", passengerId)
+    .maybeSingle();
+  if (error) throw error;
+  const row = data as { service_stop_id: string | null; dropoff_stop_id: string | null } | null;
+  return { pickupStopId: row?.service_stop_id ?? null, dropoffStopId: row?.dropoff_stop_id ?? null };
 }
 
 export async function getVehicleById(vehicleId: string | null) {

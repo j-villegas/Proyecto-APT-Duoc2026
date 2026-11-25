@@ -11,6 +11,11 @@ import { Button } from "../../components/Button";
 import { StatusBadge } from "../../components/StatusBadge";
 import { RoutePoints } from "../../components/RoutePoints";
 import { getNextServiceForPassenger } from "../../services/services";
+import { useServiceLive } from "../../hooks/useServiceLive";
+import { useServiceStatusNotice } from "../../hooks/useServiceStatusNotice";
+import { ServiceNoticeBanner } from "../../components/ServiceNoticeBanner";
+import { usePassengerLegs } from "../../hooks/usePassengerLegs";
+import { passengerPoints } from "../../utils/passengerPoints";
 import type { Service } from "../../types/database";
 import { colors, radius, spacing, typography } from "../../constants/theme";
 import { formatTime } from "../../utils/format";
@@ -20,7 +25,13 @@ type Nav = NativeStackNavigationProp<PassengerStackParamList>;
 
 export default function PassengerHomeScreen({ navigation }: { navigation: Nav }) {
   const { profile } = useAuth();
-  const [trip, setTrip] = useState<Service | null>(null);
+  const [loadedTrip, setLoadedTrip] = useState<Service | null>(null);
+  // En vivo: inicio, avance y cierre del viaje asignado llegan por Realtime.
+  const live = useServiceLive(loadedTrip?.id ?? null);
+  const trip = live.service && live.service.id === loadedTrip?.id ? live.service : loadedTrip;
+  const { notice, dismiss } = useServiceStatusNotice(trip);
+  const legs = usePassengerLegs(trip?.id ?? null, live.service?.id === trip?.id ? live.stops : []);
+  const points = trip ? passengerPoints(trip, legs) : null;
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [loadError, setLoadError] = useState<unknown>(null);
@@ -29,7 +40,7 @@ export default function PassengerHomeScreen({ navigation }: { navigation: Nav })
     if (!profile?.passenger_id) return;
     try {
       const next = await getNextServiceForPassenger(profile.passenger_id);
-      setTrip(next);
+      setLoadedTrip(next);
       setLoadError(null);
     } catch (err) {
       setLoadError(err);
@@ -71,6 +82,8 @@ export default function PassengerHomeScreen({ navigation }: { navigation: Nav })
           </View>
         </View>
 
+        <ServiceNoticeBanner notice={notice} onDismiss={dismiss} />
+
         {!loading && trip ? (
           <Card style={styles.tripCard}>
             <View style={styles.tripTimeRow}>
@@ -82,8 +95,11 @@ export default function PassengerHomeScreen({ navigation }: { navigation: Nav })
             </View>
 
             <RoutePoints
-              originLabel={trip.origin_label}
-              destinationLabel={trip.destination_label}
+              originEyebrow="TE RECOGEN EN"
+              originLabel={points?.pickup?.label ?? "Por confirmar"}
+              destinationEyebrow="TU DESTINO"
+              destinationLabel={points?.dropoff.label ?? trip.destination_label}
+              destinationAddress={points?.dropoff.address}
             />
 
             {trip.contract_name ? (
