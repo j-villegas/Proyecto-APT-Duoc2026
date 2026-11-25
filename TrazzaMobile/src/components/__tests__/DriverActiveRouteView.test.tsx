@@ -30,7 +30,7 @@ const service = (status: Service["status"]): Service => ({
   actual_start_at: null, actual_end_at: null, cancel_reason: null, created_at: "2026-10-09T00:00:00Z",
 });
 const stop = (status: ServiceStop["status"]): ServiceStop => ({
-  id: "st1", service_id: "s1", order_index: 1, label: "Paradero", address: "", eta: null,
+  id: "st1", service_id: "s1", order_index: 1, type: "pickup", label: "Paradero", address: "", eta: null,
   passenger_count: 1, status, arrived_at: null, completed_at: null,
 });
 
@@ -41,7 +41,7 @@ it("una ruta finalizada no ofrece más acciones y permite salir", async () => {
   await render(<DriverActiveRouteView serviceId="s1" onReportIncident={jest.fn()} onExit={onExit} />);
 
   expect(await screen.findByText("Ruta finalizada")).toBeTruthy();
-  expect(screen.queryByText("Llegué a la parada")).toBeNull();
+  expect(screen.queryByText("Pasajero a bordo")).toBeNull();
   expect(screen.queryByText("Finalizar ruta")).toBeNull();
   await fireEvent.press(screen.getByText("Volver al inicio"));
   expect(onExit).toHaveBeenCalled();
@@ -65,6 +65,6 @@ it("transmite el GPS solo mientras la ruta está en curso", async () => {
   await render(<DriverActiveRouteView serviceId="s1" onReportIncident={jest.fn()} />);
 
   expect(await screen.findByText("Ruta cancelada")).toBeTruthy();
-  expect(screen.queryByText("Llegué a la parada")).toBeNull();
-  expect(jest.mocked(useDriverLocationBroadcast)).toHaveBeenLastCalledWith({ serviceId: "s1", enabled: false });
+  expect(screen.queryByText("Pasajero a bordo")).toBeNull();
+  expect(jest.mocked(useDriverLocationBroadcast)).toHaveBeenLastCalledWith(expect.objectContaining({ serviceId: "s1", enabled: false }));
 });

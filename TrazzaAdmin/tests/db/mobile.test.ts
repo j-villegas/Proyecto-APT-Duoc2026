@@ -109,11 +109,12 @@ describe('funciones de la app', () => {
     expect(await one(db, `select status, current_odometer_km::int as km from vehicles where id = '${VEHICLE_ID}'`)).toEqual({ status: 'available', km: 123456 })
     expect(await one(db, `select count(*)::int as n from service_locations where service_id = '${SERVICE_ID}'`)).toEqual({ n: 1 })
     const events = await rows<{ event_type: string }>(db, `select event_type from service_events where service_id = '${SERVICE_ID}' and actor_type = 'driver' order by created_at`)
-    expect(events.map(e => e.event_type)).toEqual(['service_started', 'stop_completed', 'stop_completed', 'stop_completed', 'service_finished'])
+    // 034: completar la recogida deja abordados a sus dos pasajeros.
+    expect(events.map(e => e.event_type)).toEqual(['service_started', 'stop_completed', 'passenger_boarded', 'passenger_boarded', 'stop_completed', 'stop_completed', 'service_finished'])
   })
 
   it('publica en realtime las tablas que usan las apps', async () => {
     const tables = await rows<{ tablename: string }>(db, `select tablename from pg_publication_tables where pubname = 'supabase_realtime' order by 1`)
-    expect(tables.map(t => t.tablename)).toEqual(['service_locations', 'service_stops', 'services'])
+    expect(tables.map(t => t.tablename)).toEqual(['service_events', 'service_locations', 'service_metrics', 'service_stops', 'services'])
   })
 })

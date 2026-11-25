@@ -88,6 +88,55 @@ con `set check_function_bodies = off`.
 **Los botones Iniciar / Finalizar / Cancelar / Añadir ruta del panel
 dependen de 027 y 028**: corre `npm run db:migrate` antes de usarlos.
 
+## 030-031: auditoría de servicios y vehículos por conductor
+
+- `030` agrega la auditoría: al cerrar un servicio (app o panel) un trigger
+  llena `service_metrics` con estimado vs. real (inicio, duración, distancia
+  GPS, paradas, pasajeros, incidentes, trayectoria) y códigos de anomalía.
+  `admin_audit_service(id, 'approved'|'observed', notas)` deja historial en
+  `service_audits`, estado en `services.audit_status`, evento en la bitácora
+  y registro en `audit_logs`. `service_events`, `service_locations` y
+  `service_audits` son inmutables (trigger). `mobile_report_location` acepta
+  `p_is_simulated` (GPS simulado del modo demo).
+- `030` también agregó un flujo "bajo demanda" (el pasajero pedía viajes y
+  un conductor los tomaba de una bolsa) que **`031` retira por completo**: no
+  corresponde a la operación. Los viajes los crea y asigna el panel.
+- `031` agrega `driver_vehicles`: vehículos que puede manejar cada conductor
+  (muchos a muchos). El panel los propone al crear un viaje. Además, si un
+  viaje no tiene duración estimada, se deriva de su distancia (30 km/h).
+
+**La vista Auditoría, Pasajeros y la asignación de vehículos dependen de
+030-031**: corre `npm run db:migrate` antes de usarlas.
+
+## 032: recogidas y bajadas
+
+- Recorrido de un viaje: **origen** (salida del conductor) → **recogida** de
+  cada pasajero → **bajada** de quienes tienen destino propio → **destino
+  final**. Nuevo tipo de parada `dropoff` y `service_passengers.dropoff_stop_id`
+  (null = baja en el destino final; sin FK para no romper el embed
+  `service_stops(...)` del panel).
+- `admin_create_route_service` acepta `dropoff` por pasajero.
+- Al iniciar el servicio, la parada de origen queda completada (salida) y la
+  primera recogida pasa a ser la siguiente.
+
+## 033-034: ruta por calles y pasajeros a bordo
+
+- `033`: `services.planned_path` (`[[lat, lng], ...]`). Al crear un viaje, el
+  panel pide el recorrido a Google Directions (requiere la API Directions en
+  `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`) y lo guarda junto con la distancia y
+  duración estimadas. La app lo dibuja y el modo demostración lo recorre. Sin
+  Directions, el viaje se crea igual (sin recorrido).
+- `034`: al completar una recogida, sus pasajeros quedan `boarded` y la
+  bitácora registra `passenger_boarded`.
+
+## 035: regreso a la base
+
+- Transporte de personal: el conductor sale de su base, recoge a la cuadrilla,
+  deja a todos en el mismo destino y vuelve a la base. Nuevo tipo de parada
+  `return` al final del recorrido cuando el viaje se crea con
+  `return_to_origin: true` (casilla "El conductor regresa a la base al
+  terminar" en el panel, marcada por defecto).
+
 ## Pruebas
 
 `npm run test:db` levanta Postgres en memoria (PGlite), corre todas las
@@ -95,7 +144,7 @@ migraciones y prueba RLS y funciones (`tests/db`). Si cambias una migración
 o una policy, agrega o ajusta un caso ahí.
 
 Antes de crear uno nuevo:
-- Usa el siguiente número disponible (el próximo es `029`).
+- Usa el siguiente número disponible (el próximo es `036`).
 - Si toca RLS, deja explícito qué patrón de aislamiento asume (ej.
   `profiles.company_id` vía `current_profile_company_id()`) por si el
   proyecto cambia de convención.

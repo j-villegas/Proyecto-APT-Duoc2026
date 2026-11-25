@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import PlacesAutocompleteInput, { type PlaceResult } from '@/app/dashboard/components/PlacesAutocompleteInput'
 import { friendlyError } from '@/lib/errors'
+import { planRoute, type LatLng } from '@/lib/planned-route'
 
 // ─── Dropdown option types ────────────────────────────────────────────────────
 
@@ -44,8 +45,10 @@ type LocationEntry = {
   lng: number | null
 }
 
-// A "stop" is now always tied to one of the contract's passengers — the
-// admin only fills in the pickup/dropoff address, the name is fixed.
+// Transporte de personal: el conductor sale de su base, recoge a cada pasajero
+// del contrato (su dirección de recogida), deja a todos en el mismo destino
+// (faena / planta) y, si se marca, vuelve a la base:
+// origen → recogidas → destino → regreso a la base.
 type StopEntry = LocationEntry & { localId: string; passengerId: string; fullName: string }
 
 // ─── Form data ────────────────────────────────────────────────────────────────
@@ -59,6 +62,7 @@ type FormData = {
   driver_id: string
   vehicle_id: string
   scheduled_datetime: string
+  return_to_origin: boolean
 }
 
 const EMPTY_LOC: LocationEntry = { text: '', address: '', lat: null, lng: null }
@@ -72,6 +76,7 @@ const EMPTY_FORM: FormData = {
   driver_id: '',
   vehicle_id: '',
   scheduled_datetime: '',
+  return_to_origin: true,
 }
 
 // ─── Field validation ─────────────────────────────────────────────────────────
@@ -98,7 +103,7 @@ function validate(form: FormData, contractPassengerCount: number): FieldErrors {
   if (!form.vehicle_id)               e.vehicle_id       = 'Selecciona un vehículo.'
   if (!form.scheduled_datetime)       e.scheduled_datetime = 'La fecha y hora son obligatorias.'
   if (form.contract_id && contractPassengerCount > 0 && form.stops.some(s => !s.text.trim())) {
-    e.stops = 'Completa la dirección de todos los pasajeros.'
+    e.stops = 'Completa la dirección de recogida de todos los pasajeros.'
   }
   return e
 }
@@ -166,6 +171,8 @@ export default function AddRouteModal() {
   const [contracts, setContracts] = useState<ContractOption[]>([])
   const [drivers, setDrivers]    = useState<DriverOption[]>([])
   const [vehicles, setVehicles]  = useState<VehicleOption[]>([])
+  // Vehículos asignados a cada conductor (driver_vehicles, migración 031).
+  const [driverVehicles, setDriverVehicles] = useState<Record<string, string[]>>({})
   const [contractPassengers, setContractPassengers] = useState<ContractPassengerOption[]>([])
   const [loadingPassengers, setLoadingPassengers]   = useState(false)
 
@@ -173,7 +180,7 @@ export default function AddRouteModal() {
   const loadOptions = useCallback(async () => {
     setLoadingOptions(true)
     const supabase = createClient()
-    const [c, d, v] = await Promise.all([
+    const [c, d, v, dv] = await Promise.all([
       supabase
         .from('contracts')
         .select('id, contract_name, client_name')
@@ -194,10 +201,19 @@ export default function AddRouteModal() {
         .eq('status', 'available')
         .is('deleted_at', null)
         .order('plate', { ascending: true }),
+
+      supabase
+        .from('driver_vehicles')
+        .select('driver_id, vehicle_id'),
     ])
     setContracts((c.data ?? []) as ContractOption[])
     setDrivers((d.data ?? []) as DriverOption[])
     setVehicles((v.data ?? []) as VehicleOption[])
+    const byDriver: Record<string, string[]> = {}
+    for (const row of (dv.data ?? []) as { driver_id: string; vehicle_id: string }[]) {
+      (byDriver[row.driver_id] ??= []).push(row.vehicle_id)
+    }
+    setDriverVehicles(byDriver)
     setLoadingOptions(false)
   }, [])
 
@@ -223,6 +239,7 @@ export default function AddRouteModal() {
       .select('passenger_id, passengers ( id, full_name, rut )')
       .eq('contract_id', contractId)
       .is('deleted_at', null)
+      .order('created_at', { ascending: true })
 
     if (request !== contractRequest.current) return
     const list: ContractPassengerOption[] = (data ?? []).map(row => {
@@ -332,9 +349,20 @@ export default function AddRouteModal() {
     const destLng     = form.destination.lng
 
     const intermediateStops = form.stops.filter(s => s.text.trim())
+    const returnToOrigin    = form.return_to_origin
 
     try {
       const [scheduled_date, scheduled_start_time] = scheduledDatetime.split('T')
+
+      // Recorrido por calles en el mismo orden que crea las paradas la base:
+      // origen → recogidas → destino → (regreso a la base).
+      const ordered: (LatLng | null)[] = [
+        { lat: originLat, lng: originLng },
+        ...intermediateStops.map(st => ({ lat: st.lat, lng: st.lng })),
+        { lat: destLat, lng: destLng },
+        ...(returnToOrigin ? [{ lat: originLat, lng: originLng }] : []),
+      ].map(p => (p.lat !== null && p.lng !== null ? { lat: p.lat, lng: p.lng } : null))
+      const planned = ordered.every(p => p !== null) ? await planRoute(ordered as LatLng[]) : null
 
       // Ruta, paradas, servicio, pasajeros y códigos de acceso en una sola
       // transacción (admin_create_route_service): si algo falla, no se crea nada.
@@ -355,6 +383,10 @@ export default function AddRouteModal() {
             lng: st.lng,
             passenger_id: st.passengerId || null,
           })),
+          return_to_origin: returnToOrigin,
+          planned_path: planned?.path ?? null,
+          planned_distance_km: planned?.distanceKm ?? null,
+          planned_duration_minutes: planned?.durationMinutes ?? null,
         },
       })
 
@@ -490,7 +522,12 @@ export default function AddRouteModal() {
                       <Field label="Conductor" error={fieldErrors.driver_id}>
                         <select
                           value={form.driver_id}
-                          onChange={e => set('driver_id', e.target.value)}
+                          onChange={e => {
+                            const driverId = e.target.value
+                            set('driver_id', driverId)
+                            const own = (driverVehicles[driverId] ?? []).filter(id => vehicles.some(v => v.id === id))
+                            if (own.length > 0 && !own.includes(form.vehicle_id)) set('vehicle_id', own[0])
+                          }}
                           className={inputCls}
                         >
                           <option value="">— Selecciona un conductor —</option>
@@ -508,12 +545,12 @@ export default function AddRouteModal() {
 
                     {/* Row 3 — Origen | Vehículo */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <Field label="Origen" error={fieldErrors.origin}>
+                      <Field label="Origen · base del conductor" error={fieldErrors.origin}>
                         <PlacesAutocompleteInput
                           value={form.origin.text}
                           onChange={text => setLoc('origin', { text, address: '', lat: null, lng: null })}
                           onPlaceSelect={r => setLoc('origin', { text: r.name, address: r.address, lat: r.lat, lng: r.lng })}
-                          placeholder="Ciudad o Terminal de Origen"
+                          placeholder="Base o punto de partida del conductor"
                           className={inputCls}
                         />
                         <CoordIndicator entry={form.origin} />
@@ -529,26 +566,51 @@ export default function AddRouteModal() {
                           {vehicles.length === 0 && (
                             <option disabled>Sin vehículos disponibles</option>
                           )}
-                          {vehicles.map(v => (
-                            <option key={v.id} value={v.id}>
-                              {[v.plate, v.brand, v.model].filter(Boolean).join(' · ')}
-                            </option>
-                          ))}
+                          {(() => {
+                            const own = new Set(driverVehicles[form.driver_id] ?? [])
+                            const label = (v: VehicleOption) => [v.plate, v.brand, v.model].filter(Boolean).join(' · ')
+                            const mine = vehicles.filter(v => own.has(v.id))
+                            const others = vehicles.filter(v => !own.has(v.id))
+                            if (!form.driver_id || mine.length === 0) {
+                              return vehicles.map(v => <option key={v.id} value={v.id}>{label(v)}</option>)
+                            }
+                            return (
+                              <>
+                                <optgroup label="Asignados al conductor">
+                                  {mine.map(v => <option key={v.id} value={v.id}>{label(v)}</option>)}
+                                </optgroup>
+                                {others.length > 0 && (
+                                  <optgroup label="Otros vehículos disponibles">
+                                    {others.map(v => <option key={v.id} value={v.id}>{label(v)}</option>)}
+                                  </optgroup>
+                                )}
+                              </>
+                            )
+                          })()}
                         </select>
                       </Field>
                     </div>
 
                     {/* Row 4 — Destino | Fecha y Hora */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <Field label="Destino Final" error={fieldErrors.destination}>
+                      <Field label="Destino · donde bajan los pasajeros" error={fieldErrors.destination}>
                         <PlacesAutocompleteInput
                           value={form.destination.text}
                           onChange={text => setLoc('destination', { text, address: '', lat: null, lng: null })}
                           onPlaceSelect={r => setLoc('destination', { text: r.name, address: r.address, lat: r.lat, lng: r.lng })}
-                          placeholder="Ciudad o Terminal de Destino"
+                          placeholder="Faena, planta u oficina de destino"
                           className={inputCls}
                         />
                         <CoordIndicator entry={form.destination} />
+                        <label className="flex items-center gap-2 mt-2 text-[11px] text-muted cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            checked={form.return_to_origin}
+                            onChange={e => set('return_to_origin', e.target.checked)}
+                            className="accent-emerald-500"
+                          />
+                          El conductor regresa a la base al terminar
+                        </label>
                       </Field>
 
                       <Field label="Fecha y Hora de Salida" error={fieldErrors.scheduled_datetime}>
@@ -564,7 +626,7 @@ export default function AddRouteModal() {
                     {/* Row 5 — Pasajeros del contrato full width */}
                     <div>
                       <div className="flex items-center justify-between mb-2">
-                        <span className={labelCls}>Pasajeros del Contrato</span>
+                        <span className={labelCls}>Pasajeros del Contrato · orden de recogida</span>
                         {contractPassengers.length > 0 && (
                           <span className="text-[10px] text-muted">
                             {contractPassengers.length} pasajero{contractPassengers.length !== 1 ? 's' : ''}
@@ -611,7 +673,7 @@ export default function AddRouteModal() {
                                   value={stop.text}
                                   onChange={text => updateStopAddressText(stop.localId, text)}
                                   onPlaceSelect={r => setStopPlace(stop.localId, r)}
-                                  placeholder="Dirección de recogida / destino"
+                                  placeholder="Recogida: dónde lo busca el conductor"
                                   className={inputCls + ' flex-1'}
                                 />
                               </div>

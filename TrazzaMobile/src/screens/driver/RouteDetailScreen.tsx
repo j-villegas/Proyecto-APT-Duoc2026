@@ -8,6 +8,7 @@ import { Card } from "../../components/Card";
 import { Button } from "../../components/Button";
 import { StatusBadge } from "../../components/StatusBadge";
 import { getServiceById, getServiceStops, getVehicleById } from "../../services/services";
+import { STOP_TYPE_SHORT, stopActionLabel } from "../../utils/tripLegs";
 import type { Service, ServiceStop, Vehicle } from "../../types/database";
 import { colors, spacing, typography } from "../../constants/theme";
 import { formatDateTime, formatTime } from "../../utils/format";
@@ -102,31 +103,34 @@ export default function RouteDetailScreen({ route, navigation }: Props) {
 
         <Text style={styles.sectionTitle}>ITINERARIO</Text>
         <Card style={styles.itineraryCard}>
-          <View style={styles.stopRow}>
-            <View style={styles.originDot} />
-            <View style={styles.flex1}>
-              <Text style={styles.stopLabel}>{service.origin_label}</Text>
-              <Text style={styles.stopAddress}>{service.origin_address}</Text>
+          {stops.length === 0 ? (
+            <View style={styles.stopRow}>
+              <View style={styles.originDot} />
+              <View style={styles.flex1}>
+                <Text style={styles.stopLabel}>{service.origin_label}</Text>
+                <Text style={styles.stopAddress}>{service.origin_address}</Text>
+              </View>
             </View>
-          </View>
-          <View style={styles.connector} />
-          <View style={styles.stopRow}>
-            <View style={styles.midDot} />
-            <View style={styles.flex1}>
-              <Text style={styles.stopLabel}>Paradas intermedias</Text>
-              <Text style={styles.stopAddress}>
-                {stops.length} paradas · {stops.filter((s) => s.status !== "pendiente").length} confirmadas
-              </Text>
-            </View>
-          </View>
-          <View style={styles.connector} />
-          <View style={styles.stopRow}>
-            <View style={styles.destDot} />
-            <View style={styles.flex1}>
-              <Text style={styles.stopLabel}>{service.destination_label}</Text>
-              <Text style={styles.stopAddress}>{service.destination_address}</Text>
-            </View>
-          </View>
+          ) : null}
+          {stops.map((stop, idx) => (
+            <React.Fragment key={stop.id}>
+              {idx > 0 ? <View style={styles.connector} /> : null}
+              <View style={styles.stopRow}>
+                <View
+                  style={
+                    stop.type === "origin" || stop.type === "return" ? styles.originDot : stop.type === "destination" ? styles.destDot : styles.midDot
+                  }
+                />
+                <View style={styles.flex1}>
+                  <Text style={styles.stopLabel}>{stopActionLabel(stop)}</Text>
+                  <Text style={styles.stopAddress}>
+                    {[STOP_TYPE_SHORT[stop.type], stop.address].filter(Boolean).join(" · ")}
+                    {stop.status !== "pendiente" ? " · listo" : ""}
+                  </Text>
+                </View>
+              </View>
+            </React.Fragment>
+          ))}
         </Card>
 
         {timeline.length > 1 ? (

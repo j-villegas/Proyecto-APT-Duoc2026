@@ -7,6 +7,9 @@ interface RoutePointsProps {
   originAddress?: string;
   destinationLabel: string;
   destinationAddress?: string;
+  /** Rótulos (por defecto ORIGEN / DESTINO). */
+  originEyebrow?: string;
+  destinationEyebrow?: string;
 }
 
 export function RoutePoints({
@@ -14,6 +17,8 @@ export function RoutePoints({
   originAddress,
   destinationLabel,
   destinationAddress,
+  originEyebrow = "ORIGEN",
+  destinationEyebrow = "DESTINO",
 }: RoutePointsProps) {
   return (
     <View>
@@ -23,7 +28,7 @@ export function RoutePoints({
           <View style={styles.connector} />
         </View>
         <View style={styles.textColumn}>
-          <Text style={styles.eyebrow}>ORIGEN</Text>
+          <Text style={styles.eyebrow}>{originEyebrow}</Text>
           <Text style={styles.label}>{originLabel}</Text>
           {originAddress ? <Text style={styles.address}>{originAddress}</Text> : null}
         </View>
@@ -33,7 +38,7 @@ export function RoutePoints({
           <View style={styles.destinationDot} />
         </View>
         <View style={styles.textColumn}>
-          <Text style={styles.eyebrow}>DESTINO</Text>
+          <Text style={styles.eyebrow}>{destinationEyebrow}</Text>
           <Text style={styles.label}>{destinationLabel}</Text>
           {destinationAddress ? <Text style={styles.address}>{destinationAddress}</Text> : null}
         </View>

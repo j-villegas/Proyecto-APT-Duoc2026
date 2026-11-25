@@ -8,6 +8,9 @@
     "start": "next start",
     "lint": "eslint",
     "db:migrate": "node --env-file=.env.local scripts/migrate.mjs",
+    "demo:seed": "node --env-file=.env.local scripts/demo.mjs seed",
+    "demo:check": "node --env-file=.env.local scripts/demo.mjs check",
+    "demo:reset": "node --env-file=.env.local scripts/demo.mjs reset",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:db": "vitest run tests/db"

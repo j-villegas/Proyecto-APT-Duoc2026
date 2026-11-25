@@ -9,8 +9,10 @@ import { Button } from "../../components/Button";
 import { StatusBadge } from "../../components/StatusBadge";
 import { RoutePoints } from "../../components/RoutePoints";
 import { TripRouteMap } from "../../components/TripRouteMap";
-import { getServiceById, getServiceDriver, getVehicleById } from "../../services/services";
-import type { DriverInfo, Service, Vehicle } from "../../types/database";
+import { getServiceById, getServiceDriver, getServiceStops, getVehicleById } from "../../services/services";
+import type { DriverInfo, Service, ServiceStop, Vehicle } from "../../types/database";
+import { usePassengerLegs } from "../../hooks/usePassengerLegs";
+import { passengerPoints } from "../../utils/passengerPoints";
 import { colors, spacing, typography } from "../../constants/theme";
 import { formatTime } from "../../utils/format";
 import type { PassengerStackParamList } from "../../navigation/types";
@@ -23,6 +25,8 @@ export default function TripDetailScreen({ route, navigation }: Props) {
   const [service, setService] = useState<Service | null>(null);
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
   const [driver, setDriver] = useState<DriverInfo | null>(null);
+  const [stops, setStops] = useState<ServiceStop[]>([]);
+  const legs = usePassengerLegs(serviceId, stops);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,12 +37,14 @@ export default function TripDetailScreen({ route, navigation }: Props) {
       try {
         const svc = await getServiceById(serviceId);
         setService(svc);
-        const [veh, driverInfo] = await Promise.all([
+        const [veh, driverInfo, stopList] = await Promise.all([
           svc.vehicle_id ? getVehicleById(svc.vehicle_id) : Promise.resolve(null),
           getServiceDriver(serviceId),
+          getServiceStops(serviceId),
         ]);
         setVehicle(veh);
         setDriver(driverInfo);
+        setStops(stopList);
       } catch (err) {
         setError(friendlyError(err));
       } finally {
@@ -70,6 +76,8 @@ export default function TripDetailScreen({ route, navigation }: Props) {
     );
   }
 
+  const { pickup, dropoff } = passengerPoints(service, legs);
+
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       <ScreenHeader
@@ -98,22 +106,9 @@ export default function TripDetailScreen({ route, navigation }: Props) {
 
         <Card style={styles.card}>
           <Text style={styles.sectionTitle}>PUNTO DE RECOGIDA</Text>
-          <Text style={styles.pointLabel}>{service.origin_label}</Text>
-          <Text style={styles.pointAddress}>{service.origin_address}</Text>
-          <TripRouteMap
-            origin={{
-              label: service.origin_label,
-              address: service.origin_address,
-              latitude: service.origin_latitude,
-              longitude: service.origin_longitude,
-            }}
-            destination={{
-              label: service.destination_label,
-              address: service.destination_address,
-              latitude: service.destination_latitude,
-              longitude: service.destination_longitude,
-            }}
-          />
+          <Text style={styles.pointLabel}>{pickup?.label ?? "Por confirmar"}</Text>
+          <Text style={styles.pointAddress}>El conductor sale desde {service.origin_label} y pasa a buscarte aquí.</Text>
+          {pickup ? <TripRouteMap origin={pickup} destination={dropoff} /> : null}
         </Card>
 
         <Card style={styles.card}>
@@ -152,10 +147,11 @@ export default function TripDetailScreen({ route, navigation }: Props) {
         </Card>
 
         <RoutePoints
-          originLabel={service.origin_label}
-          originAddress={service.origin_address}
-          destinationLabel={service.destination_label}
-          destinationAddress={service.destination_address}
+          originEyebrow="TE RECOGEN EN"
+          originLabel={pickup?.label ?? "Por confirmar"}
+          destinationEyebrow="TU DESTINO"
+          destinationLabel={dropoff.label}
+          destinationAddress={dropoff.address}
         />
       </ScrollView>
 

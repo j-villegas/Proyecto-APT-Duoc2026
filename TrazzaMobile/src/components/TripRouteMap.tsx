@@ -97,6 +97,7 @@ export function TripRouteMap({ origin, destination, height = 180 }: TripRouteMap
             coordinate={state.destination}
             title={destination.label}
             description={destination.address}
+            pinColor={colors.info}
           >
             <View style={[styles.marker, { backgroundColor: colors.info }]}>
               <Ionicons name="flag" size={12} color={colors.white} />

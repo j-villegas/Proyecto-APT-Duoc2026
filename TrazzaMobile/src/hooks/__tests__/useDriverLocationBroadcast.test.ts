@@ -1,7 +1,11 @@
 import { act, renderHook } from "@testing-library/react-native";
 import * as Location from "expo-location";
 import { supabase } from "../../lib/supabase";
-import { LOCATION_REPORT_INTERVAL_MS, useDriverLocationBroadcast } from "../useDriverLocationBroadcast";
+import {
+  LOCATION_REPORT_INTERVAL_MS,
+  SIMULATION_REPORT_INTERVAL_MS,
+  useDriverLocationBroadcast,
+} from "../useDriverLocationBroadcast";
 
 jest.mock("../../lib/supabase", () => ({ supabase: { rpc: jest.fn() } }));
 jest.mock("expo-location", () => ({
@@ -95,5 +99,26 @@ it("sin permiso de ubicación avisa y no transmite", async () => {
 it("deshabilitado no pide la ubicación", async () => {
   const { unmount } = await mount(false);
   expect(Location.requestForegroundPermissionsAsync).not.toHaveBeenCalled();
+  await unmount();
+});
+
+it("modo demostración: recorre las paradas sin GPS y marca los pings como simulados", async () => {
+  const path = [
+    { latitude: -33.45, longitude: -70.66 },
+    { latitude: -33.42, longitude: -70.61 },
+  ];
+  const { result, unmount } = await renderHook(() =>
+    useDriverLocationBroadcast({ serviceId: "s1", enabled: true, simulatePath: path })
+  );
+  await flush();
+
+  expect(Location.requestForegroundPermissionsAsync).not.toHaveBeenCalled();
+  expect(supabase.rpc).toHaveBeenCalledWith("mobile_report_location", expect.objectContaining({
+    p_service_id: "s1", p_latitude: -33.45, p_longitude: -70.66, p_is_simulated: true,
+  }));
+  expect(intervals.map((i) => i.ms)).toEqual([SIMULATION_REPORT_INTERVAL_MS]);
+  expect(result.current.simulatedPosition).toEqual(path[0]);
+  await tick();
+  expect(supabase.rpc).toHaveBeenCalledTimes(2);
   await unmount();
 });

@@ -30,7 +30,8 @@ export function useDriverLocationSubscription(serviceId: string | null) {
     authenticateRealtime().then(() => {
       if (!active) return;
       channel = supabase
-        .channel(`service-location-${serviceId}`)
+        // Nombre único por suscripción (ver useServiceLive).
+        .channel(`service-location-${serviceId}-${Math.random().toString(36).slice(2, 8)}`)
         .on(
           "postgres_changes",
           {

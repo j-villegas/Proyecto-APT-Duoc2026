@@ -80,6 +80,11 @@ export function mapService(row: DbServiceRow): Service {
     origin_longitude: toNumber(route?.origin_longitude),
     destination_latitude: toNumber(route?.destination_latitude),
     destination_longitude: toNumber(route?.destination_longitude),
+    planned_path: Array.isArray(row.planned_path)
+      ? row.planned_path
+          .filter((p) => Array.isArray(p) && Number.isFinite(p[0]) && Number.isFinite(p[1]))
+          .map(([latitude, longitude]) => ({ latitude, longitude }))
+      : null,
     scheduled_at: row.scheduled_at,
     eta: row.eta,
     status: SERVICE_STATUS_FROM_DB[row.status] ?? "programado",
@@ -96,6 +101,7 @@ export function mapServiceStop(row: DbServiceStopRow): ServiceStop {
     id: row.id,
     service_id: row.service_id,
     order_index: row.stop_order,
+    type: row.stop_type ?? "pickup",
     label: row.name,
     address: row.address ?? "",
     eta: row.eta,
@@ -103,6 +109,8 @@ export function mapServiceStop(row: DbServiceStopRow): ServiceStop {
     status: STOP_STATUS_FROM_DB[row.status] ?? "pendiente",
     arrived_at: row.actual_arrival_at,
     completed_at: row.completed_at,
+    latitude: toNumber(row.latitude),
+    longitude: toNumber(row.longitude),
   };
 }
 

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { friendlyError } from '@/lib/errors'
+import DriverVehiclesField from './DriverVehiclesField'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -510,6 +511,10 @@ export default function DriverDetailModal({ driverId }: Props) {
                       <option value="suspended">Suspendido</option>
                     </select>
                   </Field>
+
+                  {/* ── Vehículos asignados (driver_vehicles) ── */}
+                  <SectionTitle>Vehículos asignados</SectionTitle>
+                  {driver?.company_id && <DriverVehiclesField driverId={driver.id} companyId={driver.company_id} />}
 
                   {/* ── Observaciones ── */}
                   <SectionTitle>Observaciones</SectionTitle>

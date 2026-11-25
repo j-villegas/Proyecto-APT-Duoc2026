@@ -54,7 +54,7 @@ describe('iniciar / cancelar / finalizar (027)', () => {
     expect(await resources()).toEqual({ vehicle: 'available', driver: 'available' })
     expect(await one(db, `select completion_source, finalized_by_profile_id, notes from services where id = '${A1}'`))
       .toEqual({ completion_source: 'admin', finalized_by_profile_id: ADMIN_UID, notes: 'Todo ok' })
-    const events = await rows<{ e: string }>(db, `select event_type || ':' || actor_type as e from service_events where service_id in ('${A1}', '${A2}') order by created_at, event_type`)
+    const events = await rows<{ e: string }>(db, `select event_type || ':' || actor_type as e from service_events where service_id in ('${A1}', '${A2}') and actor_type <> 'system' order by created_at, event_type`)
     expect(events.map(r => r.e)).toEqual(['service_started:admin', 'service_started:admin', 'service_cancelled:admin', 'service_finished:admin'])
   })
 

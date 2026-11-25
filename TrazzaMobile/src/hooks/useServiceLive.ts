@@ -34,7 +34,9 @@ export function useServiceLive(serviceId: string | null) {
     authenticateRealtime().then(() => {
       if (!active) return;
       channel = supabase
-        .channel(`service-live-${serviceId}`)
+        // Nombre único: inicio y seguimiento pueden escuchar el mismo servicio a la
+        // vez, y supabase-js reutiliza un canal con el mismo nombre ya suscrito.
+        .channel(`service-live-${serviceId}-${Math.random().toString(36).slice(2, 8)}`)
         .on(
           "postgres_changes",
           { event: "*", schema: "public", table: "services", filter: `id=eq.${serviceId}` },
